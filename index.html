@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin Wallet</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 QuantumCoin Wallet</h1>
+    <p id="wallet-address">Wallet: <span>TNZCY5NT...QNSATLVTHNBW</span></p>
+    
+    <div class="balance-section">
+      <h2>Balance</h2>
+      <p id="balance">1,250,000 QTC</p>
+    </div>
+
+    <div class="actions">
+      <button onclick="sendCoins()">Send</button>
+      <button onclick="mineCoins()">Mine</button>
+    </div>
+
+    <div id="log"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
