@@ -1,5 +1,61 @@
-<div class="genesis-countdown">
-  <h2>🚀 QuantumCoin Genesis Status</h2>
-  <p>🪙 Genesis Coins Remaining: <span id="remainingQTC">Loading...</span> / 1,250,000 QTC</p>
-  <p id="miningStatus">⛏️ Mining unlocks when supply = 0 QTC</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin™ | Quantum-Secure Currency</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>The future of<br><span>quantum-secure</span> currency.</h1>
+      <a href="#" class="buy-button">Buy QuantumCoin™</a>
+    </header>
+
+    <section class="price-box">
+      <div class="price-label">QUANTUMCOIN</div>
+      <div class="price-value">$749.23</div>
+      <div class="price-change">▲ 14.36 (1.98%)</div>
+      <div class="price-chart">
+        <canvas id="priceChart"></canvas>
+        <div class="timeframes">
+          <button>1H</button>
+          <button>1D</button>
+          <button>1W</button>
+          <button>1Y</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div>
+        <img src="icons/shield.svg" alt="Shield" />
+        <h3>Quantum-resistant security</h3>
+        <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
+      </div>
+      <div>
+        <img src="icons/kyc.svg" alt="KYC" />
+        <h3>KYC verification</h3>
+        <p>Verify your identity quickly and securely to start trading.</p>
+      </div>
+      <div>
+        <img src="icons/data.svg" alt="Data" />
+        <h3>Real-time data</h3>
+        <p>View your balance and the latest price changes at any time.</p>
+      </div>
+    </section>
+
+    <section class="signup">
+      <h2>Get started with QuantumCoin™</h2>
+      <form>
+        <input type="email" placeholder="Email" required />
+        <button type="submit">Sign Up</button>
+      </form>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
