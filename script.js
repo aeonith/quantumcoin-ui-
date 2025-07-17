@@ -1,24 +1,28 @@
-async function updateGenesisCountdown() {
-  try {
-    const res = await fetch("/status");
-    const data = await res.json();
-
-    const spent = data.genesis_spent || 0;
-    const remaining = 1250000 - spent;
-
-    document.getElementById("remainingQTC").innerText = remaining.toLocaleString();
-
-    if (remaining <= 0) {
-      document.getElementById("miningStatus").innerText = "✅ Mining is now UNLOCKED!";
-    } else {
-      document.getElementById("miningStatus").innerText = "⛏️ Mining unlocks when supply = 0 QTC";
+const ctx = document.getElementById('priceChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [{
+      label: 'Price',
+      data: [700, 705, 710, 715, 730, 740, 749],
+      borderColor: '#57a8ff',
+      fill: false,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      x: {
+        display: false
+      },
+      y: {
+        display: false
+      }
     }
-
-  } catch (err) {
-    console.error("Error fetching status:", err);
-    document.getElementById("remainingQTC").innerText = "Unavailable";
   }
-}
-
-setInterval(updateGenesisCountdown, 5000);
-updateGenesisCountdown();
+});
