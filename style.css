@@ -1,104 +1,86 @@
-body {
+* {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-image: url("assets/background.jpg");
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background: url('assets/quantum-bg.jpg') no-repeat center center fixed;
   background-size: cover;
-  background-position: center;
   color: white;
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.75);
+  height: 100%;
+  width: 100%;
+  padding: 40px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  height: 60px;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+nav a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+nav a:hover {
+  color: #00ffcc;
+}
+
+.content {
+  margin-top: 120px;
   text-align: center;
 }
 
-.hero {
-  padding: 60px 20px;
-  backdrop-filter: brightness(0.9);
+.content h1 {
+  font-size: 4em;
+  margin-bottom: 0.2em;
 }
 
-h1 {
-  font-size: 2.6rem;
-  font-weight: bold;
-  margin-bottom: 15px;
+.content h2 {
+  font-size: 1.8em;
+  color: #ccc;
+  margin-bottom: 1em;
 }
 
-h1 span {
-  display: block;
-  font-size: 2.4rem;
+.tagline {
+  font-size: 1.2em;
+  margin-bottom: 2em;
 }
 
-.buy-btn {
-  display: inline-block;
-  margin-top: 20px;
-  background-color: #2d8bff;
-  padding: 12px 24px;
-  color: white;
-  font-weight: bold;
+.cta-button {
+  padding: 15px 40px;
+  background-color: #00ffcc;
+  color: black;
+  font-size: 1.2em;
+  border: none;
   border-radius: 8px;
   text-decoration: none;
+  transition: background 0.3s;
 }
 
-.price-card {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 25px;
-  border-radius: 10px;
-  margin: 40px auto 30px;
-  width: 300px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-}
-
-.price {
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-.change {
-  color: #00ff90;
-  margin: 5px 0;
-}
-
-.range span {
-  margin: 0 8px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.features {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 40px;
-  margin-top: 40px;
-}
-
-.feature {
-  width: 200px;
-}
-
-.feature img {
-  width: 48px;
-  margin-bottom: 10px;
-}
-
-.signup {
-  margin-top: 50px;
-}
-
-.signup input {
-  padding: 10px;
-  width: 250px;
-  border: none;
-  border-radius: 6px;
-  margin-top: 10px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.signup button {
-  margin-top: 15px;
-  padding: 12px 32px;
-  background-color: #2d8bff;
-  color: white;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+.cta-button:hover {
+  background-color: #00ccaa;
 }
