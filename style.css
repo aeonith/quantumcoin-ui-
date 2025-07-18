@@ -1,167 +1,116 @@
-/* Reset & Base */
-* {
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-body {
   font-family: 'Inter', sans-serif;
-  background: url('assets/3C4C5306-9DC7-4D16-9A66-2F73479DC8CD.png') no-repeat center center/cover;
-  min-height: 100vh;
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Layout */
-.container {
-  max-width: 360px;
-  width: 100%;
-  padding: 40px 20px;
+  background: url('background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
   text-align: center;
 }
 
-/* Headline */
-h1 {
-  font-size: 2.25rem;
-  line-height: 1.2;
-  font-weight: 700;
-  margin-bottom: 24px;
-}
-h1 span {
-  display: block;
+.container {
+  padding: 20px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-/* Buy button with pulse animation */
-.buy-button {
-  background: #006EFF;
+h1 {
+  font-size: 2.2em;
+  font-weight: 800;
+  margin-top: 30px;
+}
+
+h2 {
+  font-size: 1.5em;
+  font-weight: 700;
+}
+
+button,
+.cta-button {
+  background-color: #1a73e8;
+  color: white;
+  font-weight: bold;
+  padding: 14px 32px;
+  font-size: 1em;
   border: none;
   border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 32px;
   cursor: pointer;
-  animation: pulse 1.8s infinite;
-  transition: background 0.3s ease;
-}
-.buy-button:hover {
-  background: #0056cc;
+  margin: 20px auto;
+  display: inline-block;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
-/* Card */
-.card {
-  background: rgba(255,255,255,0.1);
+.price-box {
+  background-color: rgba(0, 0, 0, 0.6);
   border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-}
-.card h2 {
-  font-size: 0.875rem;
-  letter-spacing: 1px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-.price {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.growth {
-  color: #00F787;
-  font-size: 1rem;
-  margin-bottom: 16px;
-}
-.chart {
-  width: 100%;
-  height: auto;
-  margin-bottom: 16px;
-  border-radius: 8px;
-}
-.times {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.875rem;
-  color: rgba(255,255,255,0.7);
+  padding: 20px;
+  width: 90%;
+  max-width: 420px;
+  margin: 30px auto;
 }
 
-/* Features */
+.price-chart {
+  width: 100%;
+  border-radius: 12px;
+  margin: 10px 0;
+}
+
+.time-range {
+  display: flex;
+  justify-content: space-around;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
 .features {
   display: flex;
-  gap: 12px;
-  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  margin: 40px 0;
 }
+
 .feature {
-  flex: 1;
-  text-align: center;
+  width: 260px;
+  max-width: 80%;
 }
-.feature .icon {
-  width: 40px;
-  height: 40px;
+
+.feature img {
+  width: 48px;
+  height: 48px;
   margin-bottom: 12px;
-  object-fit: contain;
 }
+
 .feature h3 {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.1em;
   margin-bottom: 8px;
 }
+
 .feature p {
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: rgba(255,255,255,0.85);
+  font-size: 0.9em;
+  color: #ccc;
 }
 
-/* Signup */
-.signup-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
 .signup {
-  display: flex;
-}
-.signup input {
-  flex: 1;
-  padding: 12px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px 0 0 8px;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  outline: none;
-}
-.signup input::placeholder {
-  color: rgba(255,255,255,0.7);
-}
-.signup-button {
-  padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 0 8px 8px 0;
-  background: #006EFF;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-.signup-button:hover {
-  background: #0056cc;
+  margin-top: 50px;
 }
 
-/* Success Message */
-#success-message {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #00f787;
-  margin-top: 20px;
+input[type="email"] {
+  padding: 14px;
+  width: 80%;
+  max-width: 400px;
+  border-radius: 8px;
+  border: none;
+  font-size: 1em;
+  margin-bottom: 12px;
+}
+
+.signup button {
+  width: 80%;
+  max-width: 400px;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 1em;
 }
