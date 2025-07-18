@@ -2,54 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="hero">
-    <div class="overlay">
-      <h1>The future of<br />quantum-secure<br />currency.</h1>
-      <a href="#" class="buy-btn">Buy QuantumCoin™</a>
+  <div class="container">
+    <h1>The future of<br />quantum-secure<br />currency.</h1>
+    <button class="buy-button">Buy QuantumCoin™</button>
 
-      <div class="card">
-        <div class="coin-info">
-          <h2>QUANTUMCOIN</h2>
-          <p class="price">$749.23</p>
-          <p class="change">▲ 14.36 (1.98%)</p>
-        </div>
-        <div class="chart">
-          <img src="file-C1swcNgRj2ma9ndEzgQCuB" alt="Chart" />
-          <div class="timespan">
-            <span>1H</span><span>1D</span><span>1W</span><span>1Y</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="features">
-        <div class="feature">
-          <img src="file-YCnoSTi7RQ6XBQsgV64NNq" alt="Shield" />
-          <h3>Quantum-resistant<br />security</h3>
-          <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
-        </div>
-        <div class="feature">
-          <img src="file-Y29JhEhhs71TJyQB3fTSH5" alt="KYC" />
-          <h3>KYC verification</h3>
-          <p>Verify your identity quickly and securely to start trading</p>
-        </div>
-        <div class="feature">
-          <img src="file-JJPLDqtkxteVkg5ZKN7dQH" alt="Data" />
-          <h3>Real-time data</h3>
-          <p>View your balance and the latest price changes at any time.</p>
-        </div>
-      </div>
-
-      <div class="signup">
-        <h2>Get started with QuantumCoin™</h2>
-        <input type="email" placeholder="Email" />
-        <button>Sign Up</button>
+    <div class="chart-section">
+      <h2>QUANTUMCOIN</h2>
+      <p class="price">$749.23</p>
+      <p class="change">▲ 14.36 (1.98%)</p>
+      <img src="E65B16AD-FE97-408F-9CB3-BFED727FB757.png" alt="Chart" class="chart-image" />
+      <div class="timeline">
+        <span>1H</span><span>1D</span><span>1W</span><span>1Y</span>
       </div>
     </div>
+
+    <div class="features">
+      <div class="feature">
+        <img src="9FD91BCC-257E-4FDB-B4F5-84C5A82C0F2A.png" alt="Quantum-resistant security" />
+        <h3>Quantum-resistant<br />security</h3>
+        <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
+      </div>
+      <div class="feature">
+        <img src="6690DEF8-E7B0-489D-9BA7-99E48F2C994F.jpeg" alt="KYC verification" />
+        <h3>KYC verification</h3>
+        <p>Verify your identity quickly and securely to start trading.</p>
+      </div>
+      <div class="feature">
+        <img src="64C39F87-B7FD-4CF2-8D8E-30AE00FAD2C5.jpeg" alt="Real-time data" />
+        <h3>Real-time data</h3>
+        <p>View your balance and the latest price changes at any time.</p>
+      </div>
+    </div>
+
+    <form class="signup-form">
+      <label for="email">Get started with QuantumCoin™</label>
+      <input type="email" id="email" placeholder="Email" required />
+      <button type="submit">Sign Up</button>
+    </form>
   </div>
 </body>
 </html>
