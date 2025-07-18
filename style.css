@@ -1,17 +1,18 @@
-/* Reset & base */
+/* Reset & Base */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 body {
   font-family: 'Inter', sans-serif;
-  color: #fff;
-  background: url('assets/background.jpg') no-repeat center center/cover;
+  background: url('assets/3C4C5306-9DC7-4D16-9A66-2F73479DC8CD.png') no-repeat center center/cover;
   min-height: 100vh;
+  color: #fff;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
 /* Layout */
@@ -33,7 +34,7 @@ h1 span {
   display: block;
 }
 
-/* Buy button */
+/* Buy button with pulse animation */
 .buy-button {
   background: #006EFF;
   border: none;
@@ -42,16 +43,22 @@ h1 span {
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  transition: background 0.3s ease;
   margin-bottom: 32px;
+  cursor: pointer;
+  animation: pulse 1.8s infinite;
+  transition: background 0.3s ease;
 }
 .buy-button:hover {
-  background: #005AE5;
+  background: #0056cc;
 }
 
-/* Price card */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Card */
 .card {
   background: rgba(255,255,255,0.1);
   border-radius: 16px;
@@ -78,6 +85,7 @@ h1 span {
   width: 100%;
   height: auto;
   margin-bottom: 16px;
+  border-radius: 8px;
 }
 .times {
   display: flex;
@@ -86,7 +94,7 @@ h1 span {
   color: rgba(255,255,255,0.7);
 }
 
-/* Features row */
+/* Features */
 .features {
   display: flex;
   gap: 12px;
@@ -100,6 +108,7 @@ h1 span {
   width: 40px;
   height: 40px;
   margin-bottom: 12px;
+  object-fit: contain;
 }
 .feature h3 {
   font-size: 1rem;
@@ -112,7 +121,7 @@ h1 span {
   color: rgba(255,255,255,0.85);
 }
 
-/* Sign up form */
+/* Signup */
 .signup-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -128,7 +137,7 @@ h1 span {
   border: none;
   border-radius: 8px 0 0 8px;
   background: rgba(255,255,255,0.2);
-  color: #fff;
+  color: white;
   outline: none;
 }
 .signup input::placeholder {
@@ -141,10 +150,18 @@ h1 span {
   border: none;
   border-radius: 0 8px 8px 0;
   background: #006EFF;
-  color: #fff;
+  color: white;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 .signup-button:hover {
-  background: #005AE5;
+  background: #0056cc;
+}
+
+/* Success Message */
+#success-message {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #00f787;
+  margin-top: 20px;
 }
