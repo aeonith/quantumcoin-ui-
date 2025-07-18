@@ -1,21 +1,20 @@
-use actix_web::{web, App, HttpServer};
-mod handlers;
-mod routes;
-mod wallet;
-mod blockchain;
-mod transaction;
-mod revstop;
-mod models;
-mod utils;
+#[macro_use] extern crate rocket;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    println!("🚀 QuantumCoin API running at http://localhost:8080");
+use rocket_dyn_templates::Template;
+use std::collections::HashMap;
 
-    HttpServer::new(|| {
-        App::new().configure(routes::init_routes)
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+#[get("/")]
+fn index() -> Template {
+    let mut context = HashMap::new();
+    context.insert("title", "QuantumCoin™");
+    context.insert("tagline", "The Future of Quantum-Resistant Currency");
+    context.insert("description", "QuantumCoin™ is a next-generation cryptocurrency offering secure, quantum-resistant transactions, real-time price tracking, and a fully integrated wallet and blockchain platform.");
+    Template::render("index", &context)
+}
+
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .mount("/", routes![index])
+        .attach(Template::fairing())
 }
