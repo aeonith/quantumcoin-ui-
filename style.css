@@ -1,138 +1,136 @@
-* {
+/* Reset and base layout */
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-
-body, html {
-  font-family: 'Segoe UI', sans-serif;
-  color: #fff;
   background-color: #000;
-  height: 100%;
-}
-
-.hero {
-  background: url('file-C1swcNgRj2ma9ndEzgQCuB') no-repeat center center/cover;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
-}
-
-.overlay {
-  max-width: 600px;
-  width: 100%;
-  text-align: center;
-}
-
-h1 {
-  font-size: 2.4rem;
-  font-weight: bold;
-  margin-bottom: 1.2rem;
-}
-
-.buy-btn {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  background: #007bff;
-  border-radius: 6px;
   color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-  margin-bottom: 2rem;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  line-height: 1.6;
 }
 
-.card {
-  background: rgba(0, 0, 0, 0.5);
-  padding: 1.5rem;
-  border-radius: 16px;
-  margin-bottom: 2rem;
-  backdrop-filter: blur(8px);
+.container {
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
 }
 
-.coin-info h2 {
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
+/* Header */
+h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.buy-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+/* Chart section */
+.chart-section {
+  background-color: #111;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.chart-section h2 {
+  font-size: 1.2rem;
+  margin: 0;
 }
 
 .price {
   font-size: 2rem;
   font-weight: bold;
+  margin: 5px 0;
 }
 
 .change {
-  color: #00ff88;
-  margin-bottom: 1rem;
+  color: #00ff99;
+  font-weight: bold;
+  margin-bottom: 15px;
 }
 
-.chart img {
+.chart-image {
   width: 100%;
-  margin-top: 1rem;
+  max-width: 100%;
+  border-radius: 10px;
+  margin-bottom: 15px;
 }
 
-.timespan {
+.timeline {
   display: flex;
   justify-content: space-around;
-  margin-top: 0.5rem;
   font-weight: bold;
-  font-size: 0.9rem;
 }
 
+/* Features */
 .features {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 30px;
+  margin-bottom: 40px;
 }
 
 .feature img {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 0.5rem;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  margin-bottom: 10px;
 }
 
 .feature h3 {
-  font-size: 1.1rem;
-  margin-bottom: 0.4rem;
+  font-size: 1rem;
+  margin-bottom: 5px;
 }
 
 .feature p {
-  font-size: 0.95rem;
-  line-height: 1.4;
+  font-size: 0.9rem;
+  padding: 0 10px;
 }
 
-.signup h2 {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
+/* Signup form */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
-.signup input {
+.signup-form label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.signup-form input[type="email"] {
   width: 100%;
-  padding: 0.8rem;
-  margin-bottom: 1rem;
+  padding: 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 1rem;
 }
 
-.signup button {
-  width: 100%;
-  padding: 0.9rem;
+.signup-form button {
   background-color: #007bff;
   color: white;
-  font-size: 1rem;
   border: none;
-  border-radius: 8px;
-  font-weight: bold;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
 }
 
-/* Responsive */
-@media screen and (min-width: 768px) {
-  h1 {
-    font-size: 3rem;
-  }
-
+/* Responsive layout */
+@media (min-width: 600px) {
   .features {
     flex-direction: row;
     justify-content: space-between;
@@ -140,10 +138,6 @@ h1 {
 
   .feature {
     flex: 1;
-    padding: 0 1rem;
-  }
-
-  .signup h2 {
-    font-size: 1.5rem;
+    padding: 0 10px;
   }
 }
