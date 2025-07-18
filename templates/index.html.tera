@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #111111;
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 2px solid #1f1f1f;
+        }
+        header h1 {
+            font-size: 3rem;
+            margin: 0;
+        }
+        header p {
+            font-size: 1.25rem;
+            color: #999;
+            margin-top: 0.5rem;
+        }
+        main {
+            padding: 2rem;
+            max-width: 800px;
+            margin: auto;
+        }
+        .highlight {
+            color: #00ffc8;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+            font-size: 0.9rem;
+            background-color: #0a0a0a;
+            border-top: 1px solid #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 class="highlight">{{ title }}</h1>
+        <p>{{ tagline }}</p>
+    </header>
+
+    <main>
+        <h2>🚀 Welcome to the New Era of Currency</h2>
+        <p>{{ description }}</p>
+
+        <h3>🔐 Quantum-Resistant Security</h3>
+        <p>QuantumCoin™ uses Dilithium2 cryptography and cutting-edge zk-STARK privacy to ensure your assets remain untouchable in the post-quantum age.</p>
+
+        <h3>💼 Wallet & Tracker</h3>
+        <p>Manage your balance, track transactions, and export securely using RevStop protection. Designed for cold storage, exchanges, and full sovereignty.</p>
+
+        <h3>📈 Real-Time Price</h3>
+        <p>Integrated price monitor. Launch price set at <strong>$0.25</strong>. Live chart updates will follow in version 2 integration.</p>
+
+        <h3>🔗 Fully Integrated Blockchain</h3>
+        <p>QuantumCoin™ runs on its own native chain. No Ethereum dependencies. Bitcoin-style mining. 22M coin cap. Halving every 2 years.</p>
+    </main>
+
+    <footer>
+        &copy; 2025 QuantumCoin™. All rights reserved. | <a href="#" style="color:#888;">Privacy Policy</a> | <a href="#" style="color:#888;">Terms & Conditions</a>
+    </footer>
+</body>
+</html>
