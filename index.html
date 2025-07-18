@@ -2,53 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuantumCoin™ | The Future of Currency</title>
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="script.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin™</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <section class="hero">
-    <h1>The future of<br><span>quantum-secure currency.</span></h1>
-    <button class="buy-btn">Buy QuantumCoin™</button>
-  </section>
+<body class="bg-[#0d1117] text-white font-sans">
+  <div class="text-center py-16 px-4">
+    <h1 class="text-4xl md:text-5xl font-bold mb-6">
+      The future of <span class="text-blue-500">quantum-secure currency</span>.
+    </h1>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded mb-10">
+      Buy QuantumCoin™
+    </button>
 
-  <section class="price-card">
-    <h2>QUANTUMCOIN</h2>
-    <p id="qtc-price" class="price">$749.23</p>
-    <p id="qtc-change" class="price-change">▲ 14.36 (1.98%)</p>
-    <canvas id="price-chart"></canvas>
+    <div class="bg-[#161b22] rounded-lg p-6 inline-block text-left w-full max-w-md mx-auto">
+      <h2 class="text-lg font-semibold">QUANTUMCOIN</h2>
+      <p class="text-3xl font-bold mt-1">$749.23</p>
+      <p class="text-green-400">▲ 14.36 (1.98%)</p>
+      <img src="https://via.placeholder.com/400x100?text=Graph" alt="Graph" class="mt-4 rounded" />
+      <div class="flex justify-between text-sm text-gray-400 mt-2">
+        <span>1H</span><span>1D</span><span>1W</span><span>1Y</span>
+      </div>
+    </div>
 
-    <div class="timeframes">
-      <button>1H</button>
-      <button>1D</button>
-      <button>1W</button>
-      <button>1Y</button>
-    </div>
-  </section>
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-4xl mx-auto">
+      <div>
+        <div class="flex items-center space-x-2 mb-2">
+          <div class="text-blue-500">🔒</div>
+          <h3 class="text-xl font-semibold">Quantum-resistant security</h3>
+        </div>
+        <p class="text-gray-400 text-sm">Your assets are protected by advanced, quantum-proof cryptography.</p>
+      </div>
 
-  <section class="features">
-    <div class="feature">
-      <img src="icons/shield.png" alt="Shield Icon" />
-      <h3>Quantum-resistant security</h3>
-      <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
-    </div>
-    <div class="feature">
-      <img src="icons/user-check.png" alt="KYC Icon" />
-      <h3>KYC verification</h3>
-      <p>Verify your identity quickly and securely to start trading.</p>
-    </div>
-    <div class="feature">
-      <img src="icons/chart.png" alt="Data Icon" />
-      <h3>Real-time data</h3>
-      <p>View your balance and the latest price changes at any time.</p>
-    </div>
-  </section>
+      <div>
+        <div class="flex items-center space-x-2 mb-2">
+          <div class="text-blue-500">🆔</div>
+          <h3 class="text-xl font-semibold">KYC verification</h3>
+        </div>
+        <p class="text-gray-400 text-sm">Verify your identity quickly and securely to start trading.</p>
+      </div>
 
-  <section class="signup">
-    <h2>Get started with QuantumCoin™</h2>
-    <input type="email" placeholder="Email" />
-    <button class="signup-btn">Sign Up</button>
-  </section>
+      <div>
+        <div class="flex items-center space-x-2 mb-2">
+          <div class="text-blue-500">📊</div>
+          <h3 class="text-xl font-semibold">Real-time data</h3>
+        </div>
+        <p class="text-gray-400 text-sm">View your balance and the latest price changes at any time.</p>
+      </div>
+    </div>
+
+    <div class="mt-12">
+      <h2 class="text-2xl font-bold mb-4">Get started with QuantumCoin™</h2>
+      <form class="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-3">
+        <input type="email" placeholder="Email" class="px-4 py-2 rounded w-64 text-black" />
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded">
+          Sign Up
+        </button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
