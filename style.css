@@ -1,143 +1,127 @@
-/* Reset and base layout */
+/* Reset & base */
+* { margin:0; padding:0; box-sizing:border-box; }
 body {
-  margin: 0;
-  padding: 0;
-  background-color: #000;
+  font-family: 'Inter', sans-serif;
   color: #fff;
-  font-family: 'Arial', sans-serif;
+  background: url('assets/3C4C5306-9DC7-4D16-9A66-2F73479DC8CD.png') center/cover no-repeat;
+  min-height: 100vh;
   text-align: center;
-  line-height: 1.6;
+  padding: 20px;
 }
 
+/* Container */
 .container {
-  padding: 20px;
   max-width: 600px;
   margin: auto;
 }
 
-/* Header */
+/* Headline & Button */
 h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 20px;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 24px;
 }
-
-.buy-button {
-  background-color: #007bff;
-  color: white;
+.buy-btn {
+  background: #007aff;
+  color: #fff;
   border: none;
   padding: 12px 24px;
   font-size: 1rem;
+  font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
-/* Chart section */
-.chart-section {
-  background-color: #111;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 30px;
+/* Price Card */
+.card {
+  background: rgba(0,0,0,0.5);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
 }
-
-.chart-section h2 {
-  font-size: 1.2rem;
-  margin: 0;
+.card h2 {
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
-
 .price {
   font-size: 2rem;
-  font-weight: bold;
-  margin: 5px 0;
+  font-weight: 700;
+  margin-bottom: 8px;
 }
-
 .change {
-  color: #00ff99;
-  font-weight: bold;
-  margin-bottom: 15px;
+  color: #00f787;
+  margin-bottom: 16px;
 }
-
-.chart-image {
+.chart {
   width: 100%;
-  max-width: 100%;
-  border-radius: 10px;
-  margin-bottom: 15px;
+  border-radius: 8px;
+  margin-bottom: 16px;
 }
-
-.timeline {
+.times {
   display: flex;
   justify-content: space-around;
-  font-weight: bold;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.7);
 }
 
 /* Features */
 .features {
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  margin-bottom: 40px;
+  gap: 32px;
+  margin-bottom: 32px;
 }
-
-.feature img {
-  width: 50px;
-  height: 50px;
-  object-fit: contain;
-  margin-bottom: 10px;
-}
-
-.feature h3 {
-  font-size: 1rem;
-  margin-bottom: 5px;
-}
-
-.feature p {
-  font-size: 0.9rem;
-  padding: 0 10px;
-}
-
-/* Signup form */
-.signup-form {
+.feature {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+}
+.icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+}
+.feature h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.feature p {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.85);
+  max-width: 280px;
 }
 
-.signup-form label {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 5px;
+/* Signup */
+.signup h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
 }
-
-.signup-form input[type="email"] {
+.signup input {
   width: 100%;
   padding: 12px;
+  border-radius: 8px;
   border: none;
-  border-radius: 6px;
+  margin-bottom: 12px;
   font-size: 1rem;
 }
-
-.signup-form button {
-  background-color: #007bff;
+.signup button {
+  width: 100%;
+  background: #007aff;
   color: white;
   border: none;
-  padding: 12px 20px;
+  padding: 12px;
   font-size: 1rem;
-  border-radius: 6px;
+  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
-  width: 100%;
 }
 
-/* Responsive layout */
+/* Responsive */
 @media (min-width: 600px) {
-  .features {
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .feature {
-    flex: 1;
-    padding: 0 10px;
-  }
+  .features { flex-direction: row; justify-content: space-between; }
 }
