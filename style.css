@@ -1,116 +1,149 @@
-body {
+* {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
-  background: url('background.jpg') no-repeat center center fixed;
-  background-size: cover;
-  color: white;
+  box-sizing: border-box;
+}
+
+body, html {
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+  background-color: #000;
+  height: 100%;
+}
+
+.hero {
+  background: url('file-C1swcNgRj2ma9ndEzgQCuB') no-repeat center center/cover;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem;
+}
+
+.overlay {
+  max-width: 600px;
+  width: 100%;
   text-align: center;
 }
 
-.container {
-  padding: 20px;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
 h1 {
-  font-size: 2.2em;
-  font-weight: 800;
-  margin-top: 30px;
-}
-
-h2 {
-  font-size: 1.5em;
-  font-weight: 700;
-}
-
-button,
-.cta-button {
-  background-color: #1a73e8;
-  color: white;
+  font-size: 2.4rem;
   font-weight: bold;
-  padding: 14px 32px;
-  font-size: 1em;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin: 20px auto;
+  margin-bottom: 1.2rem;
+}
+
+.buy-btn {
   display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #007bff;
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 2rem;
 }
 
-.price-box {
-  background-color: rgba(0, 0, 0, 0.6);
+.card {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1.5rem;
   border-radius: 16px;
-  padding: 20px;
-  width: 90%;
-  max-width: 420px;
-  margin: 30px auto;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(8px);
 }
 
-.price-chart {
+.coin-info h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.price {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.change {
+  color: #00ff88;
+  margin-bottom: 1rem;
+}
+
+.chart img {
   width: 100%;
-  border-radius: 12px;
-  margin: 10px 0;
+  margin-top: 1rem;
 }
 
-.time-range {
+.timespan {
   display: flex;
   justify-content: space-around;
+  margin-top: 0.5rem;
   font-weight: bold;
-  margin-top: 10px;
+  font-size: 0.9rem;
 }
 
 .features {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 25px;
-  margin: 40px 0;
-}
-
-.feature {
-  width: 260px;
-  max-width: 80%;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
 .feature img {
   width: 48px;
   height: 48px;
-  margin-bottom: 12px;
+  margin-bottom: 0.5rem;
 }
 
 .feature h3 {
-  font-size: 1.1em;
-  margin-bottom: 8px;
+  font-size: 1.1rem;
+  margin-bottom: 0.4rem;
 }
 
 .feature p {
-  font-size: 0.9em;
-  color: #ccc;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
-.signup {
-  margin-top: 50px;
+.signup h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
 }
 
-input[type="email"] {
-  padding: 14px;
-  width: 80%;
-  max-width: 400px;
-  border-radius: 8px;
+.signup input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
   border: none;
-  font-size: 1em;
-  margin-bottom: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
 .signup button {
-  width: 80%;
-  max-width: 400px;
-  background-color: #1a73e8;
+  width: 100%;
+  padding: 0.9rem;
+  background-color: #007bff;
   color: white;
+  font-size: 1rem;
   border: none;
-  padding: 14px;
   border-radius: 8px;
-  font-size: 1em;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media screen and (min-width: 768px) {
+  h1 {
+    font-size: 3rem;
+  }
+
+  .features {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .feature {
+    flex: 1;
+    padding: 0 1rem;
+  }
+
+  .signup h2 {
+    font-size: 1.5rem;
+  }
 }
