@@ -1,86 +1,150 @@
+/* Reset & base */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
-body, html {
-  height: 100%;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
 body {
-  background: url('assets/quantum-bg.jpg') no-repeat center center fixed;
-  background-size: cover;
-  color: white;
-}
-
-.overlay {
-  background-color: rgba(0, 0, 0, 0.75);
-  height: 100%;
-  width: 100%;
-  padding: 40px;
-}
-
-header {
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  background: url('assets/background.jpg') no-repeat center center/cover;
+  min-height: 100vh;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
 }
 
-.logo {
-  height: 60px;
-}
-
-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 30px;
-}
-
-nav a {
-  text-decoration: none;
-  color: white;
-  font-weight: bold;
-  transition: color 0.3s;
-}
-
-nav a:hover {
-  color: #00ffcc;
-}
-
-.content {
-  margin-top: 120px;
+/* Layout */
+.container {
+  max-width: 360px;
+  width: 100%;
+  padding: 40px 20px;
   text-align: center;
 }
 
-.content h1 {
-  font-size: 4em;
-  margin-bottom: 0.2em;
+/* Headline */
+h1 {
+  font-size: 2.25rem;
+  line-height: 1.2;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+h1 span {
+  display: block;
 }
 
-.content h2 {
-  font-size: 1.8em;
-  color: #ccc;
-  margin-bottom: 1em;
-}
-
-.tagline {
-  font-size: 1.2em;
-  margin-bottom: 2em;
-}
-
-.cta-button {
-  padding: 15px 40px;
-  background-color: #00ffcc;
-  color: black;
-  font-size: 1.2em;
+/* Buy button */
+.buy-button {
+  background: #006EFF;
   border: none;
   border-radius: 8px;
-  text-decoration: none;
-  transition: background 0.3s;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: background 0.3s ease;
+  margin-bottom: 32px;
+}
+.buy-button:hover {
+  background: #005AE5;
 }
 
-.cta-button:hover {
-  background-color: #00ccaa;
+/* Price card */
+.card {
+  background: rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+.card h2 {
+  font-size: 0.875rem;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.price {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.growth {
+  color: #00F787;
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+.chart {
+  width: 100%;
+  height: auto;
+  margin-bottom: 16px;
+}
+.times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.7);
+}
+
+/* Features row */
+.features {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+.feature {
+  flex: 1;
+  text-align: center;
+}
+.feature .icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+}
+.feature h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.feature p {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.85);
+}
+
+/* Sign up form */
+.signup-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.signup {
+  display: flex;
+}
+.signup input {
+  flex: 1;
+  padding: 12px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  outline: none;
+}
+.signup input::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+.signup-button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  background: #006EFF;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.signup-button:hover {
+  background: #005AE5;
 }
