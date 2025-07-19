@@ -1,188 +1,76 @@
-body, html {
+/* === Global Background === */
+body {
+  background-image: url("/IMG_0264.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
   margin: 0;
   padding: 0;
-  height: 100%;
-  font-family: 'Inter', Arial, sans-serif;
-  color: #fff;
-  min-height: 100vh;
 }
-.bg-overlay {
-  background: url('assets/3C4C5306-9DC7-4D16-9A66-2F73479DC8CD.png') no-repeat center center/cover;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
-  /* overlay */
-  filter: brightness(0.6) blur(0px);
-}
-.main-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  padding: 40px 20px 0 20px;
-}
-.headline {
-  font-size: 3rem;
-  font-weight: bold;
-  text-align: center;
-  margin: 30px 0 16px 0;
-  line-height: 1.1;
-  letter-spacing: -2px;
-}
-.cta {
-  background: #2186ff;
-  color: #fff;
-  font-weight: bold;
-  border: none;
-  border-radius: 10px;
-  padding: 16px 32px;
-  font-size: 1.3rem;
-  margin-bottom: 32px;
-  margin-top: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 18px 0 rgba(30,135,255,0.18);
-  transition: background .2s;
-}
-.cta:hover { background: #1762c9; }
 
-.card {
-  background: rgba(12,20,38,0.72);
-  border-radius: 16px;
-  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.38);
-  padding: 24px 32px;
-  min-width: 330px;
-  margin: 32px 0 0 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 350px;
-  max-width: 95vw;
+/* === General Layout Styles === */
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff;
+  text-shadow: 1px 1px 2px #000000;
 }
-.card-header {
-  font-size: 1.3rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
+
+p {
+  color: #e0e0e0;
+  line-height: 1.6;
 }
-.card-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 8px;
+
+a {
+  color: #66ccff;
+  text-decoration: none;
 }
-.card-change {
-  color: #24e88b;
-  font-size: 1.1rem;
-  margin-bottom: 12px;
+
+a:hover {
+  text-decoration: underline;
 }
-.card-chart {
-  width: 100%;
-  max-height: 70px;
-  margin: 8px 0 8px 0;
+
+/* === Container === */
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* === Buttons === */
+button {
+  background-color: #00bfff;
+  color: white;
+  padding: 12px 24px;
+  border: none;
   border-radius: 8px;
-  background: transparent;
-}
-.card-ticks {
-  color: #fff;
-  font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 3px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-}
-.features {
-  margin: 48px 0 0 0;
-  width: 100%;
-  max-width: 900px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 44px;
-}
-.feature {
-  background: none;
-  text-align: center;
-  color: #fff;
-  flex: 1;
-  min-width: 180px;
-}
-.feature img {
-  width: 62px;
-  margin-bottom: 12px;
-  margin-top: 8px;
-  filter: drop-shadow(0 4px 18px #1e87ff38);
-}
-.feature h3 {
-  margin: 10px 0 8px 0;
-  font-size: 1.15rem;
-  font-weight: bold;
-}
-.feature p {
-  font-size: 1.05rem;
-  color: #dbeafe;
-  font-weight: 400;
-  margin: 0 auto 0 auto;
-  line-height: 1.45;
-  max-width: 230px;
-}
-.signup {
-  margin: 56px 0 0 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 600px;
-}
-.signup label {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #fff;
-}
-.signup input[type="email"] {
-  width: 85%;
-  max-width: 370px;
-  padding: 15px 18px;
-  margin-bottom: 16px;
-  border-radius: 10px;
-  border: none;
-  background: #151d2b;
-  color: #fff;
-  font-size: 1.15rem;
-  outline: none;
-  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.12);
-}
-.signup button {
-  width: 90%;
-  max-width: 370px;
-  padding: 16px 0;
-  font-size: 1.3rem;
-  font-weight: bold;
-  background: #2186ff;
-  border: none;
-  color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 18px 0 #1762c933;
   cursor: pointer;
-  transition: background .2s;
+  font-size: 16px;
+  transition: 0.3s;
 }
-.signup button:hover {
-  background: #1762c9;
+
+button:hover {
+  background-color: #009acd;
 }
-@media (max-width: 1000px) {
-  .features {
-    flex-direction: column;
-    gap: 12px;
-    align-items: center;
-  }
-  .feature {
-    margin-bottom: 24px;
-  }
-  .main-content {
-    padding: 20px 5vw 0 5vw;
-  }
+
+/* === Form Inputs === */
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+/* === Header (if needed) === */
+header {
+  padding: 20px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid #00bfff;
 }
