@@ -1,61 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <title>QuantumCoin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <section class="hero">
-    <h1>The future of<br>quantum-secure currency.</h1>
-    <button id="buy-btn">Buy QuantumCoin™</button>
 
-    <div class="price-chart-card">
-      <h2>QUANTUMCOIN</h2>
-      <p class="price" id="price">$0.00</p>
-      <p class="change" id="change">▲0.00 (0.00%)</p>
-      <canvas id="price-chart"></canvas>
-      <div class="timeframe-buttons">
-        <button data-days="0.0417">1H</button>
-        <button data-days="1">1D</button>
-        <button data-days="7">1W</button>
-        <button data-days="365">1Y</button>
-      </div>
+    <div class="background">
+        <img src="IMG_0264.png" alt="QuantumCoin background" class="background-img">
     </div>
 
-    <div class="features">
-      <div class="feature">
-        <img src="assets/icon-security.svg" alt="Security">
-        <h3>Quantum-resistant security</h3>
-        <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
-      </div>
-      <div class="feature">
-        <img src="assets/icon-kyc.svg" alt="KYC">
-        <h3>KYC verification</h3>
-        <p>Verify your identity quickly and securely to start trading.</p>
-      </div>
-      <div class="feature">
-        <img src="assets/icon-data.svg" alt="Real-time data">
-        <h3>Real-time data</h3>
-        <p>View your balance and the latest price changes at any time.</p>
-      </div>
+    <div class="dashboard-icons">
+        <button onclick="openRevStop()"><img src="IMG_0265.png" alt="RevStop Icon"></button>
+        <button onclick="openKYC()"><img src="IMG_0265.png" alt="KYC Icon"></button>
+        <button onclick="openGraph()"><img src="IMG_0265.png" alt="Graph Icon"></button>
     </div>
 
-    <div class="cta">
-      <h2>Get started with QuantumCoin™</h2>
-      <form id="signup-form">
-        <input type="email" id="email" placeholder="Email" required>
-        <button type="submit">Sign Up</button>
-      </form>
-      <p class="terms">
-        By signing up, you agree to our
-        <a href="#">Terms</a> &amp; <a href="#">Privacy</a> policies.
-      </p>
+    <div class="wallet-info">
+        <h2>Wallet Address:</h2>
+        <p id="wallet-address">Loading...</p>
+        <h2>Balance:</h2>
+        <p id="wallet-balance">0 QTC</p>
+        <h2>Price:</h2>
+        <p>$0.25 / QTC</p>
     </div>
-  </section>
 
-  <script src="script.js"></script>
+    <nav class="bottom-nav">
+        <button onclick="goHome()">Home</button>
+        <button onclick="goNotifications()">Notifications</button>
+        <button onclick="goExplore()">Explore</button>
+        <button onclick="goProfile()">Profile</button>
+    </nav>
+
+    <footer class="legal-links">
+        <a href="#">Privacy Policy</a> | 
+        <a href="#">Terms of Service</a>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
