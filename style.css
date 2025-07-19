@@ -1,0 +1,121 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
+  background: url('https://images.unsplash.com/photo-1632821924118-448eb0488ac5') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.container {
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 900px;
+  margin: auto;
+  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+}
+
+h1 {
+  font-size: 2.8rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+h1 span {
+  color: #58a6ff;
+}
+
+#buy-btn {
+  background: #1e90ff;
+  border: none;
+  padding: 12px 28px;
+  color: white;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-bottom: 30px;
+}
+
+.price-box {
+  border: 1px solid #3c3c3c;
+  padding: 20px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.coin-info h2 {
+  margin: 0;
+}
+
+#price {
+  font-size: 2rem;
+  margin: 10px 0 5px;
+}
+
+.price-change {
+  color: #2ecc71;
+  font-size: 1rem;
+}
+
+.timeframes span {
+  margin: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.features {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin: 40px 0;
+}
+
+.features div {
+  width: 30%;
+  min-width: 200px;
+}
+
+.features img {
+  width: 36px;
+  margin-bottom: 12px;
+}
+
+.signup-box {
+  margin: 40px 0 20px;
+}
+
+.signup-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 400px;
+  margin: auto;
+}
+
+.signup-box input {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+}
+
+.signup-box button {
+  padding: 12px;
+  border: none;
+  background: #1e90ff;
+  color: white;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+footer {
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+footer a {
+  color: #58a6ff;
+  text-decoration: none;
+}
