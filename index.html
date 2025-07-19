@@ -2,67 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="hero">
-    <img class="bg" src="background.jpg" alt="Background" />
-    <div class="overlay"></div>
-    <div class="content">
-      <h1>The future of <span>quantum-secure</span> currency.</h1>
-      <button id="buy-btn">Buy QuantumCoin™</button>
-      <a href="QuantumCoin_Whitepaper.pdf" class="whitepaper-link" target="_blank">
-        📄 View the QuantumCoin™ Whitepaper
-      </a>
+    <h1>The future of <span>quantum-secure</span> currency.</h1>
+    <button id="buy-btn">Buy QuantumCoin™</button><br />
+    <a href="QuantumCoin_Whitepaper.pdf" class="whitepaper-link" target="_blank">
+      📄 View the QuantumCoin™ Whitepaper
+    </a>
 
-      <div class="chart-card">
-        <div class="header">
-          <h2>QUANTUMCOIN</h2>
-          <p id="price">$0.00</p>
-          <p id="change">▲0.00 (0.00%)</p>
-        </div>
-        <canvas id="priceChart"></canvas>
-        <div class="intervals">
-          <button data-interval="1h">1H</button>
-          <button data-interval="1d" class="active">1D</button>
-          <button data-interval="1w">1W</button>
-          <button data-interval="1y">1Y</button>
-        </div>
+    <div class="chart-card">
+      <div class="header">
+        <h2>QUANTUMCOIN</h2>
+        <p id="price">$0.00</p>
+        <p id="change">▲0.00 (0.89%)</p>
       </div>
+      <canvas id="priceChart"></canvas>
+      <div class="intervals">
+        <button data-interval="1h">1H</button>
+        <button data-interval="1d" class="active">1D</button>
+        <button data-interval="1w">1W</button>
+        <button data-interval="1y">1Y</button>
+      </div>
+    </div>
 
-      <div class="features">
-        <div class="feature">
-          <img src="quantum-security-icon.png" alt="Security" />
-          <h3>Quantum-resistant security</h3>
-          <p>Your assets are protected by<br />advanced, quantum-proof cryptography.</p>
-        </div>
-        <div class="feature">
-          <img src="kyc-verification-icon.png" alt="KYC" />
-          <h3>KYC verification</h3>
-          <p>Verify your identity quickly<br />and securely to start trading.</p>
-        </div>
-        <div class="feature">
-          <img src="price-chart-icon.png" alt="Data" />
-          <h3>Real-time data</h3>
-          <p>View your balance and<br />the latest price changes at any time.</p>
-        </div>
+    <div class="features">
+      <div class="feature">
+        <img src="quantum-security-icon.png" alt="Security" />
+        <h3>Quantum-resistant security</h3>
+        <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
       </div>
+      <div class="feature">
+        <img src="kyc-verification-icon.png" alt="KYC" />
+        <h3>KYC verification</h3>
+        <p>Verify your identity quickly and securely to start trading.</p>
+      </div>
+      <div class="feature">
+        <img src="price-chart-icon.png" alt="Data" />
+        <h3>Real-time data</h3>
+        <p>View your balance and the latest price changes at any time.</p>
+      </div>
+    </div>
 
-      <div class="signup">
-        <h2>Get started with QuantumCoin™</h2>
-        <form id="signupForm">
-          <input type="email" id="email" placeholder="Email" required />
-          <button type="submit">Sign Up</button>
-        </form>
-        <p class="terms">
-          By signing up, you agree to our
-          <a href="/terms.html" target="_blank">Terms</a> &
-          <a href="/privacy.html" target="_blank">Privacy</a> policies.
-        </p>
-      </div>
+    <div class="signup">
+      <h2>Get started with QuantumCoin™</h2>
+      <form id="signupForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <button type="submit">Sign Up</button>
+      </form>
+      <p class="terms">
+        By signing up, you agree to our
+        <a href="/terms.html" target="_blank">Terms</a> &
+        <a href="/privacy.html" target="_blank">Privacy</a> policies.
+      </p>
     </div>
   </div>
 
