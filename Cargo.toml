@@ -3,27 +3,36 @@ name = "quantumcoin"
 version = "1.0.0"
 edition = "2021"
 authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
-description = "QuantumCoin™ – a quantum-resistant cryptocurrency with web node and wallet"
+description = "QuantumCoin™ — a quantum-resistant cryptocurrency with web node and wallet"
 license = "MIT"
 
 [dependencies]
-# Quantum-safe cryptography
+# JSON handling
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Base64 encoding for keys
+base64 = "0.21"
+
+# Logging and file I/O
+log = "0.4"
+env_logger = "0.10"
+
+# Cryptography: Dilithium for quantum-safe
 pqcrypto-dilithium = "0.3"
 pqcrypto-traits = "0.3"
 
-# Web API server
-actix-web = "4"
+# For command line interface
+clap = { version = "4.4", features = ["derive"] }
 
-# Asynchronous runtime
+# DateTime utilities (optional, if you're using timestamps)
+chrono = "0.4"
+
+# Async networking (if used)
 tokio = { version = "1", features = ["full"] }
 
-# JSON serialization/deserialization
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+# Optional: colored terminal UI
+colored = "2.0"
 
-# Encoding and decoding utilities
-base64 = "0.21"
-
-# File I/O, logging, and utility crates
-log = "0.4"
-env_logger = "0.10"
+# Optional: save/load JSON to disk
+directories = "5.0"
