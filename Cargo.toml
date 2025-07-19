@@ -1,0 +1,29 @@
+[package]
+name = "quantumcoin"
+version = "1.0.0"
+edition = "2021"
+authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+description = "QuantumCoin™ – a quantum-resistant cryptocurrency with RevStop and mining logic"
+license = "MIT"
+
+[dependencies]
+# Quantum-safe cryptography
+pqcrypto-dilithium = "0.3"
+pqcrypto-traits = "0.3"
+
+# Web API server
+actix-web = "4"
+
+# Asynchronous runtime
+tokio = { version = "1", features = ["full"] }
+
+# JSON serialization/deserialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Encoding and decoding utilities
+base64 = "0.21"
+
+# File I/O, logging, and utility crates (optional, based on your modules)
+log = "0.4"
+env_logger = "0.10"
