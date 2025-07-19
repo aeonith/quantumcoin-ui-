@@ -1,69 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0a0a0a;
+      color: #ffffff;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .whitepaper-link {
+      display: inline-block;
+      margin-top: 30px;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #6a0dad;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .whitepaper-link:hover {
+      background-color: #4b0082;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      p {
+        font-size: 1rem;
+        padding: 0 10px;
+      }
+
+      .whitepaper-link {
+        padding: 10px 16px;
+        font-size: 0.95rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="hero">
-    <img class="bg" src="background.jpg" alt="Background">
-    <div class="overlay"></div>
-    <div class="content">
-      <h1>The future of <span>quantum-secure</span> currency.</h1>
-      <button id="buy-btn">Buy QuantumCoin™</button>
 
-      <div class="chart-card">
-        <div class="header">
-          <h2>QUANTUMCOIN</h2>
-          <p id="price">$0.00</p>
-          <p id="change">▲0.00 (0.00%)</p>
-        </div>
-        <canvas id="priceChart"></canvas>
-        <div class="intervals">
-          <button data-interval="1h">1H</button>
-          <button data-interval="1d" class="active">1D</button>
-          <button data-interval="1w">1W</button>
-          <button data-interval="1y">1Y</button>
-        </div>
-      </div>
+  <h1>Welcome to QuantumCoin™</h1>
+  <p>
+    QuantumCoin™ is a revolutionary quantum-resistant cryptocurrency designed for maximum security, decentralization, and future-proof protection against quantum attacks. Explore the innovation behind our coin, built with post-quantum cryptography and hardened mining logic inspired by Bitcoin.
+  </p>
 
-      <div class="features">
-        <div class="feature">
-          <img src="quantum-security-icon.png" alt="Security">
-          <h3>Quantum-resistant security</h3>
-          <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
-        </div>
-        <div class="feature">
-          <img src="kyc-verification-icon.png" alt="KYC">
-          <h3>KYC verification</h3>
-          <p>Verify your identity quickly and securely to start trading.</p>
-        </div>
-        <div class="feature">
-          <img src="price-chart-icon.png" alt="Data">
-          <h3>Real-time data</h3>
-          <p>View your balance and the latest price changes at any time.</p>
-        </div>
-      </div>
+  <a href="assets/QuantumCoin_Whitepaper.pdf" target="_blank" class="whitepaper-link">
+    📄 View the QuantumCoin™ Whitepaper
+  </a>
 
-      <div class="signup">
-        <h2>Get started with QuantumCoin™</h2>
-        <form id="signupForm">
-          <input type="email" id="email" placeholder="Email" required>
-          <button type="submit">Sign Up</button>
-        </form>
-        <p class="terms">
-          By signing up, you agree to our
-          <a href="/terms.html" target="_blank">Terms</a> &
-          <a href="/privacy.html" target="_blank">Privacy</a> policies.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
