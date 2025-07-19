@@ -1,0 +1,137 @@
+/* Reset and font */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(#000b12, #010f1f);
+  color: white;
+  overflow-x: hidden;
+}
+a {
+  text-decoration: none;
+  color: white;
+}
+.hero {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+/* Heading */
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+/* Button */
+.buy-btn {
+  display: inline-block;
+  margin: 10px auto 40px;
+  padding: 15px 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background-color: #007bff;
+  box-shadow: 0 0 10px #007bff, 0 0 30px #007bff66;
+  transition: background-color 0.3s ease;
+}
+.buy-btn:hover {
+  background-color: #0056c7;
+}
+
+/* Price Card */
+.price-card {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 0 auto 50px;
+  max-width: 500px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px #00c3ff44;
+}
+.price-header {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.price-value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+.price-change {
+  color: #00ffb7;
+  margin-bottom: 15px;
+}
+.time-range {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-around;
+  color: #ccc;
+}
+
+/* Features */
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 50px;
+  gap: 40px;
+}
+.features div {
+  max-width: 250px;
+}
+.features img {
+  height: 40px;
+  margin-bottom: 10px;
+}
+.features h3 {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
+
+/* Signup */
+.signup {
+  margin-top: 60px;
+}
+.signup h2 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+}
+.signup input[type="email"] {
+  padding: 12px;
+  width: 280px;
+  border: none;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+.signup button {
+  padding: 12px 20px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.signup button:hover {
+  background-color: #0056c7;
+}
+
+/* Footer */
+footer {
+  margin-top: 80px;
+  font-size: 0.9rem;
+  color: #888;
+}
+footer a {
+  color: #888;
+  margin: 0 8px;
+}
+footer a:hover {
+  color: white;
+}
