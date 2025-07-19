@@ -1,200 +1,111 @@
-/* Reset & Base Styles */
-* {
+body, html {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-}
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #ffffff;
-  background-color: #000;
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
   overflow-x: hidden;
+  background: #000;
+  color: white;
   position: relative;
-  min-height: 100vh;
 }
 
-/* Animated Chain Background */
+/* Background floating animation */
+@keyframes chainFloat {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(20px); }
+  100% { transform: translateY(-20px); }
+}
+
 body::before {
   content: "";
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
   width: 100%;
-  background-image: url('background.jpg'); /* Replace with your glowing chain image */
+  height: 100%;
+  background-image: url('background.jpg'); /* Replace with your chain image */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: brightness(1.2) saturate(1.4) blur(0.3px);
-  opacity: 0.1;
-  animation: chainFloat 18s ease-in-out infinite alternate;
+  opacity: 0.15;
+  filter: brightness(1.6) saturate(1.4);
   z-index: -2;
+  animation: chainFloat 10s ease-in-out infinite;
 }
 
-@keyframes chainFloat {
-  0% {
-    transform: translateY(0px);
-  }
-  100% {
-    transform: translateY(-25px);
-  }
-}
-
-/* Optional dark overlay for contrast */
-body::after {
-  content: "";
-  position: fixed;
+/* Main overlay */
+.overlay {
+  position: absolute;
   top: 0;
   left: 0;
-  height: 100%;
   width: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.85));
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9));
   z-index: -1;
 }
 
-/* Hero Section */
 .hero {
   padding: 60px 20px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.content {
+  max-width: 700px;
   text-align: center;
 }
-.hero h1 {
-  font-size: 2.4rem;
-  line-height: 1.3;
-  margin-bottom: 20px;
-}
-.hero span {
-  color: #29a3ff;
+
+h1 span {
+  color: #00e5ff;
 }
 
-/* Buttons */
-#buy-btn, .whitepaper-btn {
-  padding: 12px 20px;
-  margin: 10px;
-  font-size: 1rem;
+button {
+  background-color: #00e5ff;
+  color: #000;
   border: none;
-  border-radius: 8px;
+  padding: 12px 24px;
+  margin-top: 20px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-#buy-btn {
-  background-color: #29a3ff;
-  color: #fff;
-}
-#buy-btn:hover {
-  background-color: #007acc;
-}
-.whitepaper-btn {
-  background-color: #9b59b6;
-  color: #fff;
-}
-.whitepaper-btn:hover {
-  background-color: #7c3fa3;
-}
-
-/* Chart Card */
-.chart-card {
-  background-color: #111;
-  padding: 20px;
-  border-radius: 12px;
-  max-width: 400px;
-  margin: 40px auto;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
-}
-.chart-card .header {
-  margin-bottom: 15px;
-}
-.chart-card h2 {
-  font-size: 1.2rem;
-}
-#price {
-  font-size: 2rem;
   font-weight: bold;
 }
-#change {
-  color: #00ff99;
+
+.chart-card, .features, .signup {
+  margin-top: 40px;
 }
 
-/* Intervals */
-.intervals {
-  margin-top: 15px;
-}
-.intervals button {
-  padding: 8px 14px;
-  margin: 0 4px;
-  border: none;
-  background: #222;
-  color: #fff;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-.intervals .active {
-  background-color: #29a3ff;
-}
-
-/* Features */
 .features {
   display: flex;
-  flex-direction: column;
-  gap: 25px;
-  max-width: 1000px;
-  margin: 40px auto;
-  padding: 0 20px;
-}
-.feature {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-  padding: 20px;
-  text-align: center;
-}
-.feature img {
-  height: 50px;
-  margin-bottom: 12px;
-}
-.feature h3 {
-  font-size: 1.2rem;
-  margin-bottom: 8px;
-}
-
-/* Signup Section */
-.signup {
-  margin-top: 60px;
-  padding: 20px;
-  text-align: center;
-}
-.signup h2 {
-  font-size: 1.6rem;
-  margin-bottom: 20px;
-}
-#signupForm {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
+  justify-content: space-around;
   flex-wrap: wrap;
 }
-#signupForm input {
-  padding: 12px;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: none;
-  width: 250px;
+
+.feature {
+  width: 30%;
+  min-width: 250px;
+  margin: 20px 0;
 }
-#signupForm button {
-  padding: 12px 20px;
-  font-size: 1rem;
-  background-color: #29a3ff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+
+.feature img {
+  width: 48px;
+  height: 48px;
 }
-#signupForm button:hover {
-  background-color: #007acc;
+
+.signup input {
+  padding: 10px;
+  margin-right: 10px;
+  width: 60%;
+  max-width: 300px;
 }
+
+.signup button {
+  padding: 10px 20px;
+}
+
 .terms {
-  font-size: 0.8rem;
-  margin-top: 12px;
-}
-.terms a {
-  color: #29a3ff;
+  font-size: 0.8em;
+  color: #aaa;
+  margin-top: 10px;
 }
