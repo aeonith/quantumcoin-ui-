@@ -2,62 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™ | Quantum-Secure Future</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin™ | The Future of Quantum-Secure Currency</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/main.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-  <div class="hero">
-    <h1>The future of <br>quantum-secure currency.</h1>
-    <a href="#" class="buy-btn">Buy QuantumCoin™</a>
-    
-    <div class="price-card">
-      <div class="price-header">QUANTUMCOIN</div>
-      <div class="price-value" id="price">$749.23</div>
-      <div class="price-change">▲ 14.36 (1.98%)</div>
-      <canvas id="priceChart"></canvas>
-      <div class="time-range">
-        <span>1H</span><span>1D</span><span>1W</span><span>1Y</span>
+  <section class="hero">
+    <div class="container">
+      <h1>The future of <br /><span>quantum-secure</span> currency.</h1>
+      <a href="#" class="btn-primary">Buy QuantumCoin™</a>
+      
+      <div class="price-card">
+        <h2>QUANTUMCOIN</h2>
+        <p class="price" id="price">$749.23</p>
+        <p class="change" id="change">▲ 14.36 (1.98%)</p>
+        <canvas id="priceChart"></canvas>
+        <div class="time-range">
+          <span>1H</span>
+          <span>1D</span>
+          <span>1W</span>
+          <span>1Y</span>
+        </div>
       </div>
+
+      <div class="features">
+        <div class="feature">
+          <img src="assets/security-icon.svg" alt="Security" />
+          <h3>Quantum-resistant security</h3>
+          <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
+        </div>
+        <div class="feature">
+          <img src="assets/kyc-icon.svg" alt="KYC" />
+          <h3>KYC verification</h3>
+          <p>Verify your identity quickly and securely to start trading.</p>
+        </div>
+        <div class="feature">
+          <img src="assets/data-icon.svg" alt="Data" />
+          <h3>Real-time data</h3>
+          <p>View your balance and the latest price changes at any time.</p>
+        </div>
+      </div>
+
+      <div class="signup">
+        <h2>Get started with QuantumCoin™</h2>
+        <form>
+          <input type="email" placeholder="Email" />
+          <button type="submit">Sign Up</button>
+        </form>
+      </div>
+
+      <footer>
+        <p>&copy; 2025 QuantumCoin. All rights reserved.</p>
+        <a href="#">Terms & Conditions</a> | <a href="#">Privacy Policy</a>
+        <br />
+        <a href="mailto:Aeonith@quantumcoincrypto.com">Contact: Aeonith@quantumcoincrypto.com</a>
+      </footer>
     </div>
-
-    <div class="features">
-      <div>
-        <img src="images/shield.png" alt="Shield" />
-        <h3>Quantum-resistant security</h3>
-        <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
-      </div>
-      <div>
-        <img src="images/kyc.png" alt="KYC" />
-        <h3>KYC verification</h3>
-        <p>Verify your identity quickly and securely to start trading.</p>
-      </div>
-      <div>
-        <img src="images/data.png" alt="Data" />
-        <h3>Real-time data</h3>
-        <p>View your balance and the latest price changes at any time.</p>
-      </div>
-    </div>
-
-    <div class="signup">
-      <h2>Get started with QuantumCoin™</h2>
-      <form id="signup-form">
-        <input type="email" name="user_email" placeholder="Email" required />
-        <button type="submit">Sign Up</button>
-      </form>
-    </div>
-
-    <footer>
-      <p><a href="terms.html">Terms</a> • <a href="privacy.html">Privacy</a> • <a href="legal.html">Legal</a></p>
-      <p>&copy; 2025 QuantumCoin™</p>
-    </footer>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script src="js/main.js"></script>
+  </section>
 </body>
 </html>
