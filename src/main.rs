@@ -1,90 +1,46 @@
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use std::sync::Mutex;
-use std::fs;
-use serde::{Serialize, Deserialize};
-
-mod blockchain;
 mod wallet;
-mod revstop;
+mod blockchain;
 
+use wallet::Wallet;
 use blockchain::Blockchain;
-use wallet::{Wallet, Transaction};
+use std::fs;
+use std::path::Path;
+use std::time::Instant;
 
-#[derive(Serialize)]
-struct HealthStatus {
-    status: String,
-    version: String,
-}
+fn main() {
+    println!("🚀 QuantumCoin Node Initializing...");
 
-// Shared App State
-struct AppState {
-    blockchain: Mutex<Blockchain>,
-}
+    // Load or create wallet
+    let wallet_path_pub = "wallet_public.key";
+    let wallet_path_priv = "wallet_private.key";
 
-// Health check
-async fn health() -> impl Responder {
-    web::Json(HealthStatus {
-        status: "OK".to_string(),
-        version: "1.0.0".to_string(),
-    })
-}
-
-// View blockchain
-async fn get_chain(data: web::Data<AppState>) -> impl Responder {
-    let chain = data.blockchain.lock().unwrap();
-    HttpResponse::Ok().json(&chain.chain)
-}
-
-// Create transaction
-#[derive(Deserialize)]
-struct TxRequest {
-    sender: String,
-    recipient: String,
-    amount: f64,
-    signature: String,
-}
-
-async fn new_transaction(req: web::Json<TxRequest>, data: web::Data<AppState>) -> impl Responder {
-    let tx = Transaction {
-        sender: req.sender.clone(),
-        recipient: req.recipient.clone(),
-        amount: req.amount,
-        signature: Some(req.signature.clone()),
+    let wallet = if Path::new(wallet_path_pub).exists() && Path::new(wallet_path_priv).exists() {
+        Wallet::load_from_files(wallet_path_pub, wallet_path_priv)
+            .expect("⚠️ Failed to load wallet from files.")
+    } else {
+        println!("🧾 No wallet found — generating new one...");
+        let wallet = Wallet::new();
+        wallet.save_to_files(wallet_path_pub, wallet_path_priv);
+        println!("✅ Wallet saved to disk.");
+        wallet
     };
 
-    let mut chain = data.blockchain.lock().unwrap();
-    chain.add_transaction(tx);
-    HttpResponse::Ok().body("Transaction added")
-}
+    // Print wallet address only (no private key)
+    let address = wallet.get_address();
+    println!("🔐 Wallet Address: {}", address);
 
-// Mine block
-async fn mine(data: web::Data<AppState>) -> impl Responder {
-    let mut chain = data.blockchain.lock().unwrap();
-    chain.mine_pending_transactions();
-    HttpResponse::Ok().body("Block mined")
-}
+    // Load or create blockchain
+    let start_time = Instant::now();
+    let mut blockchain = Blockchain::load_from_disk().unwrap_or_else(|| {
+        println!("📦 No blockchain found — creating genesis block...");
+        Blockchain::new(address.clone()) // assign genesis to this wallet
+    });
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // Load or initialize blockchain
-    let blockchain = match Blockchain::load_from_disk() {
-        Ok(bc) => bc,
-        Err(_) => Blockchain::new("GENESIS_PUBLIC_KEY_STRING".to_string()),
-    };
+    println!("✅ Blockchain ready. Load time: {:.2?}", start_time.elapsed());
 
-    println!("🚀 QuantumCoin™ Backend Server Running on http://localhost:8080");
+    // Example mining display (can be expanded)
+    blockchain.mine_pending_transactions(address.clone());
+    blockchain.save_to_disk();
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(AppState {
-                blockchain: Mutex::new(blockchain.clone()),
-            }))
-            .route("/health", web::get().to(health))
-            .route("/chain", web::get().to(get_chain))
-            .route("/transaction", web::post().to(new_transaction))
-            .route("/mine", web::post().to(mine))
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    println!("✅ Block mined and saved. Chain is live.");
 }
