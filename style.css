@@ -1,40 +1,88 @@
-body {
+/* Reset & Box‐Sizing */
+* {
   margin: 0;
   padding: 0;
-  font-family: 'Arial', sans-serif;
-  background-image: url('background.jpg'); /* make sure this matches your uploaded image */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  color: white;
+  box-sizing: border-box;
 }
 
+/* Root & Background Animation */
+html,
+body {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ffffff;
+  overflow-x: hidden;
+  background: #000;
+  position: relative;
+}
+
+/* Floating chains via <img> hack */
+.bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.15;
+  transform: translateY(0);
+  animation: chainFloat 12s ease-in-out infinite alternate;
+  z-index: -2;
+}
+
+@keyframes chainFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-25px);
+  }
+}
+
+/* Overlay for contrast */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0.85)
+  );
+  z-index: -1;
+}
+
+/* HERO SECTION */
 .hero {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
   text-align: center;
   padding: 2rem;
-  backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.5);
 }
 
+/* CONTENT WRAPPER */
+.content {
+  max-width: 700px;
+}
+
+/* HEADLINE */
 h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
 }
-
 h1 span {
-  color: #ffb347; /* warm orange highlight */
+  color: #ffb347; /* warm orange */
 }
 
+/* BUY BUTTON */
 #buy-btn {
   background-color: #007acc; /* glowing blue */
-  color: white;
+  color: #fff;
   border: none;
   padding: 12px 24px;
   font-size: 1rem;
@@ -43,29 +91,29 @@ h1 span {
   cursor: pointer;
   transition: background 0.3s;
 }
-
 #buy-btn:hover {
-  background-color: #ff8c42; /* glowing orange on hover */
+  background-color: #ff8c42; /* orange hover */
   box-shadow: 0 0 15px rgba(255, 140, 66, 0.8);
 }
 
+/* WHITEPAPER LINK */
 .whitepaper-link {
   display: inline-block;
-  margin-top: 1rem;
+  margin: 1rem 0;
   background: rgba(0, 122, 204, 0.1);
   color: #00aaff;
   padding: 8px 16px;
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
-  transition: all 0.3s;
+  transition: background 0.3s, color 0.3s;
 }
-
 .whitepaper-link:hover {
   background: rgba(255, 140, 66, 0.2);
   color: #ff8c42;
 }
 
+/* CHART CARD */
 .chart-card {
   margin-top: 2rem;
   background: rgba(0, 0, 0, 0.8);
@@ -75,20 +123,27 @@ h1 span {
   max-width: 500px;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
 }
-
+.chart-card .header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
 .chart-card h2 {
   margin: 0;
+  font-size: 1.2rem;
 }
-
 #price {
   font-size: 2rem;
   margin: 0.5rem 0;
 }
-
 #change {
   color: #00ff88;
 }
 
+/* INTERVAL BUTTONS */
+.intervals {
+  margin-top: 1rem;
+}
 .intervals button {
   background: transparent;
   color: white;
@@ -97,12 +152,12 @@ h1 span {
   font-weight: bold;
   cursor: pointer;
 }
-
 .intervals .active {
   color: #ffb347;
   text-decoration: underline;
 }
 
+/* FEATURES GRID */
 .features {
   display: flex;
   justify-content: center;
@@ -110,7 +165,6 @@ h1 span {
   margin-top: 3rem;
   flex-wrap: wrap;
 }
-
 .feature {
   background: rgba(0, 0, 0, 0.6);
   padding: 1.5rem;
@@ -119,23 +173,24 @@ h1 span {
   text-align: center;
   box-shadow: 0 0 10px rgba(255, 140, 66, 0.4);
 }
-
 .feature img {
   width: 50px;
   height: auto;
   margin-bottom: 1rem;
 }
 
+/* SIGNUP FORM */
 .signup {
   margin-top: 3rem;
 }
-
+.signup h2 {
+  margin-bottom: 1rem;
+}
 .signup form {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-
 .signup input[type="email"] {
   padding: 10px;
   border: none;
@@ -143,28 +198,28 @@ h1 span {
   width: 250px;
   margin-bottom: 10px;
 }
-
 .signup button {
   background-color: #007acc;
-  color: white;
+  color: #fff;
   border: none;
   padding: 10px 20px;
   font-size: 1rem;
   border-radius: 5px;
   box-shadow: 0 0 8px rgba(0, 122, 204, 0.8);
   cursor: pointer;
+  transition: background 0.3s;
 }
-
 .signup button:hover {
   background-color: #ff8c42;
   box-shadow: 0 0 12px rgba(255, 140, 66, 0.8);
 }
 
+/* TERMS & LINKS */
 .terms {
   font-size: 0.8rem;
   color: #ccc;
+  margin-top: 10px;
 }
-
 .terms a {
   color: #00aaff;
 }
