@@ -1,128 +1,188 @@
-/* Base reset */
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: 'Inter', sans-serif;
-  color:#fff;
-  background: url('assets/background.png') center/cover no-repeat;
-  text-align:center;
-  padding:20px;
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', Arial, sans-serif;
+  color: #fff;
+  min-height: 100vh;
 }
-.container { max-width:600px; margin:0 auto; }
-
-/* Headline */
-h1 {
-  font-size:2.5rem;
-  font-weight:800;
-  line-height:1.2;
-  margin-bottom:24px;
+.bg-overlay {
+  background: url('assets/3C4C5306-9DC7-4D16-9A66-2F73479DC8CD.png') no-repeat center center/cover;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  /* overlay */
+  filter: brightness(0.6) blur(0px);
 }
-
-/* Primary button */
-.buy-btn {
-  background:#007aff;
-  color:#fff;
-  border:none;
-  padding:12px 24px;
-  font-size:1rem;
-  font-weight:600;
-  border-radius:8px;
-  cursor:pointer;
-  margin-bottom:32px;
+.main-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 20px 0 20px;
 }
+.headline {
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 30px 0 16px 0;
+  line-height: 1.1;
+  letter-spacing: -2px;
+}
+.cta {
+  background: #2186ff;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  padding: 16px 32px;
+  font-size: 1.3rem;
+  margin-bottom: 32px;
+  margin-top: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px 0 rgba(30,135,255,0.18);
+  transition: background .2s;
+}
+.cta:hover { background: #1762c9; }
 
-/* Price card */
 .card {
-  background:rgba(0,0,0,0.6);
-  border-radius:16px;
-  padding:24px;
-  margin-bottom:32px;
+  background: rgba(12,20,38,0.72);
+  border-radius: 16px;
+  box-shadow: 0 6px 32px 0 rgba(0,0,0,0.38);
+  padding: 24px 32px;
+  min-width: 330px;
+  margin: 32px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 350px;
+  max-width: 95vw;
 }
-.card h2 {
-  font-size:0.9rem;
-  letter-spacing:1px;
-  font-weight:600;
-  margin-bottom:8px;
+.card-header {
+  font-size: 1.3rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
 }
-.price {
-  font-size:2rem;
-  font-weight:700;
-  margin-bottom:8px;
+.card-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
-.change {
-  color:#00f787;
-  margin-bottom:16px;
+.card-change {
+  color: #24e88b;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
 }
-.chart {
-  width:100%;
-  border-radius:8px;
-  margin-bottom:16px;
+.card-chart {
+  width: 100%;
+  max-height: 70px;
+  margin: 8px 0 8px 0;
+  border-radius: 8px;
+  background: transparent;
 }
-.times {
-  display:flex;
-  justify-content:space-around;
-  color:rgba(255,255,255,0.7);
-  font-size:0.9rem;
+.card-ticks {
+  color: #fff;
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 3px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
 }
-
-/* Features */
 .features {
-  display:flex;
-  flex-direction:column;
-  gap:32px;
-  margin-bottom:32px;
+  margin: 48px 0 0 0;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 44px;
 }
 .feature {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
+  background: none;
+  text-align: center;
+  color: #fff;
+  flex: 1;
+  min-width: 180px;
 }
-.icon {
-  width:48px;
-  height:48px;
-  margin-bottom:12px;
+.feature img {
+  width: 62px;
+  margin-bottom: 12px;
+  margin-top: 8px;
+  filter: drop-shadow(0 4px 18px #1e87ff38);
 }
 .feature h3 {
-  font-size:1rem;
-  margin-bottom:8px;
+  margin: 10px 0 8px 0;
+  font-size: 1.15rem;
+  font-weight: bold;
 }
 .feature p {
-  font-size:0.9rem;
-  color:rgba(255,255,255,0.85);
-  max-width:280px;
+  font-size: 1.05rem;
+  color: #dbeafe;
+  font-weight: 400;
+  margin: 0 auto 0 auto;
+  line-height: 1.45;
+  max-width: 230px;
 }
-
-/* Signup */
-.signup h2 {
-  font-size:1.25rem;
-  font-weight:600;
-  margin-bottom:16px;
+.signup {
+  margin: 56px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
 }
-.signup input {
-  width:100%;
-  padding:12px;
-  border:1px solid rgba(255,255,255,0.4);
-  border-radius:8px;
-  margin-bottom:12px;
-  font-size:1rem;
-  background:transparent;
-  color:#fff;
+.signup label {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #fff;
 }
-.signup input::placeholder {
-  color:rgba(255,255,255,0.6);
+.signup input[type="email"] {
+  width: 85%;
+  max-width: 370px;
+  padding: 15px 18px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: none;
+  background: #151d2b;
+  color: #fff;
+  font-size: 1.15rem;
+  outline: none;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.12);
 }
 .signup button {
-  width:100%;
-  background:#007aff;
-  color:#fff;
-  border:none;
-  padding:12px;
-  font-size:1rem;
-  font-weight:600;
-  border-radius:8px;
-  cursor:pointer;
+  width: 90%;
+  max-width: 370px;
+  padding: 16px 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: #2186ff;
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 18px 0 #1762c933;
+  cursor: pointer;
+  transition: background .2s;
 }
-
-/* Wide screens */
-@media (min-width:600px) {
-  .features { flex-direction:row; justify-content:space-between; }
+.signup button:hover {
+  background: #1762c9;
+}
+@media (max-width: 1000px) {
+  .features {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+  .feature {
+    margin-bottom: 24px;
+  }
+  .main-content {
+    padding: 20px 5vw 0 5vw;
+  }
 }
