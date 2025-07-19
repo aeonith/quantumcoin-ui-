@@ -3,7 +3,7 @@ name = "quantumcoin"
 version = "1.0.0"
 edition = "2021"
 authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
-description = "QuantumCoin™ – a quantum-resistant cryptocurrency with RevStop and mining logic"
+description = "QuantumCoin™ – a quantum-resistant cryptocurrency with web node and wallet"
 license = "MIT"
 
 [dependencies]
@@ -24,6 +24,6 @@ serde_json = "1"
 # Encoding and decoding utilities
 base64 = "0.21"
 
-# File I/O, logging, and utility crates (optional, based on your modules)
+# File I/O, logging, and utility crates
 log = "0.4"
 env_logger = "0.10"
