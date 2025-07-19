@@ -1,111 +1,170 @@
-body, html {
+body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  overflow-x: hidden;
-  background: #000;
-  color: white;
-  position: relative;
-}
-
-/* Background floating animation */
-@keyframes chainFloat {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(20px); }
-  100% { transform: translateY(-20px); }
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('background.jpg'); /* Replace with your chain image */
+  font-family: 'Arial', sans-serif;
+  background-image: url('background.jpg'); /* make sure this matches your uploaded image */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.15;
-  filter: brightness(1.6) saturate(1.4);
-  z-index: -2;
-  animation: chainFloat 10s ease-in-out infinite;
-}
-
-/* Main overlay */
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9));
-  z-index: -1;
+  background-attachment: fixed;
+  color: white;
 }
 
 .hero {
-  padding: 60px 20px;
+  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  text-align: center;
+  padding: 2rem;
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
-.content {
-  max-width: 700px;
-  text-align: center;
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
 }
 
 h1 span {
-  color: #00e5ff;
+  color: #ffb347; /* warm orange highlight */
 }
 
-button {
-  background-color: #00e5ff;
-  color: #000;
+#buy-btn {
+  background-color: #007acc; /* glowing blue */
+  color: white;
   border: none;
   padding: 12px 24px;
-  margin-top: 20px;
+  font-size: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(0, 122, 204, 0.8);
   cursor: pointer;
-  font-weight: bold;
+  transition: background 0.3s;
 }
 
-.chart-card, .features, .signup {
-  margin-top: 40px;
+#buy-btn:hover {
+  background-color: #ff8c42; /* glowing orange on hover */
+  box-shadow: 0 0 15px rgba(255, 140, 66, 0.8);
+}
+
+.whitepaper-link {
+  display: inline-block;
+  margin-top: 1rem;
+  background: rgba(0, 122, 204, 0.1);
+  color: #00aaff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.whitepaper-link:hover {
+  background: rgba(255, 140, 66, 0.2);
+  color: #ff8c42;
+}
+
+.chart-card {
+  margin-top: 2rem;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1.5rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+.chart-card h2 {
+  margin: 0;
+}
+
+#price {
+  font-size: 2rem;
+  margin: 0.5rem 0;
+}
+
+#change {
+  color: #00ff88;
+}
+
+.intervals button {
+  background: transparent;
+  color: white;
+  border: none;
+  margin: 0 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.intervals .active {
+  color: #ffb347;
+  text-decoration: underline;
 }
 
 .features {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 3rem;
   flex-wrap: wrap;
 }
 
 .feature {
-  width: 30%;
-  min-width: 250px;
-  margin: 20px 0;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1.5rem;
+  border-radius: 8px;
+  max-width: 250px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(255, 140, 66, 0.4);
 }
 
 .feature img {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: auto;
+  margin-bottom: 1rem;
 }
 
-.signup input {
+.signup {
+  margin-top: 3rem;
+}
+
+.signup form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signup input[type="email"] {
   padding: 10px;
-  margin-right: 10px;
-  width: 60%;
-  max-width: 300px;
+  border: none;
+  border-radius: 5px;
+  width: 250px;
+  margin-bottom: 10px;
 }
 
 .signup button {
+  background-color: #007acc;
+  color: white;
+  border: none;
   padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  box-shadow: 0 0 8px rgba(0, 122, 204, 0.8);
+  cursor: pointer;
+}
+
+.signup button:hover {
+  background-color: #ff8c42;
+  box-shadow: 0 0 12px rgba(255, 140, 66, 0.8);
 }
 
 .terms {
-  font-size: 0.8em;
-  color: #aaa;
-  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #ccc;
+}
+
+.terms a {
+  color: #00aaff;
 }
