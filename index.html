@@ -2,44 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QuantumCoin | Official Site</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QuantumCoin™</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <div class="logo">QuantumCoin</div>
-    <nav>
-      <button id="termsBtn">Terms</button>
-      <button id="privacyBtn">Privacy</button>
-    </nav>
-  </header>
+  <div class="hero">
+    <img class="bg" src="assets/background.jpg" alt="Background">
+    <div class="overlay"></div>
+    <div class="content">
+      <h1>The future of <span>quantum-secure</span> currency.</h1>
+      <button id="buy-btn">Buy QuantumCoin™</button>
 
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Welcome to QuantumCoin</h1>
-      <p>The world's most secure, quantum-resistant cryptocurrency. Built from the ground up with Dilithium2 + RevStop.</p>
-      <div class="wallet-box">
-        <p><strong>Wallet Address:</strong></p>
-        <p id="walletAddress" class="wallet-data"></p>
-        <p><strong>Balance:</strong> <span id="walletBalance"></span></p>
-        <p><strong>USD Value:</strong> <span id="usdBalance"></span></p>
+      <div class="chart-card">
+        <div class="header">
+          <h2>QUANTUMCOIN</h2>
+          <p id="price">$0.00</p>
+          <p id="change">▲0.00 (0.00%)</p>
+        </div>
+        <canvas id="priceChart"></canvas>
+        <div class="intervals">
+          <button data-interval="1h">1H</button>
+          <button data-interval="1d" class="active">1D</button>
+          <button data-interval="1w">1W</button>
+          <button data-interval="1y">1Y</button>
+        </div>
       </div>
-      <div class="button-group">
-        <button id="buyBtn">Buy QTC</button>
-        <button id="sendBtn">Send</button>
-        <button id="mineBtn">Mine</button>
-        <button id="revStopBtn">RevStop</button>
-        <button id="kycBtn">KYC Verify</button>
+
+      <div class="features">
+        <div class="feature">
+          <img src="assets/icon-security.svg" alt="Security">
+          <h3>Quantum-resistant security</h3>
+          <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
+        </div>
+        <div class="feature">
+          <img src="assets/icon-kyc.svg" alt="KYC">
+          <h3>KYC verification</h3>
+          <p>Verify your identity quickly and securely to start trading.</p>
+        </div>
+        <div class="feature">
+          <img src="assets/icon-data.svg" alt="Data">
+          <h3>Real-time data</h3>
+          <p>View your balance and the latest price changes at any time.</p>
+        </div>
+      </div>
+
+      <div class="signup">
+        <h2>Get started with QuantumCoin™</h2>
+        <form id="signupForm">
+          <input type="email" id="email" placeholder="Email" required>
+          <button type="submit">Sign Up</button>
+        </form>
+        <p class="terms">
+          By signing up, you agree to our
+          <a href="/terms.html" target="_blank">Terms</a> &
+          <a href="/privacy.html" target="_blank">Privacy</a> policies.
+        </p>
       </div>
     </div>
-  </section>
+  </div>
 
-  <footer>
-    <p>Contact: <a href="mailto:Aeonith@quantumcoincrypto.com">Aeonith@quantumcoincrypto.com</a></p>
-    <p>QuantumCoin © 2025. All rights reserved.</p>
-  </footer>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
