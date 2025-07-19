@@ -1,44 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>QuantumCoin</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>QuantumCoin | Official Site</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div class="background">
-        <img src="IMG_0264.png" alt="QuantumCoin background" class="background-img">
-    </div>
-
-    <div class="dashboard-icons">
-        <button onclick="openRevStop()"><img src="IMG_0265.png" alt="RevStop Icon"></button>
-        <button onclick="openKYC()"><img src="IMG_0265.png" alt="KYC Icon"></button>
-        <button onclick="openGraph()"><img src="IMG_0265.png" alt="Graph Icon"></button>
-    </div>
-
-    <div class="wallet-info">
-        <h2>Wallet Address:</h2>
-        <p id="wallet-address">Loading...</p>
-        <h2>Balance:</h2>
-        <p id="wallet-balance">0 QTC</p>
-        <h2>Price:</h2>
-        <p>$0.25 / QTC</p>
-    </div>
-
-    <nav class="bottom-nav">
-        <button onclick="goHome()">Home</button>
-        <button onclick="goNotifications()">Notifications</button>
-        <button onclick="goExplore()">Explore</button>
-        <button onclick="goProfile()">Profile</button>
+  <header>
+    <div class="logo">QuantumCoin</div>
+    <nav>
+      <button id="termsBtn">Terms</button>
+      <button id="privacyBtn">Privacy</button>
     </nav>
+  </header>
 
-    <footer class="legal-links">
-        <a href="#">Privacy Policy</a> | 
-        <a href="#">Terms of Service</a>
-    </footer>
+  <section class="hero">
+    <div class="hero-content">
+      <h1>Welcome to QuantumCoin</h1>
+      <p>The world's most secure, quantum-resistant cryptocurrency. Built from the ground up with Dilithium2 + RevStop.</p>
+      <div class="wallet-box">
+        <p><strong>Wallet Address:</strong></p>
+        <p id="walletAddress" class="wallet-data"></p>
+        <p><strong>Balance:</strong> <span id="walletBalance"></span></p>
+        <p><strong>USD Value:</strong> <span id="usdBalance"></span></p>
+      </div>
+      <div class="button-group">
+        <button id="buyBtn">Buy QTC</button>
+        <button id="sendBtn">Send</button>
+        <button id="mineBtn">Mine</button>
+        <button id="revStopBtn">RevStop</button>
+        <button id="kycBtn">KYC Verify</button>
+      </div>
+    </div>
+  </section>
 
-    <script src="script.js"></script>
+  <footer>
+    <p>Contact: <a href="mailto:Aeonith@quantumcoincrypto.com">Aeonith@quantumcoincrypto.com</a></p>
+    <p>QuantumCoin © 2025. All rights reserved.</p>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
