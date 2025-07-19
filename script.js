@@ -1,76 +1,74 @@
-// Placeholder wallet data
-let wallet = {
-    address: "TNZCY5NT+GORGIA+JCVIGAJUIBM...QNSATLVTHNBWXMZA783YP/ALNCM2GEAO1TZ==",
-    balance: 1250000.00, // Genesis allocation
-    price: 0.25 // USD per QTC
-};
+// ——— fetch live data ———
+const priceEl  = document.getElementById('price');
+const changeEl = document.getElementById('change');
+const ctx       = document.getElementById('priceChart').getContext('2d');
+let chart;
 
-// Update wallet info display
-function updateWalletDisplay() {
-    document.getElementById("walletAddress").innerText = wallet.address;
-    document.getElementById("walletBalance").innerText = `${wallet.balance.toLocaleString()} QTC`;
-    document.getElementById("usdBalance").innerText = `$${(wallet.balance * wallet.price).toFixed(2)} USD`;
+// CoinGecko IDs (swap in your token ID once listed)
+const COIN_ID = 'quantumcoin'; // placeholder
+
+async function fetchData(days = 1) {
+  const now = Math.floor(Date.now() / 1000);
+  const from = now - days*24*60*60;
+  const url = `https://api.coingecko.com/api/v3/coins/${COIN_ID}/market_chart/range?vs_currency=usd&from=${from}&to=${now}`;
+  const res = await fetch(url);
+  return res.json();
 }
 
-// Placeholder for buying coins
-function buyCoins() {
-    alert("Buy functionality is under development. Will be connected to Rust backend + payment gateway.");
+async function updateChart(days = 1) {
+  const data = await fetchData(days);
+  const prices = data.prices.map(p => ({ x: new Date(p[0]), y: p[1] }));
+  const latest = prices[prices.length-1].y;
+  const previous = prices[0].y;
+  const diff = latest - previous;
+  const pct  = (diff / previous) * 100;
+
+  priceEl.textContent = `$${latest.toFixed(2)}`;
+  changeEl.textContent = `${diff>=0?'▲':'▼'}${Math.abs(diff).toFixed(2)} (${pct.toFixed(2)}%)`;
+  changeEl.style.color = diff >= 0 ? '#33cc33' : '#ff3333';
+
+  if (chart) {
+    chart.data.datasets[0].data = prices;
+    chart.update();
+  } else {
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: { datasets: [{
+        data: prices,
+        borderColor: '#3399ff',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+      }]},
+      options: {
+        scales: {
+          x: { type: 'time', time: { unit: 'hour', tooltipFormat: 'MMM d, h:mm a' } },
+          y: { grid: { color: 'rgba(255,255,255,.1)' } }
+        },
+        plugins: { legend: false, tooltip: { backgroundColor: '#222' } },
+        maintainAspectRatio: false
+      }
+    });
+  }
 }
 
-// Placeholder for sending coins
-function sendCoins() {
-    alert("Send logic will hook into Rust transaction engine.");
-}
+// interval buttons
+document.querySelectorAll('.intervals button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelector('.intervals button.active').classList.remove('active');
+    btn.classList.add('active');
+    const daysMap = { '1h': 1/24, '1d': 1, '1w': 7, '1y': 365 };
+    updateChart(daysMap[btn.dataset.interval]);
+  });
+});
 
-// Placeholder for mining
-function startMining() {
-    alert("Mining is CPU-intensive and protected by RevStop. Coming soon.");
-}
+// initial load
+updateChart(1);
 
-// Placeholder for RevStop status
-function checkRevStop() {
-    alert("RevStop security is ACTIVE. Only owner can disable via USB + Password.");
-}
-
-// Navigate to Terms and Privacy (when linked)
-function openLegal(page) {
-    alert(`Redirecting to ${page}.html — (Under Construction)`);
-}
-
-// KYC status check
-function startKYC() {
-    alert("KYC verification required for exchange integration. Feature under construction.");
-}
-
-// Load current price (ready for CoinGecko once listed)
-function loadLivePrice() {
-    const coingeckoAPI = `https://api.coingecko.com/api/v3/simple/price?ids=quantumcoin&vs_currencies=usd`;
-
-    fetch(coingeckoAPI)
-        .then(response => response.json())
-        .then(data => {
-            if (data.quantumcoin && data.quantumcoin.usd) {
-                wallet.price = data.quantumcoin.usd;
-                updateWalletDisplay();
-            } else {
-                console.warn("QuantumCoin not yet listed. Using placeholder price.");
-            }
-        })
-        .catch(() => {
-            console.warn("Could not fetch live price. CoinGecko may not be live yet.");
-        });
-}
-
-// Event bindings
-document.addEventListener("DOMContentLoaded", () => {
-    updateWalletDisplay();
-    loadLivePrice();
-
-    document.getElementById("buyBtn").addEventListener("click", buyCoins);
-    document.getElementById("sendBtn").addEventListener("click", sendCoins);
-    document.getElementById("mineBtn").addEventListener("click", startMining);
-    document.getElementById("revStopBtn").addEventListener("click", checkRevStop);
-    document.getElementById("kycBtn").addEventListener("click", startKYC);
-    document.getElementById("termsBtn").addEventListener("click", () => openLegal("terms"));
-    document.getElementById("privacyBtn").addEventListener("click", () => openLegal("privacy"));
+// ——— signup form handler ———
+document.getElementById('signupForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  alert(`Thanks! We’ll let you know when QuantumCoin™ is live: ${email}`);
+  // TODO → hook into your mailing-list backend
 });
