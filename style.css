@@ -1,21 +1,21 @@
-/* Reset & base */
-* { margin:0; padding:0; box-sizing:border-box; }
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Base */
 body {
   font-family: 'Inter', sans-serif;
   color: #fff;
-  background: url('assets/3C4C5306-9DC7-4D16-9A66-2F73479DC8CD.png') center/cover no-repeat;
+  background: url('assets/background.png') center/cover no-repeat;
   min-height: 100vh;
   text-align: center;
   padding: 20px;
 }
-
-/* Container */
 .container {
   max-width: 600px;
   margin: auto;
 }
 
-/* Headline & Button */
+/* Headline & CTA */
 h1 {
   font-size: 2.5rem;
   font-weight: 800;
@@ -36,7 +36,7 @@ h1 {
 
 /* Price Card */
 .card {
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   border-radius: 16px;
   padding: 24px;
   margin-bottom: 32px;
@@ -121,7 +121,7 @@ h1 {
   cursor: pointer;
 }
 
-/* Responsive */
+/* Desktop */
 @media (min-width: 600px) {
   .features { flex-direction: row; justify-content: space-between; }
 }
