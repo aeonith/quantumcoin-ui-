@@ -1,91 +1,78 @@
-mod wallet;
-mod blockchain;
+#[macro_use] extern crate rocket;
 
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use wallet::Wallet;
-use blockchain::Blockchain;
-use std::path::Path;
-use std::sync::Mutex;
+use rocket::fs::{FileServer, relative};
+use rocket_dyn_templates::Template;
+use rocket::form::Form;
+use rocket::fs::TempFile;
+use rocket::serde::{Serialize, Deserialize};
+use rocket::tokio::fs;
+use std::collections::HashMap;
 
-use std::time::Instant;
+// ========== STRUCTS ==========
 
-struct AppState {
-    wallet: Mutex<Wallet>,
-    blockchain: Mutex<Blockchain>,
+#[derive(FromForm)]
+pub struct SignupForm<'r> {
+    pub username: &'r str,
+    pub email: &'r str,
+    pub password: &'r str,
+    #[field(name = "id_document")]
+    pub id_doc: TempFile<'r>,
+    pub revstop: Option<bool>,
+    pub _2fa: Option<bool>,
 }
 
-// 📡 GET /address
-async fn get_address(data: web::Data<AppState>) -> impl Responder {
-    let wallet = data.wallet.lock().unwrap();
-    HttpResponse::Ok().body(wallet.get_address())
+// ========== ROUTES ==========
+
+#[get("/")]
+fn index() -> Template {
+    Template::render("index", &HashMap::<String, String>::new())
 }
 
-// 📡 GET /balance
-async fn get_balance(data: web::Data<AppState>) -> impl Responder {
-    let wallet = data.wallet.lock().unwrap();
-    let address = wallet.get_address();
-    let blockchain = data.blockchain.lock().unwrap();
-    let balance = blockchain.get_balance(&address);
-    HttpResponse::Ok().body(format!("Balance: {} QTC", balance))
+#[get("/signup")]
+fn signup_form() -> Template {
+    Template::render("signup", &HashMap::<String, String>::new())
 }
 
-// 📡 POST /mine
-async fn mine(data: web::Data<AppState>) -> impl Responder {
-    let wallet = data.wallet.lock().unwrap();
-    let address = wallet.get_address();
-    let mut blockchain = data.blockchain.lock().unwrap();
+#[post("/signup", data = "<form>")]
+async fn handle_signup(mut form: Form<SignupForm<'_>>) -> Template {
+    let user_dir = format!("users/{}", form.username);
+    let _ = fs::create_dir_all(&user_dir).await;
 
-    blockchain.mine_pending_transactions(address.clone());
-    blockchain.save_to_disk();
+    let id_path = format!("{}/id_uploaded.pdf", &user_dir);
+    if let Err(e) = form.id_doc.persist_to(&id_path).await {
+        println!("Failed to save ID: {}", e);
+    }
 
-    HttpResponse::Ok().body("✅ Block mined and saved.")
+    let user_data = format!(
+        "Username: {}\nEmail: {}\nRevStop: {}\n2FA: {}\n",
+        form.username,
+        form.email,
+        form.revstop.unwrap_or(false),
+        form._2fa.unwrap_or(false)
+    );
+
+    let info_path = format!("{}/info.txt", &user_dir);
+    if let Err(e) = fs::write(&info_path, user_data).await {
+        println!("Failed to save user info: {}", e);
+    }
+
+    // TODO: Trigger wallet + RevStop + admin hooks here
+
+    let mut context = HashMap::new();
+    context.insert("username", form.username.to_string());
+    Template::render("success", &context)
 }
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    println!("🚀 QuantumCoin Web Node Initializing...");
+// ========== LAUNCH ==========
 
-    // Wallet logic
-    let wallet_path_pub = "wallet_public.key";
-    let wallet_path_priv = "wallet_private.key";
-
-    let wallet = if Path::new(wallet_path_pub).exists() {
-        Wallet::load_from_files(wallet_path_pub, wallet_path_priv)
-            .expect("⚠️ Failed to load wallet from files")
-    } else {
-        println!("📄 No wallet found — generating new one.");
-        let wallet = Wallet::new();
-        wallet.save_to_files(wallet_path_pub, wallet_path_priv);
-        println!("✅ Wallet saved to disk.");
-        wallet
-    };
-
-    let address = wallet.get_address();
-    println!("🔐 Wallet Address: {}", address);
-
-    // Blockchain logic
-    let start_time = Instant::now();
-    let blockchain = Blockchain::load_from_disk().unwrap_or_else(|| {
-        println!("📦 No blockchain found — creating new one.");
-        Blockchain::new(address.clone())
-    });
-    println!("✅ Blockchain ready. Load time: {:?}", start_time.elapsed());
-
-    // Shared app state
-    let app_data = web::Data::new(AppState {
-        wallet: Mutex::new(wallet),
-        blockchain: Mutex::new(blockchain),
-    });
-
-    // Web server
-    HttpServer::new(move || {
-        App::new()
-            .app_data(app_data.clone())
-            .route("/address", web::get().to(get_address))
-            .route("/balance", web::get().to(get_balance))
-            .route("/mine", web::post().to(mine))
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .mount("/", routes![
+            index,
+            signup_form,
+            handle_signup
+        ])
+        .mount("/static", FileServer::from(relative!("static")))
+        .attach(Template::fairing())
 }
