@@ -1,43 +1,16 @@
 [package]
-name = "quantumcoin-backend"
-version = "0.1.0"
-edition = "2021"
+name        = "quantumcoin-backend"
+version     = "0.1.0"
+edition     = "2021"
+authors     = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+description = "QuantumCoin™ backend API"
+license     = "MIT"
 
 [dependencies]
-# Web framework and HTTP utilities
-rocket = { version = "0.5.0-rc.3", features = ["json"] }
-rocket_dyn_templates = { version = "0.1.0", features = ["tera"] }
-
-# Logging and environment config
-env_logger = "0.10"
-log = "0.4"
-
-# UUID and serialization
-uuid = { version = "1.7", features = ["v4"] }
+rocket = { version = "0.5.0-rc.3", features = ["json", "form", "fs"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_yaml = "0.9"
-
-# Quantum-safe cryptography
-pqcrypto-dilithium = "0.3"
-pqcrypto-traits = "0.3"
-
-# Crypto hash (RevStop)
-sha2 = "0.10"
-
-# Time and filesystem
-chrono = { version = "0.4", features = ["serde"] }
 base64 = "0.21"
-rand = "0.8"
-
-# Web framework alternative
-warp = "0.3"
-
-# File I/O
-tokio = { version = "1", features = ["full"] }
-
-# Optional - only if you use bcrypt
-bcrypt = "0.15"
-
-# Optional - only if using Rocket's figment config
-figment = { version = "0.10", features = ["env"] }
+sha2 = "0.10"
+pqcrypto-dilithium = "0.5.0"
+pqcrypto-traits = "0.3.5"
