@@ -1,10 +1,10 @@
 [package]
-name        = "quantumcoin-backend"
-version     = "0.1.0"
-edition     = "2021"
-authors     = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+name = "quantumcoin-backend"
+version = "0.1.0"
+edition = "2021"
+authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
 description = "QuantumCoin™ backend API"
-license     = "MIT"
+license = "MIT"
 
 [dependencies]
 rocket = { version = "0.5.0-rc.3", features = ["json", "form", "fs"] }
