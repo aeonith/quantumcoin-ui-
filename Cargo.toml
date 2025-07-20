@@ -7,15 +7,14 @@ description = "QuantumCoin™ backend API"
 license = "MIT"
 
 [dependencies]
-actix-web   = "4"
-actix-cors  = "0.6"
-tokio       = { version = "1", features = ["full"] }
-serde       = { version = "1.0", features = ["derive"] }
-serde_json  = "1.0"
-base64      = "0.21"
+warp = "0.3"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+base64 = "0.21"
 pqcrypto-dilithium = "0.3"
-pqcrypto-traits    = "0.3"
+pqcrypto-traits = "0.3"
 parking_lot = "0.12"
-uuid        = { version = "1", features = ["v4"] }
-log         = "0.4"
-env_logger  = "0.10"
+uuid = { version = "1", features = ["v4"] }
+log = "0.4"
+env_logger = "0.10"
