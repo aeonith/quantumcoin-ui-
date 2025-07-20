@@ -1,42 +1,40 @@
 #[macro_use] extern crate rocket;
 
 use rocket::fs::{FileServer, relative};
-use rocket_dyn_templates::Template;
 use rocket::form::Form;
-use rocket::fs::TempFile;
-use rocket::serde::{Serialize, Deserialize};
-use rocket::tokio::fs;
+use rocket_dyn_templates::Template;
 use std::collections::HashMap;
-
-// ========== STRUCTS ==========
+use std::fs;
+use rocket::tokio::fs::File;
+use rocket::tokio::io::AsyncWriteExt;
 
 #[derive(FromForm)]
-pub struct SignupForm<'r> {
-    pub username: &'r str,
-    pub email: &'r str,
-    pub password: &'r str,
-    #[field(name = "id_document")]
-    pub id_doc: TempFile<'r>,
-    pub revstop: Option<bool>,
-    pub _2fa: Option<bool>,
+struct SignupForm {
+    username: String,
+    email: String,
+    revstop: Option<bool>,
+    _2fa: Option<bool>,
+    id_doc: rocket::fs::TempFile<'static>,
 }
-
-// ========== ROUTES ==========
 
 #[get("/")]
 fn index() -> Template {
-    Template::render("index", &HashMap::<String, String>::new())
+    let context = HashMap::<String, String>::new();
+    Template::render("signup", &context)
 }
 
 #[get("/signup")]
 fn signup_form() -> Template {
-    Template::render("signup", &HashMap::<String, String>::new())
+    let context = HashMap::<String, String>::new();
+    Template::render("signup", &context)
 }
 
 #[post("/signup", data = "<form>")]
-async fn handle_signup(mut form: Form<SignupForm<'_>>) -> Template {
-    let user_dir = format!("users/{}", form.username);
-    let _ = fs::create_dir_all(&user_dir).await;
+async fn handle_signup(mut form: Form<SignupForm>) -> Template {
+    let user_dir = format!("user_data/{}", form.username);
+    if let Err(e) = fs::create_dir_all(&user_dir) {
+        println!("Failed to create user dir: {}", e);
+    }
 
     let id_path = format!("{}/id_uploaded.pdf", &user_dir);
     if let Err(e) = form.id_doc.persist_to(&id_path).await {
@@ -57,13 +55,10 @@ async fn handle_signup(mut form: Form<SignupForm<'_>>) -> Template {
     }
 
     // TODO: Trigger wallet + RevStop + admin hooks here
-
     let mut context = HashMap::new();
     context.insert("username", form.username.to_string());
     Template::render("success", &context)
 }
-
-// ========== LAUNCH ==========
 
 #[launch]
 fn rocket() -> _ {
@@ -73,6 +68,5 @@ fn rocket() -> _ {
             signup_form,
             handle_signup
         ])
-        .mount("/static", FileServer::from(relative!("static")))
         .attach(Template::fairing())
 }
