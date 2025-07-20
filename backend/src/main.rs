@@ -1,48 +1,31 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use serde::{Deserialize, Serialize};
-use std::env;
+#[macro_use] extern crate rocket;
 
-#[derive(Deserialize)]
-struct TxReq {
-    sender: String,
-    recipient: String,
-    amount: f64,
+use rocket::form::Form;
+use rocket_dyn_templates::{Template, context};
+
+#[derive(FromForm)]
+struct SignupForm {
+    username: String,
+    email: String,
+    password: String,
+    id_number: String,
 }
 
-#[derive(Serialize)]
-struct ApiMsg<'a> {
-    message: &'a str,
+#[get("/signup")]
+fn signup_page() -> Template {
+    Template::render("signup", context! {})
 }
 
-#[post("/api/send")]
-async fn send(tx: web::Json<TxReq>) -> impl Responder {
-    println!(
-        "TX: {} → {} amount {}",
-        tx.sender, tx.recipient, tx.amount
-    );
-    HttpResponse::Ok().json(ApiMsg { message: "tx accepted" })
+#[post("/signup", data = "<form_data>")]
+fn signup_submit(form_data: Form<SignupForm>) -> String {
+    let data = form_data.into_inner();
+    // In production, encrypt + store in database here.
+    format!("User {} with email {} submitted for KYC!", data.username, data.email)
 }
 
-#[get("/api/balance/{wallet}")]
-async fn balance(wallet: web::Path<String>) -> impl Responder {
-    // fake balance until we wire real storage
-    HttpResponse::Ok().json(serde_json::json!({
-        "wallet": wallet.into_inner(),
-        "balance": 0.0
-    }))
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    env_logger::init();
-    // Render sets $PORT; default to 8080 locally
-    let port: u16 = env::var("PORT")
-        .unwrap_or_else(|_| "8080".into())
-        .parse()
-        .expect("PORT must be a number");
-    println!("✨ Backend running on port {port}");
-    HttpServer::new(|| App::new().service(send).service(balance))
-        .bind(("0.0.0.0", port))?
-        .run()
-        .await
+#[launch]
+fn rocket() -> _ {
+    rocket::build()
+        .mount("/", routes![signup_page, signup_submit])
+        .attach(Template::fairing())
 }
