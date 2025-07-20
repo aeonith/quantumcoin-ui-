@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signup Successful</title>
+</head>
+<body>
+    <h1>Signup Complete</h1>
+    <p>Welcome, {{ username }}!</p>
+    <a href="/">Go Home</a>
+</body>
+</html>
