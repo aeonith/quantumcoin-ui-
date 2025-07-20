@@ -4,29 +4,40 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rocket = "0.5.0"  # ✅ Stable Rocket release
-rocket_dyn_templates = "0.1.0"
+# Web framework and HTTP utilities
+rocket = { version = "0.5.0-rc.3", features = ["json"] }
+rocket_dyn_templates = { version = "0.1.0", features = ["tera"] }
+
+# Logging and environment config
+env_logger = "0.10"
+log = "0.4"
+
+# UUID and serialization
+uuid = { version = "1.7", features = ["v4"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-uuid = { version = "1.3", features = ["v4"] }
-log = "0.4"
-env_logger = "0.10"
-tokio = { version = "1.32", features = ["full"] }
-warp = "0.3"
+serde_yaml = "0.9"
 
-# ✅ Quantum-safe crypto
+# Quantum-safe cryptography
 pqcrypto-dilithium = "0.3"
 pqcrypto-traits = "0.3"
 
-# ✅ SHA-256 digest
+# Crypto hash (RevStop)
 sha2 = "0.10"
 
-# ✅ File I/O
+# Time and filesystem
+chrono = { version = "0.4", features = ["serde"] }
 base64 = "0.21"
-hex = "0.4"
+rand = "0.8"
 
-# Optional: use for password input if needed
-# rpassword = "7.0"
+# Web framework alternative
+warp = "0.3"
 
-# Optional: For testing or JSON file save/load
-serde_yaml = "0.9"
+# File I/O
+tokio = { version = "1", features = ["full"] }
+
+# Optional - only if you use bcrypt
+bcrypt = "0.15"
+
+# Optional - only if using Rocket's figment config
+figment = { version = "0.10", features = ["env"] }
