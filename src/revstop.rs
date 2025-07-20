@@ -13,6 +13,7 @@ pub struct RevStop {
 }
 
 impl RevStop {
+    /// Create new locked RevStop with password
     pub fn new(password: &str) -> Self {
         Self {
             is_active: true,
@@ -20,6 +21,7 @@ impl RevStop {
         }
     }
 
+    /// Load RevStop from saved file
     pub fn load() -> Option<Self> {
         if Path::new(REVSTOP_FILE).exists() {
             let mut file = File::open(REVSTOP_FILE).ok()?;
@@ -31,17 +33,21 @@ impl RevStop {
         }
     }
 
+    /// Save RevStop to disk
     pub fn save(&self) {
         if let Ok(json) = serde_json::to_string_pretty(self) {
-            let _ = File::create(REVSTOP_FILE).and_then(|mut f| f.write_all(json.as_bytes()));
+            let _ = File::create(REVSTOP_FILE)
+                .and_then(|mut f| f.write_all(json.as_bytes()));
         }
     }
 
+    /// Lock the system
     pub fn lock(&mut self) {
         self.is_active = true;
         self.save();
     }
 
+    /// Unlock using password
     pub fn unlock(&mut self, password: &str) -> bool {
         if verify_password(&self.password_hash, password) {
             self.is_active = false;
@@ -57,6 +63,8 @@ impl RevStop {
     }
 }
 
+// === Internal Hashing ===
+
 fn hash_password(password: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(password.as_bytes());
@@ -65,4 +73,27 @@ fn hash_password(password: &str) -> String {
 
 fn verify_password(hash: &str, password: &str) -> bool {
     hash == hash_password(password)
+}
+
+// === Public Helper Methods for main.rs ===
+
+/// Returns true if RevStop is currently locked
+pub fn is_revstop_active() -> bool {
+    if let Some(data) = RevStop::load() {
+        data.is_active
+    } else {
+        false
+    }
+}
+
+/// Activates RevStop with default password (only if not already present)
+pub fn activate() {
+    let mut data = RevStop::load().unwrap_or_else(|| RevStop::new("QuantumSecure2025!"));
+    data.lock();
+}
+
+/// Deactivates RevStop (if password matches — for now hardcoded)
+pub fn deactivate() {
+    let mut data = RevStop::load().unwrap_or_else(|| RevStop::new("QuantumSecure2025!"));
+    let _ = data.unlock("QuantumSecure2025!");
 }
