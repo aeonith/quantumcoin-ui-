@@ -1,39 +1,105 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
+use rocket::fs::{FileServer, relative, TempFile};
 use rocket::form::Form;
-use rocket::fs::{FileServer, relative};
 use rocket::response::Redirect;
-use rocket_dyn_templates::Template;
-use std::collections::HashMap;
+use rocket::serde::{Serialize, Deserialize};
+use std::fs;
+use std::path::Path;
 
-#[derive(FromForm)]
-struct SignupData {
+mod wallet;
+mod revstop;
+
+#[derive(FromForm, Serialize, Deserialize)]
+struct UserData {
     username: String,
     email: String,
     password: String,
 }
 
-#[get("/signup")]
-fn signup_form() -> Template {
-    Template::render("signup", &HashMap::<String, String>::new())
+#[post("/register", data = "<reg_form>")]
+fn register(reg_form: Form<UserData>) -> Redirect {
+    let new_user = reg_form.into_inner();
+
+    let mut users: Vec<UserData> = if let Ok(content) = fs::read_to_string("users.json") {
+        serde_json::from_str(&content).unwrap_or_default()
+    } else {
+        Vec::new()
+    };
+
+    users.push(new_user);
+    let serialized = serde_json::to_string_pretty(&users).unwrap();
+    fs::write("users.json", serialized).expect("Failed to write users.json");
+
+    Redirect::to("/static/index.html")
 }
 
-#[post("/signup", data = "<form_data>")]
-fn process_signup(form_data: Form<SignupData>) -> Redirect {
-    println!("📥 New signup: {} | {}", form_data.username, form_data.email);
-    // Later: Add DB, wallet key gen, RevStop, etc.
-    Redirect::to("/signup_success")
+#[derive(FromForm)]
+struct LoginForm {
+    username: String,
+    password: String,
 }
 
-#[get("/signup_success")]
-fn signup_success() -> &'static str {
-    "✅ Signup complete! (Next: generate wallet, KYC, RevStop...)"
+#[post("/login", data = "<login_form>")]
+fn login(login_form: Form<LoginForm>) -> String {
+    let creds = login_form.into_inner();
+
+    if let Ok(content) = fs::read_to_string("users.json") {
+        let users: Vec<UserData> = serde_json::from_str(&content).unwrap_or_default();
+        for user in users {
+            if user.username == creds.username && user.password == creds.password {
+                return format!("Login successful. Welcome, {}!", user.username);
+            }
+        }
+    }
+
+    "Invalid credentials.".to_string()
+}
+
+#[post("/kyc", data = "<file>")]
+async fn kyc_upload(mut file: TempFile<'_>) -> &'static str {
+    let save_path = format!("uploads/{}", file.name().unwrap_or("kyc_file"));
+    if let Err(_) = file.persist_to(save_path).await {
+        return "Upload failed.";
+    }
+    "KYC upload successful."
+}
+
+#[get("/keys")]
+fn show_keys() -> String {
+    let (pub_key, priv_key) = wallet::get_keys();
+    format!("Public Key:\n{}\n\nPrivate Key:\n{}", pub_key, priv_key)
+}
+
+#[post("/revstop/toggle")]
+fn toggle_revstop() -> String {
+    if revstop::is_revstop_active() {
+        revstop::deactivate();
+        "RevStop Deactivated.".to_string()
+    } else {
+        revstop::activate();
+        "RevStop Activated.".to_string()
+    }
+}
+
+#[get("/")]
+fn index() -> &'static str {
+    "Welcome to QuantumCoin Backend 🚀"
 }
 
 #[launch]
 fn rocket() -> _ {
+    if !Path::new("uploads").exists() {
+        fs::create_dir("uploads").unwrap();
+    }
+
     rocket::build()
-        .mount("/", routes![signup_form, process_signup, signup_success])
+        .mount("/", routes![index, register, login, kyc_upload, show_keys, toggle_revstop])
         .mount("/static", FileServer::from(relative!("static")))
-        .attach(Template::fairing())
+        .configure(rocket::Config {
+            address: "0.0.0.0".parse().unwrap(),
+            port: 8080,
+            ..rocket::Config::default()
+        })
 }
