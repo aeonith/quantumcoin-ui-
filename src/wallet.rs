@@ -1,11 +1,10 @@
-use pqcrypto_dilithium::dilithium2::{
-    keypair, sign_detached, verify_detached, PublicKey, SecretKey, SignedMessage,
-};
-use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
+use pqcrypto_dilithium::dilithium2::{keypair, sign, verify, PublicKey, SecretKey};
+use pqcrypto_traits::sign::{Signer, Verifier, PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
 use base64::{encode, decode};
 use std::fs::{File};
 use std::io::{Write, Read};
 use std::path::Path;
+use crate::transaction::Transaction;
 
 pub struct Wallet {
     pub public_key: PublicKey,
@@ -28,35 +27,58 @@ impl Wallet {
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        sign_detached(message, &self.secret_key).as_bytes().to_vec()
+        sign(message, &self.secret_key)
     }
 
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        if let Ok(sig) = SignedMessage::from_bytes(signature) {
-            verify_detached(&sig, message, &self.public_key).is_ok()
+        verify(message, signature, &self.public_key).is_ok()
+    }
+
+    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) {
+        let pub_encoded = encode(self.public_key.as_bytes());
+        let priv_encoded = encode(self.secret_key.as_bytes());
+
+        let mut pub_file = File::create(pub_path).expect("Failed to create public key file");
+        pub_file.write_all(pub_encoded.as_bytes()).expect("Failed to write public key");
+
+        let mut priv_file = File::create(priv_path).expect("Failed to create private key file");
+        priv_file.write_all(priv_encoded.as_bytes()).expect("Failed to write private key");
+    }
+
+    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
+        if Path::new(pub_path).exists() && Path::new(priv_path).exists() {
+            let mut pub_encoded = String::new();
+            File::open(pub_path).ok()?.read_to_string(&mut pub_encoded).ok()?;
+            let pub_bytes = decode(pub_encoded).ok()?;
+            let public_key = PublicKey::from_bytes(&pub_bytes).ok()?;
+
+            let mut priv_encoded = String::new();
+            File::open(priv_path).ok()?.read_to_string(&mut priv_encoded).ok()?;
+            let priv_bytes = decode(priv_encoded).ok()?;
+            let secret_key = SecretKey::from_bytes(&priv_bytes).ok()?;
+
+            Some(Wallet {
+                public_key,
+                secret_key,
+                balance: 0.0,
+            })
         } else {
-            false
+            None
         }
     }
 
-    pub fn save_to_files(&self) {
-        let _ = File::create("public.key")
-            .and_then(|mut f| f.write_all(encode(self.public_key.as_bytes()).as_bytes()));
-        let _ = File::create("private.key")
-            .and_then(|mut f| f.write_all(encode(self.secret_key.as_bytes()).as_bytes()));
-    }
+    pub fn create_transaction(&self, recipient: &str, amount: f64) -> Option<Transaction> {
+        if self.balance < amount {
+            return None;
+        }
 
-    pub fn load_from_files() -> Option<Self> {
-        let pk_data = std::fs::read_to_string("public.key").ok()?;
-        let sk_data = std::fs::read_to_string("private.key").ok()?;
-        let pk_bytes = decode(&pk_data).ok()?;
-        let sk_bytes = decode(&sk_data).ok()?;
-        let pk = PublicKey::from_bytes(&pk_bytes).ok()?;
-        let sk = SecretKey::from_bytes(&sk_bytes).ok()?;
-        Some(Wallet {
-            public_key: pk,
-            secret_key: sk,
-            balance: 0.0,
+        let message = format!("{}:{}:{}", self.get_address(), recipient, amount);
+        let signature = self.sign_message(message.as_bytes());
+        Some(Transaction {
+            sender: self.get_address(),
+            recipient: recipient.to_string(),
+            amount,
+            signature: encode(&signature),
         })
     }
 }
