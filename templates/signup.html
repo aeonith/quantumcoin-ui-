@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QuantumCoin – Sign Up</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="form-container">
+    <h1>Create Your QuantumCoin Account</h1>
+    <form action="/api/signup" method="POST">
+      <label>Email:</label><br />
+      <input type="email" name="email" required /><br />
+
+      <label>Password:</label><br />
+      <input type="password" name="password" required /><br />
+
+      <label>Confirm Password:</label><br />
+      <input type="password" name="confirm_password" required /><br />
+
+      <label>
+        <input type="checkbox" name="accept_terms" required />
+        I agree to the <a href="/terms" target="_blank">Terms of Use</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
+      </label><br /><br />
+
+      <button type="submit">Sign Up</button>
+    </form>
+
+    <p>Already have an account? <a href="/login">Log In</a></p>
+  </div>
+</body>
+</html>
