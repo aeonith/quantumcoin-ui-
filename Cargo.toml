@@ -14,3 +14,4 @@ base64 = "0.21"
 sha2 = "0.10"
 pqcrypto-dilithium = "0.5.0"
 pqcrypto-traits = "0.3.0"
+rocket = { version = "0.5.0", features = ["json"] }
