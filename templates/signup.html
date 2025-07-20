@@ -1,31 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>QuantumCoin – Sign Up</title>
-  <link rel="stylesheet" href="/style.css" />
+    <meta charset="UTF-8">
+    <title>Signup - QuantumCoin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #101820;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        form {
+            background: #1f2a35;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        input, button {
+            display: block;
+            margin: 15px 0;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+        }
+
+        input {
+            background: #2d3e50;
+            color: #fff;
+        }
+
+        button {
+            background: #4caf50;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="form-container">
-    <h1>Create Your QuantumCoin Account</h1>
-    <form action="/api/signup" method="POST">
-      <label>Email:</label><br />
-      <input type="email" name="email" required /><br />
-
-      <label>Password:</label><br />
-      <input type="password" name="password" required /><br />
-
-      <label>Confirm Password:</label><br />
-      <input type="password" name="confirm_password" required /><br />
-
-      <label>
-        <input type="checkbox" name="accept_terms" required />
-        I agree to the <a href="/terms" target="_blank">Terms of Use</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.
-      </label><br /><br />
-
-      <button type="submit">Sign Up</button>
+    <form action="/signup" method="post">
+        <h2>Sign Up for QuantumCoin</h2>
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="email" name="email" placeholder="Email Address" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <input type="text" name="id_number" placeholder="Govt ID Number" required>
+        <button type="submit">Submit KYC</button>
     </form>
-
-    <p>Already have an account? <a href="/login">Log In</a></p>
-  </div>
 </body>
 </html>
