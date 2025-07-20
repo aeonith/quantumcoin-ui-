@@ -7,19 +7,18 @@ description = "QuantumCoin™ backend API"
 license = "MIT"
 
 [dependencies]
-rocket = { version = "=0.5.0-rc.2", features = ["json", "form", "fs", "tls", "secrets", "uuid"] }
-rocket_dyn_templates = { version = "0.1.0", features = ["handlebars"] }
-
+warp = "0.3"
+tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-uuid = { version = "1", features = ["v4"] }
 base64 = "0.21"
-sha2 = "0.10"
-
 pqcrypto-dilithium = "0.3"
 pqcrypto-traits = "0.3"
-
-tokio = { version = "1", features = ["full"] }
+parking_lot = "0.12"
+uuid = { version = "1", features = ["v4"] }
 log = "0.4"
 env_logger = "0.10"
-parking_lot = "0.12"
+
+# ✅ Rocket dependencies using nightly-compatible version
+rocket = { version = "0.5.0-rc.2", features = ["json", "secrets", "tls"] }
+rocket_dyn_templates = { version = "0.1.0", features = ["handlebars"] }
