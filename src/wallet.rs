@@ -1,5 +1,5 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign, verify, PublicKey, SecretKey};
-use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, SignedMessage, DetachedSignature};
+use pqcrypto_dilithium::dilithium2::{keypair, PublicKey, SecretKey};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, sign_detached, verify_detached, DetachedSignature};
 use base64::{encode, decode};
 use std::fs::File;
 use std::io::{Write, Read};
@@ -56,15 +56,21 @@ impl Wallet {
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        let signed = sign(message, &self.secret_key);
-        signed.as_bytes().to_vec()
+        let sig = sign_detached(message, &self.secret_key);
+        sig.as_bytes().to_vec()
     }
 
     pub fn verify_signature(message: &[u8], signature: &[u8], public_key: &PublicKey) -> bool {
-        verify(signature, message, public_key).is_ok()
+        let detached = DetachedSignature::from_bytes(signature).expect("Invalid signature format");
+        verify_detached(&detached, message, public_key).is_ok()
     }
 
     pub fn get_address(&self) -> String {
         encode(self.public_key.as_bytes())
+    }
+
+    // ✅ Optional helper for main.rs if it needs both keys
+    pub fn get_keys(&self) -> (PublicKey, SecretKey) {
+        (self.public_key.clone(), self.secret_key.clone())
     }
 }
