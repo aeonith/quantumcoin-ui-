@@ -1,6 +1,7 @@
 use pqcrypto_dilithium::dilithium2::{keypair, sign, verify, PublicKey, SecretKey};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, SignedMessage, DetachedSignature};
 use base64::{encode, decode};
-use std::fs::{File};
+use std::fs::File;
 use std::io::{Write, Read};
 use std::path::Path;
 
@@ -55,11 +56,12 @@ impl Wallet {
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        sign(message, &self.secret_key)
+        let signed = sign(message, &self.secret_key);
+        signed.as_bytes().to_vec()
     }
 
     pub fn verify_signature(message: &[u8], signature: &[u8], public_key: &PublicKey) -> bool {
-        verify(signature, public_key).is_ok()
+        verify(signature, message, public_key).is_ok()
     }
 
     pub fn get_address(&self) -> String {
