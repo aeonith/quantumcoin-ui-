@@ -7,19 +7,10 @@ description = "QuantumCoin™ backend API"
 license     = "MIT"
 
 [dependencies]
-# Rocket works best with a specific nightly Rust version
 rocket = { version = "0.5.0-rc.3", features = ["json", "form", "fs"] }
-
-# Serialization
-serde      = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-
-# Base64 encoding
 base64 = "0.21"
-
-# SHA-256 for RevStop hashing
 sha2 = "0.10"
-
-# Quantum-safe cryptography
-pqcrypto-dilithium = "0.5.0"
-pqcrypto-traits    = "0.3.0"  # ✅ Use 0.3.0 to match rocket compatibility
+pqcrypto-dilithium = "0.3"
+pqcrypto-traits = "0.3"
