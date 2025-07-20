@@ -1,8 +1,9 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, SignedMessage};
+use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey, SignedMessage};
 use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
 use base64::{encode, decode};
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Write};
+use std::path::Path;
 
 pub struct Wallet {
     pub public_key: PublicKey,
@@ -11,55 +12,66 @@ pub struct Wallet {
 }
 
 impl Wallet {
-    /// Generate a fresh keypair
-    pub fn new() -> Self {
-        let (public_key, secret_key) = keypair();
-        Wallet { public_key, secret_key, balance: 0.0 }
+    pub fn new() -> Wallet {
+        let (pk, sk) = keypair();
+        Wallet {
+            public_key: pk,
+            secret_key: sk,
+            balance: 0.0,
+        }
     }
 
-    /// Saves both keys (base64‐encoded) to disk
-    pub fn save_to_files(&self, pub_path: &str, sec_path: &str) {
+    pub fn save_to_files(&self) {
+        let pub_path = "wallet_public.key";
+        let priv_path = "wallet_private.key";
+
         let pub_encoded = encode(self.public_key.as_bytes());
-        let sec_encoded = encode(self.secret_key.as_bytes());
-        File::create(pub_path)
-            .and_then(|mut f| f.write_all(pub_encoded.as_bytes()))
-            .expect("Failed to write public key");
-        File::create(sec_path)
-            .and_then(|mut f| f.write_all(sec_encoded.as_bytes()))
-            .expect("Failed to write secret key");
+        let priv_encoded = encode(self.secret_key.as_bytes());
+
+        fs::write(pub_path, pub_encoded).expect("Failed to save public key");
+        fs::write(priv_path, priv_encoded).expect("Failed to save private key");
     }
 
-    /// Loads keys back from disk
-    pub fn load_from_files(pub_path: &str, sec_path: &str) -> Self {
-        let mut pub_s = String::new();
-        let mut sec_s = String::new();
-        File::open(pub_path)
-            .and_then(|mut f| f.read_to_string(&mut pub_s))
-            .expect("Failed to read public key");
-        File::open(sec_path)
-            .and_then(|mut f| f.read_to_string(&mut sec_s))
-            .expect("Failed to read secret key");
+    pub fn load_from_files() -> Wallet {
+        let pub_path = "wallet_public.key";
+        let priv_path = "wallet_private.key";
 
-        let pub_bytes = decode(&pub_s).expect("Invalid base64 public key");
-        let sec_bytes = decode(&sec_s).expect("Invalid base64 secret key");
-        let public_key  = PublicKey::from_bytes(&pub_bytes).expect("Bad public key bytes");
-        let secret_key  = SecretKey::from_bytes(&sec_bytes).expect("Bad secret key bytes");
+        let pub_encoded = fs::read_to_string(pub_path).expect("Failed to read public key file");
+        let priv_encoded = fs::read_to_string(priv_path).expect("Failed to read private key file");
 
-        Wallet { public_key, secret_key, balance: 0.0 }
+        let pub_decoded = decode(pub_encoded.trim()).expect("Base64 decode failed");
+        let priv_decoded = decode(priv_encoded.trim()).expect("Base64 decode failed");
+
+        let public_key = PublicKey::from_bytes(&pub_decoded).expect("Invalid public key");
+        let secret_key = SecretKey::from_bytes(&priv_decoded).expect("Invalid secret key");
+
+        Wallet {
+            public_key,
+            secret_key,
+            balance: 0.0,
+        }
     }
 
-    /// Sign a message, returning the raw `SignedMessage` blob
-    pub fn sign_message(&self, msg: &[u8]) -> SignedMessage {
-        sign(msg, &self.secret_key)
-    }
-
-    /// Returns your address as base64(pub_key)
     pub fn get_address(&self) -> String {
         encode(self.public_key.as_bytes())
     }
 
-    /// **NEW** helper so `main.rs` can grab both keys at once
-    pub fn get_keys(&self) -> (PublicKey, SecretKey) {
-        (self.public_key.clone(), self.secret_key.clone())
+    pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
+        let signature = sign_detached(message, &self.secret_key);
+        signature.as_bytes().to_vec()
+    }
+
+    pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
+        match pqcrypto_dilithium::dilithium2::DetachedSignature::from_bytes(signature) {
+            Ok(sig) => verify_detached(&sig, message, &self.public_key).is_ok(),
+            Err(_) => false,
+        }
+    }
+
+    pub fn get_keys() -> (String, String) {
+        let wallet = Wallet::load_from_files();
+        let pub_str = encode(wallet.public_key.as_bytes());
+        let priv_str = encode(wallet.secret_key.as_bytes());
+        (pub_str, priv_str)
     }
 }
