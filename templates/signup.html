@@ -1,59 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Signup - QuantumCoin</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #101820;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+  <meta charset="UTF-8">
+  <title>Sign Up | QuantumCoin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #0e0e0e;
+      color: #f0f0f0;
+      padding: 2em;
+      display: flex;
+      justify-content: center;
+    }
 
-        form {
-            background: #1f2a35;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
+    .form-container {
+      background-color: #1c1c1c;
+      padding: 2em;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 0 15px rgba(0,255,255,0.2);
+    }
 
-        input, button {
-            display: block;
-            margin: 15px 0;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            border-radius: 4px;
-        }
+    h1 {
+      text-align: center;
+      color: #00ffff;
+      margin-bottom: 1em;
+    }
 
-        input {
-            background: #2d3e50;
-            color: #fff;
-        }
+    label {
+      display: block;
+      margin: 0.8em 0 0.2em;
+    }
 
-        button {
-            background: #4caf50;
-            color: #fff;
-            cursor: pointer;
-        }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="file"] {
+      width: 100%;
+      padding: 0.6em;
+      margin-bottom: 1em;
+      border: none;
+      border-radius: 5px;
+      background-color: #333;
+      color: #fff;
+    }
 
-        h2 {
-            text-align: center;
-        }
-    </style>
+    .checkbox {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1em;
+    }
+
+    .checkbox input {
+      margin-right: 0.5em;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.8em;
+      background-color: #00ffff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .note {
+      font-size: 0.85em;
+      color: #aaa;
+    }
+  </style>
 </head>
 <body>
-    <form action="/signup" method="post">
-        <h2>Sign Up for QuantumCoin</h2>
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="email" name="email" placeholder="Email Address" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <input type="text" name="id_number" placeholder="Govt ID Number" required>
-        <button type="submit">Submit KYC</button>
+  <div class="form-container">
+    <h1>Create QuantumCoin Account</h1>
+    <form action="/signup" method="post" enctype="multipart/form-data">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
+
+      <label for="id_document">Upload Government ID:</label>
+      <input type="file" id="id_document" name="id_document" accept=".jpg,.jpeg,.png,.pdf" required>
+
+      <div class="checkbox">
+        <input type="checkbox" id="revstop" name="revstop">
+        <label for="revstop">Enable RevStop Security</label>
+      </div>
+
+      <div class="checkbox">
+        <input type="checkbox" id="2fa" name="2fa">
+        <label for="2fa">Enable Two-Factor Authentication</label>
+      </div>
+
+      <div class="checkbox">
+        <input type="checkbox" id="terms" name="terms" required>
+        <label for="terms">I agree to the <a href="/terms" target="_blank">Terms and Conditions</a> & <a href="/privacy" target="_blank">Privacy Policy</a>.</label>
+      </div>
+
+      <button type="submit">Sign Up</button>
+      <p class="note">⚠ Your ID is encrypted and never shared with third parties.</p>
     </form>
+  </div>
 </body>
-</html> 
+</html>
