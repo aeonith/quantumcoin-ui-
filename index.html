@@ -3,69 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuantumCoin™</title>
+  <title>QuantumCoin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <!-- Floating background video -->
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="background.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Hero Section -->
   <div class="hero">
-    <img class="bg" src="background.jpg" alt="Background" />
-    <div class="overlay"></div>
     <div class="content">
-      <h1>The future of <span>quantum-secure</span> currency</h1>
-      <button id="buy-btn">Buy QuantumCoin™</button>
-      <a href="assets/QuantumCoin_Whitepaper.pdf" class="whitepaper" target="_blank">
-        📄 View the QuantumCoin™ Whitepaper
-      </a>
+      <h1>Welcome to <span>QuantumCoin</span></h1>
+      <button id="buy-btn">Buy Now</button><br>
+      <a href="whitepaper.pdf" class="whitepaper" target="_blank">Read Whitepaper</a>
     </div>
   </div>
 
+  <!-- Chart Card -->
   <div class="chart-card">
-    <h2>QUANTUMCOIN</h2>
-    <p id="price">$0.00</p>
-    <p id="change">▲0.00 (0.00%)</p>
-
-    <canvas id="priceChart"></canvas>
+    <h2>Live Price</h2>
+    <div id="price">$0.00000</div>
+    <div id="change">0.00%</div>
     <div class="intervals">
-      <button data-interval="1h">1H</button>
-      <button data-interval="1d" class="active">1D</button>
-      <button data-interval="1w">1W</button>
-      <button data-interval="1y">1Y</button>
+      <button class="active">1H</button>
+      <button>24H</button>
+      <button>7D</button>
     </div>
   </div>
 
+  <!-- Features Section -->
   <div class="features">
     <div class="feature">
-      <img src="quantum-security-icon.png" alt="Quantum Security" />
-      <h3>Quantum-resistant security</h3>
-      <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
+      <img src="static/icon1.png" alt="Secure" />
+      <h3>Quantum Safe</h3>
+      <p>Next-gen encryption for total financial security.</p>
     </div>
     <div class="feature">
-      <img src="kyc-verification-icon.png" alt="KYC Verification" />
-      <h3>KYC verification</h3>
-      <p>Verify your identity quickly and securely to start trading.</p>
+      <img src="static/icon2.png" alt="Fast" />
+      <h3>Lightning Speed</h3>
+      <p>Transactions confirmed in seconds, globally.</p>
     </div>
     <div class="feature">
-      <img src="price-chart-icon.png" alt="Real-time Data" />
-      <h3>Real-time data</h3>
-      <p>View your balance and the latest price changes at any time.</p>
+      <img src="static/icon3.png" alt="Private" />
+      <h3>Fully Private</h3>
+      <p>Your data is never stored. Privacy is default.</p>
     </div>
   </div>
 
+  <!-- Signup Section -->
   <div class="signup">
-    <h2>Get started with QuantumCoin™</h2>
+    <h2>Join Our Movement</h2>
     <form id="signupForm">
-      <input type="email" id="email" placeholder="Enter your email" required />
+      <input type="email" placeholder="Your Email" required />
       <button type="submit">Sign Up</button>
     </form>
-    <p class="terms">
-      By signing up, you agree to our
-      <a href="/terms.html" target="_blank">Terms</a> &amp;
-      <a href="/privacy.html" target="_blank">Privacy</a>.
-    </p>
+    <div class="terms">
+      By signing up, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
