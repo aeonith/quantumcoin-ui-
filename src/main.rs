@@ -1,91 +1,80 @@
 mod wallet;
 mod transaction;
-mod block;
 mod blockchain;
 mod revstop;
-mod cli;
 
 use wallet::Wallet;
+use transaction::{Transaction, TransactionType};
 use blockchain::Blockchain;
-use std::fs;
-use std::io::{self, Write};
 use revstop::RevStop;
-use cli::start_cli;
+use std::sync::{Arc, Mutex};
+use std::io::{self, Write};
+
+fn calculate_price(supply: f64, demand: f64) -> f64 {
+    let mut price = (demand / (supply + 1.0)) * 10.0;
+    if price < 0.25 { price = 0.25; }
+    price
+}
 
 fn main() {
-    println!("🚀 QuantumCoin Engine Initialized");
+    println!("🚀 QuantumCoin Engine Ready");
 
-    let mut wallet = match Wallet::load_from_files() {
-        Ok(w) => {
-            println!("🔑 Wallet loaded.");
-            w
-        }
-        Err(_) => {
-            println!("⚠️  No wallet found. Generating new wallet...");
-            let w = Wallet::generate();
-            match w.save_to_files() {
-                Ok(_) => println!("✅ New wallet saved."),
-                Err(e) => println!("❌ Failed to save wallet: {}", e),
-            }
-            w
-        }
-    };
+    let wallet = Wallet::load_or_create("wallet.json");
+    let revstop = RevStop::load_status();
+    let blockchain = Arc::new(Mutex::new(Blockchain::load_from_file("blockchain.json")));
 
-    println!("📬 Your wallet address: {}", wallet.get_address());
+    let initial_supply = blockchain.lock().unwrap().total_supply();
+    let mut total_demand = 0.0;
 
-    // Step 1: Terms & Conditions agreement
-    if !wallet.agreed_to_terms {
-        println!("\n📄 Please agree to the QuantumCoin Terms & Conditions.");
-        println!("Type 'yes' to accept:");
+    loop {
+        println!("\n📜 Menu:\n1. Balance\n2. Buy\n3. Sell\n4. Mine\n5. Exit");
+        print!("> ");
+        io::stdout().flush().unwrap();
+
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
-        if input.trim().to_lowercase() == "yes" {
-            wallet.agree_to_terms();
-        } else {
-            println!("❌ You must accept terms to continue.");
-            return;
-        }
-    }
 
-    // Step 2: KYC verification
-    if !wallet.kyc_verified {
-        println!("\n🧾 Enter your KYC Verification Code (hint: try 'KYC123456'):");
-        let mut code = String::new();
-        io::stdin().read_line(&mut code).unwrap();
-        if !wallet.verify_kyc(code.trim()) {
-            println!("❌ Verification failed. Exiting.");
-            return;
-        }
-    }
-
-    // Step 3: Initialize RevStop
-    let mut revstop = RevStop::load_status().unwrap_or_default();
-
-    // Step 4: Load or initialize blockchain
-    let mut blockchain = match Blockchain::load_from_file("blockchain.json") {
-        Ok(chain) => {
-            println!("⛓️  Blockchain loaded.");
-            chain
-        }
-        Err(_) => {
-            println!("⛓️  No blockchain found. Creating genesis block...");
-            let mut new_chain = Blockchain::new();
-            let genesis_tx = transaction::Transaction {
-                sender: "GENESIS".to_string(),
-                recipient: wallet.get_address(),
-                amount: 1_250_000.0,
-                signature: None,
-            };
-            new_chain.add_transaction(genesis_tx);
-            new_chain.mine_pending_transactions("GENESIS".to_string());
-            match new_chain.save_to_file("blockchain.json") {
-                Ok(_) => println!("✅ Blockchain saved."),
-                Err(e) => println!("❌ Blockchain save error: {}", e),
+        match input.trim() {
+            "1" => {
+                println!("🔐 Address: {}", wallet.address());
+                println!("💰 Balance: {} QTC", blockchain.lock().unwrap().get_balance(&wallet.address()));
             }
-            new_chain
+            "2" => {
+                let price = calculate_price(initial_supply, total_demand);
+                println!("✅ Current price: ${:.2}", price);
+                println!("How much do you want to buy?");
+                let mut amt = String::new();
+                io::stdin().read_line(&mut amt).unwrap();
+                let coins = amt.trim().parse::<f64>().unwrap_or(0.0);
+                let cost = coins * price;
+                println!("💵 This will cost ${:.2}. Confirm? (y/n)", cost);
+                let mut confirm = String::new();
+                io::stdin().read_line(&mut confirm).unwrap();
+                if confirm.trim() == "y" {
+                    let tx = wallet.create_transaction("network".to_string(), coins, TransactionType::Buy);
+                    blockchain.lock().unwrap().add_transaction(tx);
+                    total_demand += coins;
+                    println!("✅ Buy order submitted.");
+                }
+            }
+            "3" => {
+                println!("How much do you want to sell?");
+                let mut amt = String::new();
+                io::stdin().read_line(&mut amt).unwrap();
+                let coins = amt.trim().parse::<f64>().unwrap_or(0.0);
+                let tx = wallet.create_transaction("market".to_string(), coins, TransactionType::Sell);
+                blockchain.lock().unwrap().add_transaction(tx);
+                println!("✅ Sell order submitted.");
+            }
+            "4" => {
+                blockchain.lock().unwrap().mine_pending_transactions(wallet.address());
+                println!("⛏️ Block mined and reward granted.");
+            }
+            "5" => break,
+            _ => println!("❌ Invalid input."),
         }
-    };
+    }
 
-    // Step 5: Start CLI
-    start_cli(&mut wallet, &mut blockchain, &mut revstop);
+    blockchain.lock().unwrap().save_to_file("blockchain.json");
+    RevStop::save_status(revstop);
 }
