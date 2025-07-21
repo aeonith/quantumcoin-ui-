@@ -1,31 +1,32 @@
+mod wallet;
+use wallet::Wallet;
+use std::sync::{Arc, Mutex};
 use std::net::TcpListener;
-use std::io::Write;
-use quantumcoin::wallet::Wallet;
+use std::io::prelude::*;
 
 fn main() {
-    // Attempt to load wallet or generate new one
-    let wallet = Wallet::load_from_files("wallet").unwrap_or_else(|| {
-        let w = Wallet::generate();
-        w.save_to_files("wallet");
-        w
-    });
-
-    let address = wallet.get_address();
-
-    // Launch minimal web server
-    let listener = TcpListener::bind("0.0.0.0:8080").expect("Failed to bind to port 8080");
     println!("🚀 QuantumCoin Web Server Running");
+
+    // Initialize the wallet
+    let wallet = Arc::new(Mutex::new(Wallet::load_from_file("wallet_key.json")
+        .unwrap_or_else(|| Wallet::new())));
+
+    // Show wallet address and balance
+    let wallet_ref = wallet.lock().unwrap();
+    println!("🔐 Wallet Address: {}", wallet_ref.get_address());
+    println!("💰 Wallet Balance: {} QTC", wallet_ref.get_balance());
+    drop(wallet_ref);
+
+    // Start web server
+    let listener = TcpListener::bind("0.0.0.0:8080").expect("❌ Failed to bind to port 8080");
+    println!("==> Your service is live 🎉");
+    println!("==> Available at your primary URL");
 
     for stream in listener.incoming() {
         if let Ok(mut stream) = stream {
-            let response = format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n\
-                <html><body style='background-color: black; color: white; font-family: monospace;'>\
-                <h3>QuantumCoin Wallet Address:</h3>\
-                <p>{}</p>\
-                </body></html>", address
-            );
-            stream.write_all(response.as_bytes()).unwrap();
+            println!("✅ Incoming connection");
+            let response = b"QuantumCoin Node Live\n";
+            stream.write_all(response).unwrap();
         }
     }
 }
