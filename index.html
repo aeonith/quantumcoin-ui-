@@ -1,70 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuantumCoin</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Floating background video -->
-  <video autoplay muted loop playsinline id="bg-video">
-    <source src="background.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
+  <!-- HERO section with background video -->
+  <section class="hero">
+    <video class="bg" autoplay muted loop playsinline>
+      <source src="background.mp4" type="video/mp4">
+      <img src="background.jpg" alt="Fallback Background" />
+    </video>
 
-  <!-- Hero Section -->
-  <div class="hero">
+    <div class="overlay"></div>
+
     <div class="content">
-      <h1>Welcome to <span>QuantumCoin</span></h1>
-      <button id="buy-btn">Buy Now</button><br>
-      <a href="whitepaper.pdf" class="whitepaper" target="_blank">Read Whitepaper</a>
+      <h1>The future of <span>quantum-secure</span> currency.</h1>
+      <button id="buy-btn">Buy QuantumCoin™</button>
+      <a href="assets/QuantumCoin_Whitepaper.pdf" class="whitepaper" target="_blank">
+        📄 View the QuantumCoin™ Whitepaper
+      </a>
     </div>
-  </div>
+  </section>
 
-  <!-- Chart Card -->
-  <div class="chart-card">
+  <!-- CHART -->
+  <section class="chart-card">
     <h2>Live Price</h2>
-    <div id="price">$0.00000</div>
-    <div id="change">0.00%</div>
+    <div id="price">$0.000001</div>
+    <div id="change">+0.05%</div>
     <div class="intervals">
-      <button class="active">1H</button>
-      <button>24H</button>
-      <button>7D</button>
+      <button class="active">1D</button>
+      <button>1W</button>
+      <button>1M</button>
+      <button>1Y</button>
     </div>
-  </div>
+  </section>
 
-  <!-- Features Section -->
-  <div class="features">
+  <!-- FEATURES -->
+  <section class="features">
     <div class="feature">
-      <img src="static/icon1.png" alt="Secure" />
-      <h3>Quantum Safe</h3>
-      <p>Next-gen encryption for total financial security.</p>
+      <img src="shield.png" alt="Security Icon">
+      <h3>Quantum Resistance</h3>
+      <p>Protected against future quantum threats.</p>
     </div>
     <div class="feature">
-      <img src="static/icon2.png" alt="Fast" />
-      <h3>Lightning Speed</h3>
-      <p>Transactions confirmed in seconds, globally.</p>
+      <img src="speed.png" alt="Speed Icon">
+      <h3>Instant Transactions</h3>
+      <p>Transfers complete in seconds worldwide.</p>
     </div>
     <div class="feature">
-      <img src="static/icon3.png" alt="Private" />
-      <h3>Fully Private</h3>
-      <p>Your data is never stored. Privacy is default.</p>
+      <img src="lock.png" alt="Lock Icon">
+      <h3>RevStop™ Security</h3>
+      <p>Ultimate control over your coins and privacy.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- Signup Section -->
-  <div class="signup">
-    <h2>Join Our Movement</h2>
+  <!-- SIGNUP -->
+  <section class="signup">
+    <h2>Get Early Access</h2>
     <form id="signupForm">
-      <input type="email" placeholder="Your Email" required />
+      <input type="email" placeholder="Your Email" required>
       <button type="submit">Sign Up</button>
     </form>
-    <div class="terms">
-      By signing up, you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.
-    </div>
-  </div>
+    <p class="terms">
+      By signing up, you agree to our
+      <a href="#">Terms of Service</a> & <a href="#">Privacy Policy</a>
+    </p>
+  </section>
 
 </body>
 </html>
