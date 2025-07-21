@@ -1,27 +1,22 @@
+// src/mining.rs
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const INITIAL_REWARD: u64 = 50; // Initial block reward
-const HALVING_INTERVAL: u64 = 1_051_200; // ~2 years assuming 60s blocks
-const MAX_SUPPLY: u64 = 22_000_000; // Total QuantumCoin supply cap
-const GENESIS_REWARD: u64 = 1_250_000; // Genesis block allocation
+pub const INITIAL_REWARD: u64 = 50;
+pub const HALVING_INTERVAL: u64 = 1_051_200; // Approx 2 years at 1 block per minute
+pub const MAX_SUPPLY: u64 = 22_000_000;
+pub const GENESIS_REWARD: u64 = 1_250_000;
 
-pub fn get_block_reward(block_height: u64, current_total_supply: u64) -> u64 {
-    // No reward if max supply reached
-    if current_total_supply >= MAX_SUPPLY {
+pub fn get_block_reward(block_height: u64, current_supply: u64) -> u64 {
+    if current_supply >= MAX_SUPPLY {
         return 0;
     }
 
-    // Number of halvings already occurred
     let halvings = block_height / HALVING_INTERVAL;
-    let reward = INITIAL_REWARD >> halvings;
+    let reward = INITIAL_REWARD >> (halvings as u32); // Reward halves each interval
 
-    // Prevent shifting below 1 satoshi equivalent
-    if reward == 0 {
-        return 0;
-    }
-
-    // Cap the reward if close to total max
-    let remaining = MAX_SUPPLY - current_total_supply;
+    // Ensure we don't exceed total supply
+    let remaining = MAX_SUPPLY - current_supply;
     if reward > remaining {
         return remaining;
     }
