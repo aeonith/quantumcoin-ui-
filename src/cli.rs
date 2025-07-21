@@ -1,35 +1,27 @@
-use crate::{blockchain::Blockchain, wallet::Wallet};
+use crate::{blockchain::Blockchain, revstop::RevStop, wallet::Wallet};
 use std::io::{self, Write};
 
-pub fn start_cli(wallet: &mut Wallet, blockchain: &mut Blockchain) {
+pub fn start_cli(wallet: &mut Wallet, bc: &mut Blockchain, rs: &mut RevStop) {
     loop {
         print!("qcoin> ");
         io::stdout().flush().unwrap();
-        let mut buf = String::new();
-        if io::stdin().read_line(&mut buf).is_err() {
-            println!("Error reading input"); continue;
-        }
-        let parts: Vec<_> = buf.trim().split_whitespace().collect();
-        if parts.is_empty() { continue; }
-
-        match parts[0] {
-            "addr" => println!("📬 address: {}", wallet.get_address()),
-            "bal"  => println!("💰 balance: {}", wallet.get_balance(blockchain)),
-            "tx" if parts.len() == 3 => {
-                if let Ok(amount) = parts[2].parse() {
-                    let tx = wallet.create_transaction(parts[1], amount);
-                    blockchain.pending_transactions.push(tx);
-                    println!("✅ pending tx created");
-                } else { println!("usage: tx <recipient> <amount>"); }
+        let mut line = String::new();
+        if io::stdin().read_line(&mut line).is_err() { continue; }
+        match line.trim().split_whitespace().collect::<Vec<_>>().as_slice() {
+            ["addr"]     => println!("Address: {}", wallet.get_address()),
+            ["bal"]      => println!("Balance: {}", wallet.get_balance(bc)),
+            ["tx", to, x] if x.parse::<u64>().is_ok() => {
+                let tx = wallet.create_transaction(to, x.parse().unwrap());
+                bc.create_transaction(tx);
+                println!("Queued TX");
             }
-            "mine" => {
-                blockchain.mine_pending_transactions(wallet.get_address());
-                println!("⛏️  block mined!");
-            }
-            "last" => wallet.show_last_transactions(blockchain),
-            "export" => wallet.export_with_2fa(),
-            "quit" | "exit" => break,
-            _ => println!("commands: addr | bal | tx | mine | last | export | quit"),
+            ["mine"]     => { bc.mine_pending_transactions(&wallet.get_address()); println!("Mined"); }
+            ["rev"]      => println!("RevStop: {}", rs.is_active()),
+            ["lock"]     => { rs.enabled = true; rs.save_status("revstop.json").ok(); println!("Locked"); }
+            ["unlock"]   => { rs.enabled = false; rs.save_status("revstop.json").ok(); println!("Unlocked"); }
+            ["kyc", c]   => println!("KYC {}", if crate::kyc::verify(&wallet.get_address(), c) { "OK" } else { "FAIL" }),
+            ["exit"]     => break,
+            _            => println!("Commands: addr, bal, tx <to> <amt>, mine, rev, lock, unlock, kyc <code>, exit"),
         }
     }
 }
