@@ -1,44 +1,91 @@
 mod wallet;
 mod transaction;
+mod block;
+mod blockchain;
+mod revstop;
+mod cli;
 
 use wallet::Wallet;
-use transaction::Transaction;
+use blockchain::Blockchain;
 use std::fs;
-use std::path::Path;
+use std::io::{self, Write};
+use revstop::RevStop;
+use cli::start_cli;
 
 fn main() {
     println!("🚀 QuantumCoin Engine Initialized");
 
-    let pub_path = "wallet_public.key";
-    let priv_path = "wallet_private.key";
-
-    let wallet = if Path::new(pub_path).exists() && Path::new(priv_path).exists() {
-        println!("🔑 Loading wallet from files...");
-        Wallet::load_from_files(pub_path, priv_path).expect("❌ Failed to load wallet files")
-    } else {
-        println!("🆕 Generating new wallet...");
-        let wallet = Wallet::new();
-        wallet.save_to_files(pub_path, priv_path).expect("❌ Failed to save wallet files");
-        wallet
+    let mut wallet = match Wallet::load_from_files() {
+        Ok(w) => {
+            println!("🔑 Wallet loaded.");
+            w
+        }
+        Err(_) => {
+            println!("⚠️  No wallet found. Generating new wallet...");
+            let w = Wallet::generate();
+            match w.save_to_files() {
+                Ok(_) => println!("✅ New wallet saved."),
+                Err(e) => println!("❌ Failed to save wallet: {}", e),
+            }
+            w
+        }
     };
 
-    println!("✅ Wallet initialized");
+    println!("📬 Your wallet address: {}", wallet.get_address());
 
-    let sender_address = base64::encode(wallet.public_key.as_bytes());
-    let recipient_address = "SampleRecipientAddress123".to_string();
+    // Step 1: Terms & Conditions agreement
+    if !wallet.agreed_to_terms {
+        println!("\n📄 Please agree to the QuantumCoin Terms & Conditions.");
+        println!("Type 'yes' to accept:");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        if input.trim().to_lowercase() == "yes" {
+            wallet.agree_to_terms();
+        } else {
+            println!("❌ You must accept terms to continue.");
+            return;
+        }
+    }
 
-    let mut tx = Transaction::new(sender_address.clone(), recipient_address.clone(), 100.0);
-    let signature = wallet.sign_transaction(&tx);
-    tx.set_signature(signature.clone());
+    // Step 2: KYC verification
+    if !wallet.kyc_verified {
+        println!("\n🧾 Enter your KYC Verification Code (hint: try 'KYC123456'):");
+        let mut code = String::new();
+        io::stdin().read_line(&mut code).unwrap();
+        if !wallet.verify_kyc(code.trim()) {
+            println!("❌ Verification failed. Exiting.");
+            return;
+        }
+    }
 
-    println!("\n🧾 Transaction created:");
-    println!("From: {}", tx.sender);
-    println!("To: {}", tx.recipient);
-    println!("Amount: {}", tx.amount);
-    println!("Signature (base64): {:?}", tx.signature.as_ref().unwrap());
+    // Step 3: Initialize RevStop
+    let mut revstop = RevStop::load_status().unwrap_or_default();
 
-    let tx_bytes = serde_json::to_vec(&tx).expect("Serialization failed");
+    // Step 4: Load or initialize blockchain
+    let mut blockchain = match Blockchain::load_from_file("blockchain.json") {
+        Ok(chain) => {
+            println!("⛓️  Blockchain loaded.");
+            chain
+        }
+        Err(_) => {
+            println!("⛓️  No blockchain found. Creating genesis block...");
+            let mut new_chain = Blockchain::new();
+            let genesis_tx = transaction::Transaction {
+                sender: "GENESIS".to_string(),
+                recipient: wallet.get_address(),
+                amount: 1_250_000.0,
+                signature: None,
+            };
+            new_chain.add_transaction(genesis_tx);
+            new_chain.mine_pending_transactions("GENESIS".to_string());
+            match new_chain.save_to_file("blockchain.json") {
+                Ok(_) => println!("✅ Blockchain saved."),
+                Err(e) => println!("❌ Blockchain save error: {}", e),
+            }
+            new_chain
+        }
+    };
 
-    let verified = wallet.verify_signature(&tx_bytes, &signature);
-    println!("\n🔐 Signature verified: {}", verified);
+    // Step 5: Start CLI
+    start_cli(&mut wallet, &mut blockchain, &mut revstop);
 }
