@@ -1,49 +1,34 @@
-use quantumcoin::{
-    blockchain::Blockchain,
-    mining::Mining,
-    revstop::RevStop,
-    transaction::Transaction,
-    wallet::Wallet,
-};
-use std::error::Error;
+mod wallet;
+mod blockchain;
+mod transaction;
+mod revstop;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    // Load wallet and handle Result
-    let wallet = Wallet::load_from_files("wallet.json")
-        .expect("Failed to load wallet");
-    println!("👛 Wallet loaded: {}", wallet.get_address());
+use wallet::*;
+use blockchain::*;
+use transaction::*;
+use revstop::*;
+
+fn main() {
+    println!("🚀 QuantumCoin Engine Initialized");
+    
+    // Load wallet
+    let wallet = load_from_files("wallet_public.key", "wallet_private.key");
+    println!("🔐 Wallet loaded: {}", wallet.get_address());
 
     // Load blockchain
-    let mut blockchain = Blockchain::load_from_file("blockchain.json");
-    if blockchain.chain.is_empty() {
-        blockchain.create_genesis_block(&wallet.get_address());
-        println!("🌱 Genesis block created!");
-    }
+    let mut blockchain = load_blockchain_from_file("blockchain.json").unwrap_or_else(|_| {
+        println!("🧱 No blockchain found. Creating new one...");
+        Blockchain::new()
+    });
 
-    // Initialize RevStop
-    let mut revstop = RevStop::new();
-    if revstop.is_locked() {
-        println!("🔒 RevStop protection is enabled.");
-    } else {
-        println!("🔓 RevStop is currently disabled.");
-    }
+    // Show RevStop status
+    let revstop_status = load_status("revstop_status.json").unwrap_or(false);
+    println!("🛡️ RevStop Enabled: {}", revstop_status);
 
-    // Sample transaction (for testing)
-    let tx = wallet.create_transaction(
-        "recipient_public_key_string",
-        10.0,
-    );
-    blockchain.add_transaction(tx);
+    // Display balance
+    let balance = wallet.get_balance(&blockchain);
+    println!("💰 Balance: {} QTC", balance);
 
-    // Mining simulation
-    println!("⛏️  Starting mining...");
-    let success = blockchain.mine_pending_transactions(&wallet.get_address());
-    if success {
-        println!("✅ Mining completed and block added.");
-        blockchain.save_to_file("blockchain.json");
-    } else {
-        println!("⚠️  Mining failed or nothing to mine.");
-    }
-
-    Ok(())
+    // Save blockchain state
+    save_blockchain_to_file(&blockchain, "blockchain.json");
 }
