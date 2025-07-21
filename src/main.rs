@@ -1,80 +1,106 @@
+use axum::{
+    routing::{get, post},
+    Json, Router, extract::State,
+};
+use std::sync::{Arc, Mutex};
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
+use tower_http::cors::{CorsLayer, Any};
+
+mod blockchain;
 mod wallet;
 mod transaction;
-mod blockchain;
 mod revstop;
+mod mempool;
 
-use wallet::Wallet;
-use transaction::{Transaction, TransactionType};
 use blockchain::Blockchain;
+use wallet::Wallet;
+use transaction::Transaction;
+use mempool::Mempool;
 use revstop::RevStop;
-use std::sync::{Arc, Mutex};
-use std::io::{self, Write};
 
-fn calculate_price(supply: f64, demand: f64) -> f64 {
-    let mut price = (demand / (supply + 1.0)) * 10.0;
-    if price < 0.25 { price = 0.25; }
-    price
+#[derive(Clone)]
+struct AppState {
+    blockchain: Arc<Mutex<Blockchain>>,
+    mempool: Arc<Mutex<Mempool>>,
+    wallet: Arc<Mutex<Wallet>>,
+    revstop: Arc<Mutex<RevStop>>,
 }
 
-fn main() {
-    println!("🚀 QuantumCoin Engine Ready");
+#[derive(Deserialize)]
+struct SendRequest {
+    recipient: String,
+    amount: f64,
+}
 
-    let wallet = Wallet::load_or_create("wallet.json");
-    let revstop = RevStop::load_status();
-    let blockchain = Arc::new(Mutex::new(Blockchain::load_from_file("blockchain.json")));
+#[tokio::main]
+async fn main() {
+    let wallet = Wallet::load_from_files().unwrap_or_else(|_| Wallet::new());
+    let revstop = RevStop::load_status().unwrap_or_else(|_| RevStop::default());
+    let mut blockchain = Blockchain::new();
+    blockchain.load_or_create_genesis(wallet.get_address(), 1_250_000.0);
 
-    let initial_supply = blockchain.lock().unwrap().total_supply();
-    let mut total_demand = 0.0;
+    let state = AppState {
+        blockchain: Arc::new(Mutex::new(blockchain)),
+        mempool: Arc::new(Mutex::new(Mempool::new())),
+        wallet: Arc::new(Mutex::new(wallet)),
+        revstop: Arc::new(Mutex::new(revstop)),
+    };
 
-    loop {
-        println!("\n📜 Menu:\n1. Balance\n2. Buy\n3. Sell\n4. Mine\n5. Exit");
-        print!("> ");
-        io::stdout().flush().unwrap();
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
+    let app = Router::new()
+        .route("/", get(health_check))
+        .route("/price", get(get_price))
+        .route("/send", post(send_transaction))
+        .route("/mine", post(mine_block))
+        .with_state(state.clone())
+        .layer(cors);
 
-        match input.trim() {
-            "1" => {
-                println!("🔐 Address: {}", wallet.address());
-                println!("💰 Balance: {} QTC", blockchain.lock().unwrap().get_balance(&wallet.address()));
-            }
-            "2" => {
-                let price = calculate_price(initial_supply, total_demand);
-                println!("✅ Current price: ${:.2}", price);
-                println!("How much do you want to buy?");
-                let mut amt = String::new();
-                io::stdin().read_line(&mut amt).unwrap();
-                let coins = amt.trim().parse::<f64>().unwrap_or(0.0);
-                let cost = coins * price;
-                println!("💵 This will cost ${:.2}. Confirm? (y/n)", cost);
-                let mut confirm = String::new();
-                io::stdin().read_line(&mut confirm).unwrap();
-                if confirm.trim() == "y" {
-                    let tx = wallet.create_transaction("network".to_string(), coins, TransactionType::Buy);
-                    blockchain.lock().unwrap().add_transaction(tx);
-                    total_demand += coins;
-                    println!("✅ Buy order submitted.");
-                }
-            }
-            "3" => {
-                println!("How much do you want to sell?");
-                let mut amt = String::new();
-                io::stdin().read_line(&mut amt).unwrap();
-                let coins = amt.trim().parse::<f64>().unwrap_or(0.0);
-                let tx = wallet.create_transaction("market".to_string(), coins, TransactionType::Sell);
-                blockchain.lock().unwrap().add_transaction(tx);
-                println!("✅ Sell order submitted.");
-            }
-            "4" => {
-                blockchain.lock().unwrap().mine_pending_transactions(wallet.address());
-                println!("⛏️ Block mined and reward granted.");
-            }
-            "5" => break,
-            _ => println!("❌ Invalid input."),
-        }
-    }
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("✅ QuantumCoin API running at http://{}/", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
 
-    blockchain.lock().unwrap().save_to_file("blockchain.json");
-    RevStop::save_status(revstop);
+async fn health_check() -> &'static str {
+    "✅ QuantumCoin Node is Alive"
+}
+
+async fn get_price(State(state): State<AppState>) -> Json<PriceResponse> {
+    let chain = state.blockchain.lock().unwrap();
+    let price = chain.calculate_price();
+    Json(PriceResponse {
+        current_price: price,
+    })
+}
+
+#[derive(Serialize)]
+struct PriceResponse {
+    current_price: f64,
+}
+
+async fn send_transaction(
+    State(state): State<AppState>,
+    Json(payload): Json<SendRequest>,
+) -> Json<String> {
+    let wallet = state.wallet.lock().unwrap();
+    let tx = wallet.create_transaction(&payload.recipient, payload.amount);
+    let mut mempool = state.mempool.lock().unwrap();
+    mempool.add_transaction(tx);
+    Json("Transaction submitted.".to_string())
+}
+
+async fn mine_block(State(state): State<AppState>) -> Json<String> {
+    let mut blockchain = state.blockchain.lock().unwrap();
+    let mut mempool = state.mempool.lock().unwrap();
+    let transactions = mempool.drain();
+    blockchain.mine_pending_transactions(transactions);
+    blockchain.save_to_file().unwrap();
+    Json("✅ Block mined.".to_string())
 }
