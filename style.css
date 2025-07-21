@@ -1,10 +1,11 @@
-/* Reset & base */
+/* Base Reset */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: sans-serif;
   color: #fff;
   background: #000;
   line-height: 1.4;
+  overflow-x: hidden;
 }
 
 /* HERO */
@@ -20,7 +21,7 @@ body {
   width: 100%; height: 100%;
   object-fit: cover;
   z-index: 1;
-  filter: brightness(0.5);
+  filter: brightness(0.4);
 }
 .hero .overlay {
   position: absolute;
@@ -34,7 +35,7 @@ body {
   z-index: 3;
   max-width: 90%;
   margin: 0 auto;
-  padding-top: 20vh;
+  padding-top: 18vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -68,16 +69,22 @@ body {
 
 /* CHART CARD */
 .chart-card {
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.2); /* more transparent now */
+  backdrop-filter: blur(6px);
   margin: 2rem auto;
   padding: 1.5rem;
   border-radius: 12px;
   max-width: 360px;
   text-align: center;
+  box-shadow: 0 0 12px rgba(255,255,255,0.05);
 }
 .chart-card h2 { font-size: 1.2rem; margin-bottom: 0.2rem; }
 #price { font-size: 2.5rem; margin: 0.2rem 0; }
 #change { font-size: 1rem; }
+#priceChart {
+  background-color: rgba(0, 0, 0, 0.1);  /* Chart canvas transparency */
+  border-radius: 10px;
+}
 .intervals {
   margin-top: 1rem;
   display: flex;
@@ -115,7 +122,7 @@ body {
   padding: 0 1rem;
 }
 .feature {
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.5);
   border-radius: 12px;
   text-align: center;
   padding: 1.5rem;
@@ -169,13 +176,44 @@ body {
   text-decoration: underline;
 }
 
-/* RESPONSIVE */
+/* FINAL MOBILE TWEAKS */
 @media (max-width: 480px) {
-  .hero h1 { font-size: 1.8rem; }
-  #buy-btn { padding: 0.6rem 1.4rem; font-size: 0.9rem; }
-  .chart-card { margin: 1.5rem auto; }
-  .features { gap: 1rem; }
-  .feature { padding: 1rem; }
-  .signup h2 { font-size: 1.5rem; }
-  #signupForm input { width: 180px; }
+  body {
+    padding: 0;
+    margin: 0;
+  }
+
+  .hero h1 {
+    font-size: 1.6rem;
+    padding: 0 1rem;
+  }
+
+  .chart-card {
+    width: 92%;
+    padding: 1.2rem;
+  }
+
+  #price { font-size: 2.2rem; }
+  .features {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .feature {
+    padding: 1.2rem;
+  }
+
+  .signup h2 {
+    font-size: 1.5rem;
+  }
+
+  #signupForm input {
+    width: 90%;
+    max-width: 280px;
+  }
+
+  .whitepaper {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
 }
