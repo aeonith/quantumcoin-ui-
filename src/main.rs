@@ -1,8 +1,17 @@
+mod wallet;
+mod block;
 mod transaction;
 mod blockchain;
-mod wallet;
-mod cli;
+
+use wallet::Wallet;
+use blockchain::Blockchain;
 
 fn main() {
-    cli::run();
+    println!("🚀 QuantumCoin Engine Booted");
+
+    let wallet = Wallet::new();
+    println!("🧠 Wallet initialized: {}", wallet.get_address());
+
+    let mut blockchain = Blockchain::new();
+    blockchain.print_chain();
 }
