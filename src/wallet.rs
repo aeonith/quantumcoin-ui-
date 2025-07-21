@@ -1,73 +1,82 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey};
-use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
-use base64::{encode, decode};
-use serde::{Serialize, Deserialize};
-use std::fs::{File};
-use std::io::{Read, Write};
-use std::path::Path;
+use crate::{blockchain::Blockchain, transaction::Transaction};
+use pqcrypto_dilithium::dilithium2::{keypair, PublicKey, SecretKey};
+use serde::{Deserialize, Serialize};
+use std::{error::Error, fs};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Wallet {
-    pub public_key: String,
-    pub secret_key: String,
-    pub balance: f64,
+    pub address: String,
+    #[serde(skip)]
+    pub public_key: PublicKey,
+    #[serde(skip)]
+    pub secret_key: SecretKey,
+}
+
+impl std::fmt::Debug for Wallet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Wallet")
+            .field("address", &self.address)
+            .finish() // keep keys out of debug output
+    }
 }
 
 impl Wallet {
-    pub fn new() -> Self {
+    pub fn generate() -> Self {
         let (pk, sk) = keypair();
-        let public_key = encode(pk.as_bytes());
-        let secret_key = encode(sk.as_bytes());
-
-        Wallet {
-            public_key,
-            secret_key,
-            balance: 0.0,
-        }
+        let address = base64::encode(pk.as_bytes());
+        Self { address, public_key: pk, secret_key: sk }
     }
 
-    pub fn save_to_file(&self, filename: &str) -> bool {
-        if let Ok(mut file) = File::create(filename) {
-            if let Ok(json) = serde_json::to_string(self) {
-                return file.write_all(json.as_bytes()).is_ok();
+    pub fn save_to_files(&self) -> Result<(), Box<dyn Error>> {
+        fs::write("wallet.json", serde_json::to_vec_pretty(self)?)?;
+        fs::write("wallet_sk.bin", self.secret_key.as_bytes())?;
+        Ok(())
+    }
+
+    pub fn load_from_files() -> Result<Self, Box<dyn Error>> {
+        let bytes = fs::read("wallet.json")?;
+        let mut wallet: Wallet = serde_json::from_slice(&bytes)?;
+        let sk_bytes = fs::read("wallet_sk.bin")?;
+        wallet.secret_key = SecretKey::from_bytes(&sk_bytes)?;
+        wallet.public_key = wallet.secret_key.to_public_key();
+        Ok(wallet)
+    }
+
+    pub fn get_address(&self) -> &str {
+        &self.address
+    }
+
+    pub fn get_balance(&self, bc: &Blockchain) -> f64 {
+        let mut bal = 0.0;
+        for block in &bc.chain {
+            for tx in &block.transactions {
+                if tx.recipient == self.address {
+                    bal += tx.amount;
+                } else if tx.sender == self.address {
+                    bal -= tx.amount;
+                }
             }
         }
-        false
+        bal
     }
 
-    pub fn load_from_file(filename: &str) -> Option<Self>
-    where
-        Self: Sized,
-    {
-        if let Ok(mut file) = File::open(filename) {
-            let mut contents = String::new();
-            if file.read_to_string(&mut contents).is_ok() {
-                return serde_json::from_str(&contents).ok();
+    pub fn create_transaction(&self, recipient: &str, amount: f64) -> Transaction {
+        Transaction::new(&self.address, recipient, amount)
+    }
+
+    pub fn show_last_transactions(&self, bc: &Blockchain) {
+        for block in bc.chain.iter().rev().take(5) {
+            for tx in &block.transactions {
+                if tx.sender == self.address || tx.recipient == self.address {
+                    println!("{tx:?}");
+                }
             }
         }
-        None
     }
 
-    pub fn get_public_key_bytes(&self) -> Option<PublicKey> {
-        decode(&self.public_key)
-            .ok()
-            .and_then(|bytes| PublicKey::from_bytes(&bytes).ok())
-    }
+    /* ----- simple / fake stubs you can extend later ----- */
 
-    pub fn get_secret_key_bytes(&self) -> Option<SecretKey> {
-        decode(&self.secret_key)
-            .ok()
-            .and_then(|bytes| SecretKey::from_bytes(&bytes).ok())
-    }
-
-    pub fn sign_message(&self, message: &[u8]) -> Option<Vec<u8>> {
-        self.get_secret_key_bytes().map(|sk| sign_detached(message, &sk).as_bytes().to_vec())
-    }
-
-    pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        if let Some(pk) = self.get_public_key_bytes() {
-            return verify_detached(signature, message, &pk).is_ok();
-        }
-        false
+    pub fn export_with_2fa(&self) {
+        println!("🔑 (stub) wallet exported – implement real 2FA here");
     }
 }
