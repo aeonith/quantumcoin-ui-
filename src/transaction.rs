@@ -1,35 +1,39 @@
 use serde::{Serialize, Deserialize};
-use chrono::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TransactionType {
-    Buy,
-    Sell,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Transaction {
-    pub id: String,
-    pub from: String,
-    pub to: String,
+    pub sender: String,
+    pub recipient: String,
     pub amount: f64,
-    pub timestamp: String,
     pub signature: Option<String>,
-    pub tx_type: TransactionType,
 }
 
 impl Transaction {
-    pub fn new(from: String, to: String, amount: f64, tx_type: TransactionType) -> Self {
-        let id = uuid::Uuid::new_v4().to_string();
-        let timestamp = Utc::now().to_rfc3339();
-        Transaction {
-            id,
-            from,
-            to,
-            amount,
-            timestamp,
-            signature: None,
-            tx_type,
+    pub fn is_valid(&self) -> bool {
+        if self.sender == "GENESIS" {
+            return true;
         }
+
+        if self.signature.is_none() {
+            return false;
+        }
+
+        let data = format!("{}{}{}", self.sender, self.recipient, self.amount);
+        let signature = match base64::decode(self.signature.as_ref().unwrap()) {
+            Ok(sig) => sig,
+            Err(_) => return false,
+        };
+
+        let pub_key_bytes = match base64::decode(&self.sender) {
+            Ok(bytes) => bytes,
+            Err(_) => return false,
+        };
+
+        let pub_key = match pqcrypto_dilithium::dilithium2::PublicKey::from_bytes(&pub_key_bytes) {
+            Ok(pk) => pk,
+            Err(_) => return false,
+        };
+
+        pqcrypto_dilithium::dilithium2::verify_detached(&signature, data.as_bytes(), &pub_key).is_ok()
     }
 }
