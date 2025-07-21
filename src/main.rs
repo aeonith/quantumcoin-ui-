@@ -3,6 +3,7 @@ use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use std::sync::Mutex;
 use std::env;
 
+mod block;
 mod blockchain;
 mod wallet;
 mod transaction;
