@@ -1,27 +1,22 @@
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fs};
+use std::{fs, error::Error};
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RevStop {
     pub enabled: bool,
 }
 
 impl RevStop {
-    pub fn new(enabled: bool) -> Self {
-        Self { enabled }
+    pub fn load_status(path: &str) -> Result<Self, Box<dyn Error>> {
+        if let Ok(data) = fs::read_to_string(path) {
+            Ok(serde_json::from_str(&data)?)
+        } else {
+            Ok(Self::default())
+        }
     }
 
-    pub fn load_status() -> Option<Self> {
-        fs::read("revstop_status.json").ok()
-            .and_then(|b| serde_json::from_slice::<Self>(&b).ok())
-    }
-
-    pub fn save_status(&self) -> Result<(), Box<dyn Error>> {
-        fs::write("revstop_status.json", serde_json::to_vec_pretty(self)?)?;
+    pub fn save_status(&self, path: &str) -> Result<(), Box<dyn Error>> {
+        fs::write(path, serde_json::to_string_pretty(self)?)?;
         Ok(())
     }
-}
-
-pub fn is_revstop_active(rev: &RevStop) -> bool {
-    rev.enabled
 }
