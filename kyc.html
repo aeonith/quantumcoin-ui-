@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuantumCoin | KYC Verification</title>
+  <link rel="stylesheet" href="kyc.css">
+</head>
+<body>
+  <div class="kyc-container">
+    <h1>KYC Verification</h1>
+    <p>Please enter your email and verify the code below to continue.</p>
+
+    <form id="kycForm">
+      <input type="email" id="email" placeholder="Enter your email" required>
+      <div class="code-box">
+        <span id="codeDisplay">QTC-9321</span>
+      </div>
+      <input type="text" id="codeInput" placeholder="Enter the code above" required>
+      <button type="submit">Verify Me</button>
+    </form>
+
+    <p id="statusMessage"></p>
+  </div>
+
+  <script src="kyc.js"></script>
+</body>
+</html>
