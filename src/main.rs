@@ -1,38 +1,48 @@
 mod wallet;
-mod revstop;
-mod blockchain;
-mod transaction;
-mod cli;
 
-use wallet::Wallet;
-use revstop::RevStop;
-use blockchain::Blockchain;
+use crate::wallet::Wallet;
+use std::fs;
 
 fn main() {
     println!("🚀 QuantumCoin Engine Initialized");
 
-    // Load the user's wallet and RevStop
-    let mut wallet = Wallet::load_from_files().unwrap_or_else(|_| {
-        println!("🧾 Creating a new wallet...");
-        let new_wallet = Wallet::generate();
-        new_wallet.save_to_files().expect("❌ Failed to save wallet.");
-        new_wallet
-    });
+    // Load or create wallet
+    let wallet_path = "wallet.json";
 
-    let mut revstop = RevStop::load_status().unwrap_or_else(|_| {
-        println!("🔐 Initializing RevStop...");
-        let mut rs = RevStop::new();
-        rs.lock("default_password"); // This can be changed via CLI
-        rs.save_status().expect("❌ Failed to save RevStop status.");
-        rs
-    });
+    let wallet = if fs::metadata(wallet_path).is_ok() {
+        match Wallet::load_from_file(wallet_path) {
+            Some(w) => {
+                println!("🔐 Wallet loaded successfully.");
+                w
+            },
+            None => {
+                println!("❌ Failed to load wallet. Creating a new one...");
+                let w = Wallet::new();
+                if w.save_to_file(wallet_path) {
+                    println!("💾 New wallet created and saved.");
+                }
+                w
+            }
+        }
+    } else {
+        println!("📁 No wallet file found. Creating new wallet...");
+        let w = Wallet::new();
+        if w.save_to_file(wallet_path) {
+            println!("💾 New wallet saved successfully.");
+        }
+        w
+    };
 
-    // Load or create blockchain
-    let mut blockchain = Blockchain::load_from_file().unwrap_or_else(|_| {
-        println!("🧱 No blockchain found. Creating Genesis block...");
-        Blockchain::new_with_genesis(&wallet)
-    });
+    // Show public address
+    println!("🔑 Public Wallet Address: {}", wallet.public_key);
 
-    // Launch CLI
-    cli::start_cli(&mut wallet, &mut blockchain, &mut revstop);
+    // Simulate a message signing & verification test
+    let message = b"QuantumCoin genesis";
+    match wallet.sign_message(message) {
+        Some(signature) => {
+            let valid = wallet.verify_signature(message, &signature);
+            println!("✅ Signature valid: {}", valid);
+        },
+        None => println!("❌ Failed to sign message."),
+    }
 }
