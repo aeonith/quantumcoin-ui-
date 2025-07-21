@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin Wallet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #000;
+      color: #00ffcc;
+      text-align: center;
+      padding: 60px;
+    }
+
+    .wallet-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px #00ffcc77;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    .info {
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+      background-color: #00ffcc;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #00e6b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="wallet-container">
+    <h1>💼 Welcome to QuantumCoin</h1>
+    <p class="info">Your wallet is protected and live.</p>
+    <p class="info">Balance: <strong id="balance">Loading...</strong></p>
+    <button onclick="logout()">🔒 Logout</button>
+  </div>
+
+  <script>
+    window.onload = function () {
+      const verified = localStorage.getItem("kyc_verified");
+      if (verified !== "true") {
+        alert("⚠️ You must pass KYC to access the wallet.");
+        window.location.href = "kyc.html";
+        return;
+      }
+
+      // Simulate wallet loading
+      const balanceEl = document.getElementById("balance");
+      setTimeout(() => {
+        balanceEl.textContent = "1,250,000 QTC"; // placeholder
+      }, 1000);
+    };
+
+    function logout() {
+      localStorage.removeItem("kyc_verified");
+      alert("You’ve been logged out.");
+      window.location.href = "kyc.html";
+    }
+  </script>
+</body>
+</html>
