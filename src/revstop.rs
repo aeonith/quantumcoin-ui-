@@ -1,99 +1,77 @@
-use std::fs::{File};
+// src/revstop.rs
+
+use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::Path;
-use serde::{Serialize, Deserialize};
-use sha2::{Sha256, Digest};
 
-const REVSTOP_FILE: &str = "revstop_status.json";
+const REVSTOP_FILE: &str = "revstop.lock";
 
-#[derive(Serialize, Deserialize, Debug)]
 pub struct RevStop {
-    pub is_active: bool,
-    pub password_hash: String,
+    active: bool,
+    password: String,
 }
 
 impl RevStop {
-    /// Create new locked RevStop with password
-    pub fn new(password: &str) -> Self {
-        Self {
-            is_active: true,
-            password_hash: hash_password(password),
-        }
-    }
-
-    /// Load RevStop from saved file
-    pub fn load() -> Option<Self> {
+    // Initialize RevStop system (load or default)
+    pub fn load() -> Self {
         if Path::new(REVSTOP_FILE).exists() {
-            let mut file = File::open(REVSTOP_FILE).ok()?;
+            let mut file = File::open(REVSTOP_FILE).unwrap();
             let mut contents = String::new();
-            file.read_to_string(&mut contents).ok()?;
-            serde_json::from_str(&contents).ok()
+            file.read_to_string(&mut contents).unwrap();
+            let parts: Vec<&str> = contents.splitn(2, ':').collect();
+            let status = parts[0] == "1";
+            let password = parts.get(1).unwrap_or(&"default_password").to_string();
+            RevStop {
+                active: status,
+                password,
+            }
         } else {
-            None
+            RevStop {
+                active: false,
+                password: "default_password".to_string(),
+            }
         }
     }
 
-    /// Save RevStop to disk
+    // Save current RevStop state to disk
     pub fn save(&self) {
-        if let Ok(json) = serde_json::to_string_pretty(self) {
-            let _ = File::create(REVSTOP_FILE)
-                .and_then(|mut f| f.write_all(json.as_bytes()));
-        }
+        let status = if self.active { "1" } else { "0" };
+        let data = format!("{}:{}", status, self.password);
+        let mut file = File::create(REVSTOP_FILE).unwrap();
+        file.write_all(data.as_bytes()).unwrap();
     }
 
-    /// Lock the system
-    pub fn lock(&mut self) {
-        self.is_active = true;
+    // Lock the RevStop system with password
+    pub fn lock(&mut self, password: String) {
+        self.active = true;
+        self.password = password;
         self.save();
+        println!("🔒 RevStop is now ENABLED.");
     }
 
-    /// Unlock using password
-    pub fn unlock(&mut self, password: &str) -> bool {
-        if verify_password(&self.password_hash, password) {
-            self.is_active = false;
+    // Attempt to unlock using password
+    pub fn unlock(&mut self, input_password: &str) -> bool {
+        if input_password == self.password {
+            self.active = false;
             self.save();
+            println!("🔓 RevStop is now DISABLED.");
             true
         } else {
+            println!("❌ Incorrect password. RevStop remains active.");
             false
         }
     }
 
-    pub fn status(&self) -> bool {
-        self.is_active
+    // Returns status of RevStop
+    pub fn is_active(&self) -> bool {
+        self.active
     }
-}
 
-// === Internal Hashing ===
-
-fn hash_password(password: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(password.as_bytes());
-    format!("{:x}", hasher.finalize())
-}
-
-fn verify_password(hash: &str, password: &str) -> bool {
-    hash == hash_password(password)
-}
-
-// === Public Helper Methods for main.rs ===
-
-/// Returns true if RevStop is currently locked
-pub fn is_revstop_active() -> bool {
-    if let Some(data) = RevStop::load() {
-        data.is_active
-    } else {
-        false
+    pub fn status_message(&self) -> String {
+        if self.active {
+            "🛡️ RevStop: ACTIVE (Transaction protections enabled)".to_string()
+        } else {
+            "🟢 RevStop: DISABLED (Transactions unrestricted)".to_string()
+        }
     }
-}
-
-/// Activates RevStop with default password (only if not already present)
-pub fn activate() {
-    let mut data = RevStop::load().unwrap_or_else(|| RevStop::new("QuantumSecure2025!"));
-    data.lock();
-}
-
-/// Deactivates RevStop (if password matches — for now hardcoded)
-pub fn deactivate() {
-    let mut data = RevStop::load().unwrap_or_else(|| RevStop::new("QuantumSecure2025!"));
-    let _ = data.unlock("QuantumSecure2025!");
 }
