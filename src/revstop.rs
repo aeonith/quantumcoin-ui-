@@ -1,63 +1,27 @@
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use std::{error::Error, fs};
 
-const REVSTOP_FILE: &str = "revstop.lock";
-
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct RevStop {
-    active: bool,
-    password: Option<String>,
+    pub enabled: bool,
 }
 
 impl RevStop {
-    pub fn new() -> Self {
-        if Path::new(REVSTOP_FILE).exists() {
-            let mut file = File::open(REVSTOP_FILE).expect("Unable to open revstop file");
-            let mut content = String::new();
-            file.read_to_string(&mut content).expect("Failed to read revstop file");
-            if content.starts_with("locked:") {
-                let password = content["locked:".len()..].trim().to_string();
-                return RevStop {
-                    active: true,
-                    password: Some(password),
-                };
-            }
-        }
-        RevStop {
-            active: false,
-            password: None,
-        }
+    pub fn new(enabled: bool) -> Self {
+        Self { enabled }
     }
 
-    pub fn is_active(&self) -> bool {
-        self.active
+    pub fn load_status() -> Option<Self> {
+        fs::read("revstop_status.json").ok()
+            .and_then(|b| serde_json::from_slice::<Self>(&b).ok())
     }
 
-    pub fn lock(&mut self, password: &str) {
-        let mut file = File::create(REVSTOP_FILE).expect("Unable to create revstop file");
-        file.write_all(format!("locked:{}", password).as_bytes())
-            .expect("Failed to write revstop status");
-        self.active = true;
-        self.password = Some(password.to_string());
+    pub fn save_status(&self) -> Result<(), Box<dyn Error>> {
+        fs::write("revstop_status.json", serde_json::to_vec_pretty(self)?)?;
+        Ok(())
     }
+}
 
-    pub fn unlock(&mut self, input_password: &str) -> bool {
-        if let Some(ref actual_password) = self.password {
-            if input_password == actual_password {
-                std::fs::remove_file(REVSTOP_FILE).expect("Failed to remove revstop file");
-                self.active = false;
-                self.password = None;
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn get_status_message(&self) -> String {
-        if self.active {
-            "🔒 RevStop is ACTIVE".to_string()
-        } else {
-            "🔓 RevStop is INACTIVE".to_string()
-        }
-    }
+pub fn is_revstop_active(rev: &RevStop) -> bool {
+    rev.enabled
 }
