@@ -1,75 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuantumCoin</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin™</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- HERO section with background video -->
-  <section class="hero">
-    <video class="bg" autoplay muted loop playsinline>
-      <source src="background.mp4" type="video/mp4">
-      <img src="background.jpg" alt="Fallback Background" />
-    </video>
+<!-- ▸ HERO -->
+<header class="hero">
+  <video class="bg" autoplay muted loop playsinline>
+    <source src="background.mp4" type="video/mp4" />
+  </video>
+  <div class="overlay"></div>
 
-    <div class="overlay"></div>
+  <div class="content">
+    <h1>The future of <span>quantum-secure</span><br />currency.</h1>
 
-    <div class="content">
-      <h1>The future of <span>quantum-secure</span> currency.</h1>
-      <button id="buy-btn">Buy QuantumCoin™</button>
-      <a href="assets/QuantumCoin_Whitepaper.pdf" class="whitepaper" target="_blank">
-        📄 View the QuantumCoin™ Whitepaper
-      </a>
-    </div>
-  </section>
+    <button id="buy-btn">Buy QuantumCoin™</button>
 
-  <!-- CHART -->
-  <section class="chart-card">
-    <h2>Live Price</h2>
-    <div id="price">$0.000001</div>
-    <div id="change">+0.05%</div>
-    <div class="intervals">
-      <button class="active">1D</button>
-      <button>1W</button>
-      <button>1M</button>
-      <button>1Y</button>
-    </div>
-  </section>
+    <a class="whitepaper"
+       href="QuantumCoin_Whitepaper.pdf"
+       target="_blank">
+      <img src="paper-icon.svg" alt="" aria-hidden="true" />
+      View the QuantumCoin™ Whitepaper
+    </a>
+  </div>
+</header>
 
-  <!-- FEATURES -->
-  <section class="features">
-    <div class="feature">
-      <img src="shield.png" alt="Security Icon">
-      <h3>Quantum Resistance</h3>
-      <p>Protected against future quantum threats.</p>
-    </div>
-    <div class="feature">
-      <img src="speed.png" alt="Speed Icon">
-      <h3>Instant Transactions</h3>
-      <p>Transfers complete in seconds worldwide.</p>
-    </div>
-    <div class="feature">
-      <img src="lock.png" alt="Lock Icon">
-      <h3>RevStop™ Security</h3>
-      <p>Ultimate control over your coins and privacy.</p>
-    </div>
-  </section>
+<!-- ▸ LIVE-PRICE CARD -->
+<section class="chart-card">
+  <h2>QUANTUMCOIN</h2>
+  <p id="price">$0.00</p>
+  <p id="change">▲0.00 (0.00%)</p>
 
-  <!-- SIGNUP -->
-  <section class="signup">
-    <h2>Get Early Access</h2>
-    <form id="signupForm">
-      <input type="email" placeholder="Your Email" required>
-      <button type="submit">Sign Up</button>
-    </form>
-    <p class="terms">
-      By signing up, you agree to our
-      <a href="#">Terms of Service</a> & <a href="#">Privacy Policy</a>
-    </p>
-  </section>
+  <div class="intervals">
+    <button data-interval="1h" class="active">1H</button>
+    <button data-interval="1d">1D</button>
+    <button data-interval="1w">1W</button>
+    <button data-interval="1y">1Y</button>
+  </div>
+</section>
 
+<!-- ▸ FEATURES -->
+<section class="features">
+  <article class="feature">
+    <img src="quantum-security-icon.png" alt="Quantum security icon" />
+    <h3>Quantum-Resistant<br />Security</h3>
+    <p>Your assets are protected by post-quantum cryptography from day one.</p>
+  </article>
+
+  <article class="feature">
+    <img src="kyc-verification-icon.png" alt="KYC check icon" />
+    <h3>KYC Verification</h3>
+    <p>Instant verification so you're ready to send, receive, and trade.</p>
+  </article>
+
+  <article class="feature">
+    <img src="price-chart-icon.png" alt="Chart icon" />
+    <h3>Real-Time Chart Data</h3>
+    <p>Track price changes, portfolio value, and daily performance.</p>
+  </article>
+</section>
+
+<!-- ▸ SIGN-UP -->
+<section class="signup">
+  <h2>Get started with QuantumCoin™</h2>
+
+  <form id="signupForm">
+    <input type="email" placeholder="Your Email" required />
+    <button type="submit">Sign Up</button>
+  </form>
+
+  <p class="terms">
+    By signing up, you agree to our
+    <a href="/terms.html" target="_blank">Terms</a> &
+    <a href="/privacy.html" target="_blank">Privacy</a> policies.
+  </p>
+</section>
+
+<script src="script.js"></script>
 </body>
 </html>
