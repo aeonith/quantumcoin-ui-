@@ -1,38 +1,24 @@
-use uuid::Uuid;
-use crate::transaction::Transaction;
-use crate::blockchain::Blockchain;
+use pqcrypto_dilithium::dilithium2::{keypair, PublicKey, SecretKey};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
+use base64::{encode};
 
 pub struct Wallet {
-    pub address: String,
+    pub public_key: PublicKey,
+    pub secret_key: SecretKey,
+    pub balance: f64,
 }
 
 impl Wallet {
-    /// Generate a brand-new wallet address
-    pub fn generate() -> Self {
+    pub fn new() -> Self {
+        let (pk, sk) = keypair();
         Wallet {
-            address: Uuid::new_v4().to_string()
+            public_key: pk,
+            secret_key: sk,
+            balance: 0.0,
         }
     }
 
-    /// Derive balance by summing chain transactions
-    pub fn balance(&self, chain: &Blockchain) -> u64 {
-        chain.chain.iter()
-            .flat_map(|b| b.transactions.iter())
-            .filter_map(|tx| {
-                if tx.to == self.address {
-                    Some(tx.amount as i64)
-                } else if tx.from == self.address {
-                    Some(-(tx.amount as i64))
-                } else {
-                    None
-                }
-            })
-            .sum::<i64>()
-            .max(0) as u64
-    }
-
-    /// Create a new outgoing transaction
-    pub fn create_transaction(&self, to: &str, amount: u64) -> Transaction {
-        Transaction::new(&self.address, to, amount)
+    pub fn get_address(&self) -> String {
+        encode(self.public_key.as_bytes())
     }
 }
