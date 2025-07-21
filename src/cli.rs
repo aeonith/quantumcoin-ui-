@@ -1,83 +1,104 @@
 use std::io::{self, Write};
 use crate::wallet::Wallet;
-use crate::revstop::{RevStop, enable_revstop, disable_revstop, get_revstop_status};
+use crate::revstop::RevStop;
 use crate::blockchain::Blockchain;
 
-pub fn cli_menu(wallet: &mut Wallet, blockchain: &mut Blockchain, revstop: &mut RevStop) {
+pub fn launch_cli(wallet: &mut Wallet, blockchain: &mut Blockchain, revstop: &mut RevStop) {
     loop {
-        println!("\n=== QuantumCoin CLI Wallet ===");
-        println!("1. Check Balance");
+        println!("\n=== 🔐 QuantumCoin CLI Interface ===");
+        println!("1. View Balance");
         println!("2. Send Coins");
-        println!("3. Mine Transactions");
+        println!("3. Mine Pending Transactions");
         println!("4. Show Mining Progress");
         println!("5. Show RevStop Status");
-        println!("6. Enable RevStop");
-        println!("7. Disable RevStop");
+        println!("6. Enable RevStop (Lock Wallet)");
+        println!("7. Disable RevStop (Unlock Wallet)");
         println!("8. Show Last 5 Transactions");
-        println!("9. Export Wallet with 2FA");
+        println!("9. Export Wallet Backup with 2FA");
         println!("10. Show Wallet Address");
         println!("11. Exit");
 
-        print!("Select an option: ");
+        print!("Select an option (1-11): ");
         io::stdout().flush().unwrap();
 
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).unwrap();
+        let choice = choice.trim();
 
-        match choice.trim() {
+        match choice {
             "1" => {
                 let balance = wallet.get_balance(&blockchain);
-                println!("💰 Current Balance: {} QTC", balance);
+                println!("💰 Balance: {} QTC", balance);
             }
             "2" => {
-                print!("Recipient Address: ");
+                print!("Enter recipient address: ");
                 io::stdout().flush().unwrap();
                 let mut recipient = String::new();
                 io::stdin().read_line(&mut recipient).unwrap();
-                let recipient = recipient.trim().to_string();
 
-                print!("Amount to Send: ");
+                print!("Enter amount to send: ");
                 io::stdout().flush().unwrap();
                 let mut amount = String::new();
                 io::stdin().read_line(&mut amount).unwrap();
+
+                let recipient = recipient.trim().to_string();
                 let amount: f64 = amount.trim().parse().unwrap_or(0.0);
+
+                if amount <= 0.0 {
+                    println!("❌ Invalid amount.");
+                    continue;
+                }
 
                 let tx = wallet.create_transaction(&recipient, amount);
                 blockchain.add_transaction(tx);
-                println!("✅ Transaction created and added to mempool.");
+                println!("✅ Transaction created!");
             }
             "3" => {
                 blockchain.mine_pending_transactions(wallet);
-                println!("🪨 Mining complete.");
+                println!("⛏️ Mining complete.");
             }
             "4" => {
                 blockchain.show_mining_progress();
             }
             "5" => {
-                let status = get_revstop_status(revstop);
-                println!("🔐 RevStop is currently: {}", if status { "ENABLED" } else { "DISABLED" });
+                println!("{}", revstop.get_status_message());
             }
             "6" => {
-                enable_revstop(revstop);
+                print!("Set a RevStop password to lock wallet: ");
+                io::stdout().flush().unwrap();
+                let mut password = String::new();
+                io::stdin().read_line(&mut password).unwrap();
+                revstop.lock(password.trim());
+                println!("🔒 RevStop is now ACTIVE.");
             }
             "7" => {
-                disable_revstop(revstop);
+                print!("Enter RevStop password to unlock: ");
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).unwrap();
+                let success = revstop.unlock(input.trim());
+                if success {
+                    println!("🔓 RevStop disabled successfully.");
+                } else {
+                    println!("❌ Incorrect password. RevStop remains active.");
+                }
             }
             "8" => {
-                blockchain.show_last_transactions();
+                wallet.show_last_transactions(&blockchain);
             }
             "9" => {
                 wallet.export_with_2fa();
             }
             "10" => {
-                let address = wallet.get_address();
-                println!("📬 Wallet Address: {}", address);
+                println!("📬 Wallet Address: {}", wallet.get_address());
             }
             "11" => {
-                println!("👋 Exiting QuantumCoin CLI. Goodbye.");
+                println!("👋 Exiting CLI. Goodbye!");
                 break;
             }
-            _ => println!("❌ Invalid option. Try again."),
+            _ => {
+                println!("❌ Invalid selection. Choose a number between 1-11.");
+            }
         }
     }
 }
