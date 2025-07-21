@@ -1,11 +1,10 @@
-/* Base Reset */
+/* Reset & base */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: sans-serif;
   color: #fff;
   background: #000;
   line-height: 1.4;
-  overflow-x: hidden;
 }
 
 /* HERO */
@@ -21,7 +20,7 @@ body {
   width: 100%; height: 100%;
   object-fit: cover;
   z-index: 1;
-  filter: brightness(0.4);
+  filter: brightness(0.5);
 }
 .hero .overlay {
   position: absolute;
@@ -69,27 +68,21 @@ body {
 
 /* CHART CARD */
 .chart-card {
-  background: rgba(0, 0, 0, 0.2); /* more transparent now */
-  backdrop-filter: blur(6px);
-  margin: 2rem auto;
-  padding: 1.5rem;
+  background: rgba(0,0,0,0.7);
+  margin: 1.5rem auto;
+  padding: 1.2rem;
   border-radius: 12px;
   max-width: 360px;
   text-align: center;
-  box-shadow: 0 0 12px rgba(255,255,255,0.05);
 }
 .chart-card h2 { font-size: 1.2rem; margin-bottom: 0.2rem; }
-#price { font-size: 2.5rem; margin: 0.2rem 0; }
+#price { font-size: 2.4rem; margin: 0.2rem 0; }
 #change { font-size: 1rem; }
-#priceChart {
-  background-color: rgba(0, 0, 0, 0.1);  /* Chart canvas transparency */
-  border-radius: 10px;
-}
 .intervals {
-  margin-top: 1rem;
+  margin-top: 0.8rem;
   display: flex;
   justify-content: center;
-  gap: 1rem;
+  gap: 0.6rem;
 }
 .intervals button {
   background: none;
@@ -97,7 +90,7 @@ body {
   color: #fff;
   font-weight: bold;
   cursor: pointer;
-  padding: 0.4rem 0.6rem;
+  padding: 0.3rem 0.5rem;
   position: relative;
 }
 .intervals button.active::after,
@@ -116,25 +109,25 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 2rem;
-  margin: 3rem auto;
+  gap: 1.5rem;
+  margin: 2rem auto;
   max-width: 800px;
   padding: 0 1rem;
 }
 .feature {
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.6);
   border-radius: 12px;
   text-align: center;
-  padding: 1.5rem;
+  padding: 1.2rem;
   flex: 1 1 220px;
 }
-.feature img { width: 64px; height: 64px; margin-bottom: 1rem; }
+.feature img { width: 52px; height: 52px; margin-bottom: 0.8rem; }
 .feature h3 {
   color: #fda800;
-  margin-bottom: 0.6rem;
-  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
 }
-.feature p { font-size: 0.95rem; line-height: 1.3; }
+.feature p { font-size: 0.88rem; line-height: 1.3; }
 
 /* SIGNUP */
 .signup {
@@ -142,25 +135,25 @@ body {
   padding: 2rem 1rem;
 }
 .signup h2 {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
 }
 #signupForm {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 #signupForm input {
-  padding: 0.8rem;
+  padding: 0.7rem;
   border: none;
   border-radius: 6px;
-  width: 220px;
-  font-size: 1rem;
+  width: 200px;
+  font-size: 0.95rem;
 }
 #signupForm button {
-  padding: 0.8rem 1.2rem;
+  padding: 0.7rem 1.1rem;
   border: none;
   border-radius: 6px;
   background: #fda800;
@@ -169,51 +162,21 @@ body {
   cursor: pointer;
 }
 .terms {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 .terms a {
   color: #00bfff;
   text-decoration: underline;
 }
 
-/* FINAL MOBILE TWEAKS */
+/* RESPONSIVE */
 @media (max-width: 480px) {
-  body {
-    padding: 0;
-    margin: 0;
-  }
-
-  .hero h1 {
-    font-size: 1.6rem;
-    padding: 0 1rem;
-  }
-
-  .chart-card {
-    width: 92%;
-    padding: 1.2rem;
-  }
-
-  #price { font-size: 2.2rem; }
-  .features {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .feature {
-    padding: 1.2rem;
-  }
-
-  .signup h2 {
-    font-size: 1.5rem;
-  }
-
-  #signupForm input {
-    width: 90%;
-    max-width: 280px;
-  }
-
-  .whitepaper {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.8rem;
-  }
+  .hero h1 { font-size: 1.7rem; }
+  #buy-btn { padding: 0.6rem 1.3rem; font-size: 0.88rem; }
+  .chart-card { margin: 1.2rem auto; padding: 1rem; }
+  .features { gap: 1rem; margin: 1.5rem auto; }
+  .feature { padding: 1rem; }
+  .signup h2 { font-size: 1.4rem; }
+  #signupForm input { width: 170px; font-size: 0.9rem; }
+  #signupForm button { font-size: 0.9rem; }
 }
