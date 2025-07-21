@@ -1,106 +1,61 @@
-use axum::{
-    routing::{get, post},
-    Json, Router, extract::State,
-};
-use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
-use std::net::SocketAddr;
-use tower_http::cors::{CorsLayer, Any};
+use actix_files::Files;
+use actix_web::{web, App, HttpServer, Responder, HttpResponse};
+use std::sync::Mutex;
+use once_cell::sync::Lazy;
+use quantumcoin::{blockchain::Blockchain, transaction::Transaction, wallet::Wallet};
 
 mod blockchain;
-mod wallet;
+mod block;
 mod transaction;
+mod wallet;
 mod revstop;
-mod mempool;
 
-use blockchain::Blockchain;
-use wallet::Wallet;
-use transaction::Transaction;
-use mempool::Mempool;
-use revstop::RevStop;
-
-#[derive(Clone)]
-struct AppState {
-    blockchain: Arc<Mutex<Blockchain>>,
-    mempool: Arc<Mutex<Mempool>>,
-    wallet: Arc<Mutex<Wallet>>,
-    revstop: Arc<Mutex<RevStop>>,
-}
-
-#[derive(Deserialize)]
-struct SendRequest {
-    recipient: String,
-    amount: f64,
-}
-
-#[tokio::main]
-async fn main() {
-    let wallet = Wallet::load_from_files().unwrap_or_else(|_| Wallet::new());
-    let revstop = RevStop::load_status().unwrap_or_else(|_| RevStop::default());
+static BLOCKCHAIN: Lazy<Mutex<Blockchain>> = Lazy::new(|| {
     let mut blockchain = Blockchain::new();
-    blockchain.load_or_create_genesis(wallet.get_address(), 1_250_000.0);
+    blockchain.load_from_file("blockchain.json");
+    Mutex::new(blockchain)
+});
 
-    let state = AppState {
-        blockchain: Arc::new(Mutex::new(blockchain)),
-        mempool: Arc::new(Mutex::new(Mempool::new())),
-        wallet: Arc::new(Mutex::new(wallet)),
-        revstop: Arc::new(Mutex::new(revstop)),
-    };
-
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
-
-    let app = Router::new()
-        .route("/", get(health_check))
-        .route("/price", get(get_price))
-        .route("/send", post(send_transaction))
-        .route("/mine", post(mine_block))
-        .with_state(state.clone())
-        .layer(cors);
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    println!("✅ QuantumCoin API running at http://{}/", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+async fn status() -> impl Responder {
+    HttpResponse::Ok().body("🚀 QuantumCoin API is live")
 }
 
-async fn health_check() -> &'static str {
-    "✅ QuantumCoin Node is Alive"
+async fn get_balance(data: web::Query<std::collections::HashMap<String, String>>) -> impl Responder {
+    if let Some(addr) = data.get("address") {
+        let blockchain = BLOCKCHAIN.lock().unwrap();
+        let balance = blockchain.get_balance(addr);
+        HttpResponse::Ok().body(format!("Balance for {}: {}", addr, balance))
+    } else {
+        HttpResponse::BadRequest().body("Missing 'address' parameter")
+    }
 }
 
-async fn get_price(State(state): State<AppState>) -> Json<PriceResponse> {
-    let chain = state.blockchain.lock().unwrap();
-    let price = chain.calculate_price();
-    Json(PriceResponse {
-        current_price: price,
+async fn send_transaction(tx: web::Json<Transaction>) -> impl Responder {
+    let mut blockchain = BLOCKCHAIN.lock().unwrap();
+    blockchain.add_transaction(tx.into_inner());
+    blockchain.save_to_file("blockchain.json");
+    HttpResponse::Ok().body("Transaction received and added to mempool.")
+}
+
+async fn mine() -> impl Responder {
+    let mut blockchain = BLOCKCHAIN.lock().unwrap();
+    blockchain.mine_pending_transactions("Quantum_Miner".to_string());
+    blockchain.save_to_file("blockchain.json");
+    HttpResponse::Ok().body("Block mined and added to blockchain.")
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    println!("🔗 QuantumCoin node starting...");
+    HttpServer::new(|| {
+        App::new()
+            .route("/status", web::get().to(status))
+            .route("/balance", web::get().to(get_balance))
+            .route("/transaction", web::post().to(send_transaction))
+            .route("/mine", web::post().to(mine))
+            .service(Files::new("/", "./static").index_file("index.html"))
     })
-}
-
-#[derive(Serialize)]
-struct PriceResponse {
-    current_price: f64,
-}
-
-async fn send_transaction(
-    State(state): State<AppState>,
-    Json(payload): Json<SendRequest>,
-) -> Json<String> {
-    let wallet = state.wallet.lock().unwrap();
-    let tx = wallet.create_transaction(&payload.recipient, payload.amount);
-    let mut mempool = state.mempool.lock().unwrap();
-    mempool.add_transaction(tx);
-    Json("Transaction submitted.".to_string())
-}
-
-async fn mine_block(State(state): State<AppState>) -> Json<String> {
-    let mut blockchain = state.blockchain.lock().unwrap();
-    let mut mempool = state.mempool.lock().unwrap();
-    let transactions = mempool.drain();
-    blockchain.mine_pending_transactions(transactions);
-    blockchain.save_to_file().unwrap();
-    Json("✅ Block mined.".to_string())
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
