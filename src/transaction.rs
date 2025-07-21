@@ -2,15 +2,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use chrono::Utc;
 
-/// The only two transaction kinds we need right now.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum TxType {
-    Transfer,   // user → user
-    Coinbase,   // miner reward
-}
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub enum TxType { Transfer, Coinbase }
 
-/// A single movement of value on-chain.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Transaction {
     pub id: String,
     pub from: String,
@@ -21,25 +16,23 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    /// Creates a normal user-to-user transfer.
     pub fn new(from: &str, to: &str, amount: u64) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
-            from: from.to_string(),
-            to: to.to_string(),
+            from: from.into(),
+            to: to.into(),
             amount,
             timestamp: Utc::now().timestamp(),
             tx_type: TxType::Transfer,
         }
     }
 
-    /// Special coinbase tx that mints the block reward to the miner.
     pub fn coinbase(recipient: &str) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
-            from: "GENESIS".to_string(),
-            to: recipient.to_string(),
-            amount: 50,
+            from: "GENESIS".into(),
+            to: recipient.into(),
+            amount: 25,
             timestamp: Utc::now().timestamp(),
             tx_type: TxType::Coinbase,
         }
