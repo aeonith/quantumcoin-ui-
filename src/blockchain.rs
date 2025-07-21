@@ -1,62 +1,46 @@
-use serde::{Deserialize, Serialize};
-use std::{fs, path::Path, error::Error};
+use serde::{Serialize, Deserialize};
+use sha2::{Sha256, Digest};
+use chrono::Utc;
+use crate::transaction::Transaction;
 
-use crate::{block::Block, transaction::Transaction};
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Block {
+    pub index: u64,
+    pub previous_hash: String,
+    pub timestamp: i64,
+    pub transactions: Vec<Transaction>,
+    pub hash: String,
+}
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+impl Block {
+    pub fn new(index: u64, previous_hash: String, transactions: Vec<Transaction>) -> Self {
+        let timestamp = Utc::now().timestamp();
+        let mut hasher = Sha256::new();
+        hasher.update(format!("{}{}{:?}{}", index, &previous_hash, &transactions, timestamp));
+        let hash = format!("{:x}", hasher.finalize());
+
+        Block { index, previous_hash, timestamp, transactions, hash }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Blockchain {
     pub chain: Vec<Block>,
-    pub pending: Vec<Transaction>,
-    pub difficulty: usize,
-    pub reward: u64,
 }
 
 impl Blockchain {
-    pub fn new_with_genesis(miner: &str) -> Self {
-        Self {
-            chain: vec![Block::new_genesis(miner)],
-            pending: vec![],
-            difficulty: 4,
-            reward: 25,
-        }
+    pub fn new() -> Self {
+        let genesis = Block::new(0, "0".into(), vec![]);
+        Blockchain { chain: vec![genesis] }
     }
 
-    pub fn create_transaction(&mut self, tx: Transaction) {
-        self.pending.push(tx);
-    }
-
-    pub fn mine_pending_transactions(&mut self, miner: &str) {
-        if self.pending.is_empty() { return; }
-        self.pending.push(Transaction::coinbase(miner));
-        let last = &self.chain[self.chain.len()-1];
-        let block = Block::new(
-            last.index + 1,
-            last.hash.clone(),
-            self.pending.clone(),
-            self.difficulty,
-        );
+    pub fn add_block(&mut self, transactions: Vec<Transaction>) {
+        let prev = self.chain.last().unwrap();
+        let block = Block::new(prev.index + 1, prev.hash.clone(), transactions);
         self.chain.push(block);
-        self.pending.clear();
     }
 
-    pub fn get_balance(&self, addr: &str) -> u64 {
-        self.chain.iter().flat_map(|b| &b.transactions)
-            .filter(|tx| tx.to == addr).map(|tx| tx.amount).sum::<u64>()
-        + self.chain.iter().flat_map(|b| &b.transactions)
-            .filter(|tx| tx.from == addr).map(|tx| -(tx.amount as i64))
-            .sum::<i64>().max(0) as u64
-    }
-
-    pub fn save(&self, file: &str) -> Result<(), Box<dyn Error>> {
-        fs::write(file, serde_json::to_string_pretty(self)?)?;
-        Ok(())
-    }
-
-    pub fn load(file: &str) -> Result<Self, Box<dyn Error>> {
-        if !Path::new(file).exists() {
-            return Err("no file".into());
-        }
-        let s = fs::read_to_string(file)?;
-        Ok(serde_json::from_str(&s)?)
+    pub fn last_hash(&self) -> String {
+        self.chain.last().unwrap().hash.clone()
     }
 }
