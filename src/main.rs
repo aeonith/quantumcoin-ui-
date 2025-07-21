@@ -1,58 +1,31 @@
-use actix_web::{web, App, HttpServer, Responder, HttpResponse};
-use serde::{Deserialize, Serialize};
-use base64::{engine::general_purpose, Engine as _};
-use std::sync::Mutex;
+use std::net::TcpListener;
+use std::io::Write;
+use quantumcoin::wallet::Wallet;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct Transaction {
-    sender: String,
-    recipient: String,
-    amount: u64,
-    timestamp: u64,
-}
-
-// Simulated in-memory mempool
-struct AppState {
-    mempool: Mutex<Vec<Transaction>>,
-}
-
-fn get_wallet_address() -> String {
-    let pub_key_bytes = b"MyQuantumCoinPublicKey1234567890";
-    general_purpose::STANDARD.encode(pub_key_bytes)
-}
-
-async fn wallet_handler() -> impl Responder {
-    let wallet_address = get_wallet_address();
-    HttpResponse::Ok().body(format!("QuantumCoin Wallet Address:\n{}", wallet_address))
-}
-
-async fn create_transaction(
-    transaction: web::Json<Transaction>,
-    data: web::Data<AppState>,
-) -> impl Responder {
-    let mut mempool = data.mempool.lock().unwrap();
-    let mut tx = transaction.into_inner();
-    tx.timestamp = chrono::Utc::now().timestamp() as u64;
-    mempool.push(tx.clone());
-
-    HttpResponse::Ok().json(&tx)
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    println!("🚀 QuantumCoin Web Server Running");
-
-    let app_state = web::Data::new(AppState {
-        mempool: Mutex::new(Vec::new()),
+fn main() {
+    // Attempt to load wallet or generate new one
+    let wallet = Wallet::load_from_files("wallet").unwrap_or_else(|| {
+        let w = Wallet::generate();
+        w.save_to_files("wallet");
+        w
     });
 
-    HttpServer::new(move || {
-        App::new()
-            .app_data(app_state.clone())
-            .route("/wallet", web::get().to(wallet_handler))
-            .route("/transaction", web::post().to(create_transaction))
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    let address = wallet.get_address();
+
+    // Launch minimal web server
+    let listener = TcpListener::bind("0.0.0.0:8080").expect("Failed to bind to port 8080");
+    println!("🚀 QuantumCoin Web Server Running");
+
+    for stream in listener.incoming() {
+        if let Ok(mut stream) = stream {
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n\
+                <html><body style='background-color: black; color: white; font-family: monospace;'>\
+                <h3>QuantumCoin Wallet Address:</h3>\
+                <p>{}</p>\
+                </body></html>", address
+            );
+            stream.write_all(response.as_bytes()).unwrap();
+        }
+    }
 }
