@@ -1,75 +1,80 @@
+// src/blockchain.rs
+
 use crate::block::Block;
 use crate::transaction::Transaction;
-use crate::wallet::Wallet;
-use serde::{Serialize, Deserialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::path::Path;
 
-const GENESIS_REWARD: f64 = 1_250_000.0;
-const HALVING_INTERVAL_YEARS: u64 = 2;
-const BLOCKS_PER_YEAR: u64 = 52_560; // 1 block every 10 minutes
-const BLOCKS_PER_HALVING: u64 = HALVING_INTERVAL_YEARS * BLOCKS_PER_YEAR;
+const BLOCKCHAIN_FILE: &str = "blockchain.json";
+const GENESIS_PREMINE_ADDRESS: &str = "tNzCy5NT+GORGIA+JCVIGAJUIBM...QNSATLVTHNBWXMZA783YP/ALNCM2GEAO1TZ=="; // ← your base64 wallet address
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Blockchain {
     pub chain: Vec<Block>,
-    pub mempool: Vec<Transaction>,
     pub difficulty: usize,
+    pub block_reward: f64,
 }
 
 impl Blockchain {
-    pub fn new(genesis_address: String) -> Self {
-        let mut blockchain = Blockchain {
-            chain: vec![],
-            mempool: vec![],
-            difficulty: 6, // Bitcoin-level
-        };
+    pub fn new() -> Self {
+        if Path::new(BLOCKCHAIN_FILE).exists() {
+            let mut file = File::open(BLOCKCHAIN_FILE).unwrap();
+            let mut contents = String::new();
+            file.read_to_string(&mut contents).unwrap();
+            serde_json::from_str(&contents).unwrap()
+        } else {
+            let mut blockchain = Blockchain {
+                chain: vec![],
+                difficulty: 5,
+                block_reward: 50.0,
+            };
+            blockchain.create_genesis_block();
+            blockchain
+        }
+    }
+
+    fn create_genesis_block(&mut self) {
         let genesis_tx = Transaction {
             sender: "GENESIS".to_string(),
-            recipient: genesis_address,
-            amount: GENESIS_REWARD,
+            recipient: GENESIS_PREMINE_ADDRESS.to_string(),
+            amount: 1_250_000.0,
             signature: None,
         };
-        let genesis_block = Block::new(0, vec![genesis_tx], "0".to_string(), blockchain.difficulty);
-        blockchain.chain.push(genesis_block);
-        blockchain
+
+        let genesis_block = Block::new(0, vec![genesis_tx], "0".to_string(), self.difficulty);
+        self.chain.push(genesis_block);
+        self.save_to_disk();
     }
 
-    pub fn add_transaction(&mut self, tx: Transaction) {
-        self.mempool.push(tx);
-    }
+    pub fn add_block(&mut self, transactions: Vec<Transaction>) {
+        let last_block = self.chain.last().unwrap();
+        let mut new_block = Block::new(
+            last_block.index + 1,
+            transactions,
+            last_block.hash.clone(),
+            self.difficulty,
+        );
+        new_block.mine_block();
+        self.chain.push(new_block);
 
-    pub fn mine_pending_transactions(&mut self, wallet: &Wallet) {
-        if self.mempool.is_empty() {
-            println!("📭 No transactions to mine.");
-            return;
+        if self.chain.len() % 1051200 == 0 && self.block_reward > 0.01 {
+            self.block_reward /= 2.0;
         }
 
-        let reward = self.current_block_reward();
-        let reward_tx = Transaction {
-            sender: "MINING_REWARD".to_string(),
-            recipient: wallet.get_address(),
-            amount: reward,
-            signature: None,
-        };
-
-        let mut txs = vec![reward_tx];
-        txs.append(&mut self.mempool);
-
-        let last_hash = self.chain.last().unwrap().hash.clone();
-        let new_block = Block::new(self.chain.len() as u64, txs, last_hash, self.difficulty);
-        self.chain.push(new_block);
+        self.save_to_disk();
     }
 
-    pub fn is_chain_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         for i in 1..self.chain.len() {
             let current = &self.chain[i];
             let previous = &self.chain[i - 1];
-            if current.previous_hash != previous.hash {
+
+            if current.hash != current.calculate_hash() {
                 return false;
             }
-            if !current.is_valid() {
+
+            if current.previous_hash != previous.hash {
                 return false;
             }
         }
@@ -91,42 +96,45 @@ impl Blockchain {
         balance
     }
 
-    pub fn current_block_reward(&self) -> f64 {
-        let height = self.chain.len() as u64;
-        let halvings = height / BLOCKS_PER_HALVING;
-        let mut reward = 50.0;
-        for _ in 0..halvings {
-            reward /= 2.0;
-        }
-        reward.max(0.0001)
-    }
-
     pub fn save_to_disk(&self) {
-        if let Ok(json) = serde_json::to_string(&self) {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open("blockchain.json")
-                .unwrap();
-            file.write_all(json.as_bytes()).unwrap();
-        }
+        let serialized = serde_json::to_string_pretty(self).unwrap();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(BLOCKCHAIN_FILE)
+            .unwrap();
+        file.write_all(serialized.as_bytes()).unwrap();
     }
+}
 
-    pub fn load_from_disk() -> Option<Blockchain> {
-        if let Ok(mut file) = File::open("blockchain.json") {
-            let mut data = String::new();
-            file.read_to_string(&mut data).unwrap();
-            if let Ok(bc) = serde_json::from_str(&data) {
-                return Some(bc);
-            }
-        }
-        None
+impl serde::Serialize for Blockchain {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let chain = &self.chain;
+        let difficulty = self.difficulty;
+        let block_reward = self.block_reward;
+        let mut state = serializer.serialize_struct("Blockchain", 3)?;
+        state.serialize_field("chain", chain)?;
+        state.serialize_field("difficulty", &difficulty)?;
+        state.serialize_field("block_reward", &block_reward)?;
+        state.end()
     }
+}
 
-    pub fn show_mining_progress(&self) {
-        let total = self.chain.len();
-        let reward = self.current_block_reward();
-        println!("📊 Height: {total}, Next Reward: {reward:.4} QTC");
+impl<'de> serde::Deserialize<'de> for Blockchain {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(serde::Deserialize)]
+        struct BlockchainData {
+            chain: Vec<Block>,
+            difficulty: usize,
+            block_reward: f64,
+        }
+
+        let data = BlockchainData::deserialize(deserializer)?;
+        Ok(Blockchain {
+            chain: data.chain,
+            difficulty: data.difficulty,
+            block_reward: data.block_reward,
+        })
     }
 }
