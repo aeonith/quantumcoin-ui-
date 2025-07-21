@@ -3,36 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin</title>
+  <title>QuantumCoin™</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <div class="container">
-    <h1>The future of <span class="highlight">quantum-secure</span><br>currency.</h1>
-    
-    <a href="#" class="buy-btn">Buy QuantumCoin™</a>
+    <!-- HEADLINE -->
+    <h1>
+      The future of <span>quantum-secure</span> currency.
+    </h1>
 
-    <div class="whitepaper-container">
-      <a href="whitepaper.pdf" class="whitepaper-link" target="_blank">
-        📄 View the QuantumCoin™ Whitepaper
-      </a>
-    </div>
+    <!-- CTA BUTTON -->
+    <button id="buy-btn">Buy QuantumCoin™</button>
 
-    <div class="price-widget">
+    <!-- WHITEPAPER LINK -->
+    <a href="whitepaper.pdf" class="whitepaper">
+      <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" alt="Doc Icon" width="18">
+      View the QuantumCoin™ Whitepaper
+    </a>
+
+    <!-- PRICE DATA -->
+    <div class="token-info">
       <h2>QUANTUMCOIN</h2>
-      <p class="price">$0.00</p>
-      <p class="change">▲ 0.00 (0.65%)</p>
+      <p>$0.00</p>
+      <div class="change">▲ 0.00 (0.00%)</div>
     </div>
 
-    <iframe 
-      class="chart"
-      src="https://s.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BTCUSD&locale=en"
-      frameborder="0"
-      allowtransparency="true"
-      scrolling="no"
-      width="100%"
-      height="220">
-    </iframe>
+    <!-- CHART PLACEHOLDER -->
+    <div class="chart-card">
+      <img src="https://www.tradingview.com/x/y0CqfxM9/" alt="Chart placeholder" style="width:100%; border-radius:10px;" />
+      <!-- Replace above with embedded chart if backend is live -->
+    </div>
+
+    <!-- FEATURES -->
+    <div class="features">
+      <div class="feature">
+        <img src="https://cdn-icons-png.flaticon.com/512/3064/3064197.png" alt="Shield Icon" />
+        <h3>Quantum-resistant security</h3>
+        <p>Your assets are protected by advanced, quantum-proof cryptography.</p>
+      </div>
+
+      <div class="feature">
+        <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="KYC Icon" />
+        <h3>KYC verification</h3>
+        <p>Verify your identity quickly and securely to start trading.</p>
+      </div>
+
+      <div class="feature">
+        <img src="https://cdn-icons-png.flaticon.com/512/2948/2948035.png" alt="Graph Icon" />
+        <h3>Real-time data</h3>
+        <p>View your balance and the latest price changes at any time.</p>
+      </div>
+    </div>
+
+    <!-- SIGNUP -->
+    <div class="signup">
+      <h2>Get started with QuantumCoin™</h2>
+      <form id="signupForm">
+        <input type="email" placeholder="Email" required />
+        <button type="submit">Sign Up</button>
+      </form>
+    </div>
   </div>
+
 </body>
 </html>
