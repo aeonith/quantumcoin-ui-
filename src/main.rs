@@ -1,17 +1,19 @@
-mod wallet;
-mod block;
-mod transaction;
-mod blockchain;
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
-use wallet::Wallet;
-use blockchain::Blockchain;
+#[get("/")]
+async fn index() -> impl Responder {
+    HttpResponse::Ok().body("🚀 QuantumCoin Web Server is Live!")
+}
 
-fn main() {
-    println!("🚀 QuantumCoin Engine Booted");
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    println!("🟢 Starting QuantumCoin Web Server...");
 
-    let wallet = Wallet::new();
-    println!("🧠 Wallet initialized: {}", wallet.get_address());
-
-    let mut blockchain = Blockchain::new();
-    blockchain.print_chain();
+    HttpServer::new(|| {
+        App::new()
+            .service(index)
+    })
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
