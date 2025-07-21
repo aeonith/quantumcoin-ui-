@@ -1,137 +1,223 @@
+/* Base styles */
 body {
-    background-color: #000;
-    color: #fff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+  background-color: black;
 }
 
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 40px 20px;
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 50px 20px;
+  overflow: hidden;
 }
 
-h1 {
-    font-size: 2.5em;
-    margin-bottom: 0.3em;
+.bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.15;
+  z-index: -2;
 }
 
-h2 {
-    font-size: 2em;
-    margin-bottom: 0.3em;
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 1));
+  z-index: -1;
 }
 
-p {
-    font-size: 1.1em;
-    margin-bottom: 1.5em;
+.content h1 {
+  font-size: 2.5em;
+  font-weight: bold;
+  margin-bottom: 20px;
 }
 
-button, .button-link {
-    padding: 15px 30px;
-    font-size: 1em;
-    font-weight: bold;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
-    margin: 10px 0;
-    transition: background-color 0.3s ease;
+.content h1 span {
+  color: #3498db;
 }
 
-button:hover, .button-link:hover {
-    background-color: #0056b3;
+#buy-btn {
+  background-color: #3498db;
+  border: none;
+  padding: 12px 28px;
+  font-size: 16px;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
 
-.whitepaper-note {
-    color: #ccc;
-    font-size: 0.9em;
-    margin-top: 5px;
-    margin-bottom: 30px;
-    display: block;
+#buy-btn:hover {
+  background-color: #2980b9;
 }
 
-.chart-container {
-    background-color: #111;
-    padding: 20px;
-    border-radius: 15px;
-    margin-top: 40px;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+/* ✅ Whitepaper button styling */
+.whitepaper-btn {
+  display: inline-block;
+  margin-top: 15px;
+  margin-left: 10px;
+  padding: 10px 22px;
+  background-color: #9b59b6;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 6px;
+  transition: background-color 0.3s;
 }
 
-.price-display {
-    font-size: 3em;
-    font-weight: bold;
-    margin-top: 20px;
-    margin-bottom: 10px;
+.whitepaper-btn:hover {
+  background-color: #8e44ad;
 }
 
-.price-change {
-    color: #00ff00;
-    font-weight: bold;
-    font-size: 1.2em;
+.chart-card {
+  background-color: #111;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 30px auto;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
 }
 
-footer {
-    margin-top: 60px;
-    font-size: 0.9em;
-    color: #777;
+.chart-card .header {
+  text-align: center;
+  margin-bottom: 10px;
 }
 
-a {
-    color: #00aaff;
-    text-decoration: none;
+.chart-card #price {
+  font-size: 24px;
+  font-weight: bold;
 }
 
-a:hover {
-    text-decoration: underline;
+.chart-card #change {
+  color: #2ecc71;
 }
 
-img {
+.intervals {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.intervals button {
+  background: none;
+  color: white;
+  border: 1px solid #555;
+  margin: 0 5px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.intervals .active {
+  background-color: #555;
+}
+
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.feature {
+  flex: 1 1 250px;
+  max-width: 300px;
+  background-color: #1a1a1a;
+  margin: 10px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.03);
+  text-align: center;
+}
+
+.feature img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.signup {
+  margin-top: 50px;
+  padding: 30px;
+  background-color: #222;
+  border-radius: 10px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.signup h2 {
+  margin-bottom: 20px;
+}
+
+#signupForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#email {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+#signupForm button {
+  padding: 12px;
+  background-color: #e67e22;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#signupForm button:hover {
+  background-color: #d35400;
+}
+
+.terms {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.terms a {
+  color: #ccc;
+  text-decoration: underline;
+}
+
+@media screen and (max-width: 600px) {
+  .content h1 {
+    font-size: 1.8em;
+  }
+
+  .chart-card {
+    padding: 15px;
+  }
+
+  .feature {
     max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-    margin-top: 20px;
-}
+  }
 
-/* Fix for whitepaper alignment */
-.whitepaper-link {
-    margin-top: 10px;
-    display: inline-block;
-    background-color: #003366;
-    padding: 12px 25px;
-    border-radius: 10px;
-    color: #fff;
-    font-weight: bold;
-}
+  .signup {
+    padding: 20px;
+  }
 
-.whitepaper-link:hover {
-    background-color: #005fa3;
-}
-
-/* Chart responsiveness */
-iframe {
-    width: 100%;
-    height: 400px;
-    border: none;
-    border-radius: 12px;
-    margin-top: 20px;
-}
-
-/* Mobile scaling */
-@media (max-width: 768px) {
-    h1 {
-        font-size: 2em;
-    }
-    .price-display {
-        font-size: 2.5em;
-    }
-    button, .button-link {
-        padding: 12px 20px;
-        font-size: 0.95em;
-    }
+  .whitepaper-btn {
+    font-size: 14px;
+    padding: 8px 18px;
+  }
 }
