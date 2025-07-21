@@ -1,40 +1,24 @@
-use serde::{Deserialize, Serialize};
+use chrono::{Utc, DateTime};
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
-use chrono::Utc;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub enum TxType { Transfer, Coinbase }
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
-    pub id: String,
+    pub id: Uuid,
     pub from: String,
     pub to: String,
     pub amount: u64,
-    pub timestamp: i64,
-    pub tx_type: TxType,
+    pub timestamp: DateTime<Utc>,
 }
 
 impl Transaction {
     pub fn new(from: &str, to: &str, amount: u64) -> Self {
-        Self {
-            id: Uuid::new_v4().to_string(),
-            from: from.into(),
-            to: to.into(),
+        Transaction {
+            id: Uuid::new_v4(),
+            from: from.to_string(),
+            to: to.to_string(),
             amount,
-            timestamp: Utc::now().timestamp(),
-            tx_type: TxType::Transfer,
-        }
-    }
-
-    pub fn coinbase(recipient: &str) -> Self {
-        Self {
-            id: Uuid::new_v4().to_string(),
-            from: "GENESIS".into(),
-            to: recipient.into(),
-            amount: 25,
-            timestamp: Utc::now().timestamp(),
-            tx_type: TxType::Coinbase,
+            timestamp: Utc::now(),
         }
     }
 }
