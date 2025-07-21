@@ -1,53 +1,52 @@
-use std::time::{Duration, Instant};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub struct MiningInfo {
-    pub last_mined: Instant,
-    pub mining_difficulty: u64,
-    pub mining_reward: f64,
-    pub halving_interval_secs: u64,
-    pub reward_halvings: u32,
+/// Initial mining reward in QTC
+const INITIAL_REWARD: f64 = 50.0;
+
+/// Max total supply of QuantumCoin
+pub const MAX_SUPPLY: f64 = 22_000_000.0;
+
+/// Approx. time between blocks (Bitcoin-style: 10 minutes)
+const BLOCK_TIME_SECONDS: u64 = 600;
+
+/// Number of blocks per halving (~2 years worth of blocks at 10 min/block)
+const HALVING_INTERVAL_BLOCKS: u64 = 105120; // 365*24*6 = 105120 blocks per 2 years
+
+/// Minimum possible block reward (prevents rewards from going below dust value)
+const MIN_REWARD_THRESHOLD: f64 = 0.0001;
+
+/// Returns the current UNIX timestamp in seconds
+pub fn get_current_timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
-impl MiningInfo {
-    pub fn new() -> Self {
-        Self {
-            last_mined: Instant::now(),
-            mining_difficulty: 5,          // Difficulty = number of leading zeros required
-            mining_reward: 6.25,           // Starting mining reward (similar to Bitcoin post-halvings)
-            halving_interval_secs: 60 * 60 * 24 * 365 * 2, // Halves every 2 years
-            reward_halvings: 0,
-        }
-    }
+/// Calculates the mining reward based on current block height
+pub fn calculate_block_reward(block_height: u64) -> f64 {
+    let halvings = block_height / HALVING_INTERVAL_BLOCKS;
+    let reward = INITIAL_REWARD / 2f64.powi(halvings as i32);
 
-    pub fn update_reward_if_needed(&mut self) {
-        let time_since_last_halving = self.last_mined.elapsed().as_secs();
-        if time_since_last_halving > self.halving_interval_secs {
-            self.reward_halvings += 1;
-            self.mining_reward /= 2.0;
-            self.last_mined = Instant::now();
-            println!(
-                "⛏️ Mining reward halved. New reward: {} QTC",
-                self.mining_reward
-            );
-        }
+    if reward < MIN_REWARD_THRESHOLD {
+        0.0
+    } else {
+        reward
     }
+}
 
-    pub fn get_current_reward(&self) -> f64 {
-        self.mining_reward
-    }
+/// Calculates difficulty based on current block height and previous timestamp
+/// This is a simplified dynamic difficulty system
+pub fn calculate_difficulty(previous_timestamp: u64, block_height: u64) -> u64 {
+    let current_timestamp = get_current_timestamp();
+    let time_elapsed = current_timestamp - previous_timestamp;
 
-    pub fn get_current_difficulty(&self) -> u64 {
-        self.mining_difficulty
-    }
+    let expected_time = BLOCK_TIME_SECONDS * block_height;
+    let base_difficulty = 5;
 
-    pub fn increase_difficulty(&mut self) {
-        self.mining_difficulty += 1;
-    }
-
-    pub fn show_status(&self) {
-        println!(
-            "⛏️ Current mining reward: {} QTC | Difficulty: {} | Halvings: {}",
-            self.mining_reward, self.mining_difficulty, self.reward_halvings
-        );
+    if time_elapsed < expected_time {
+        base_difficulty + (block_height / 1000) // increase with time
+    } else {
+        base_difficulty // fallback base level
     }
 }
