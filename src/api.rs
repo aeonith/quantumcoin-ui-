@@ -1,93 +1,61 @@
 use axum::{
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::sync::{Arc, Mutex};
-use crate::blockchain::Blockchain;
-use crate::wallet::Wallet;
-use crate::transaction::Transaction;
 
+// Example shared state for blockchain
 #[derive(Clone)]
 pub struct AppState {
-    pub blockchain: Arc<Mutex<Blockchain>>,
-    pub wallet: Arc<Mutex<Wallet>>,
+    pub total_supply: Arc<Mutex<u64>>,
+    pub mined_coins: Arc<Mutex<u64>>,
 }
 
-// Used for POST /send
-#[derive(Deserialize)]
-pub struct SendRequest {
-    pub recipient: String,
-    pub amount: f64,
-}
-
-// Used for GET /balance
 #[derive(Serialize)]
-pub struct BalanceResponse {
-    pub address: String,
-    pub balance: f64,
+struct SupplyResponse {
+    total_supply: u64,
+    mined_coins: u64,
+    circulating_supply: u64,
 }
 
-// Used for GET /price
 #[derive(Serialize)]
-pub struct PriceResponse {
-    pub current_price: f64,
+struct PriceResponse {
+    current_price: f64,
 }
 
-// Create the router with all endpoints
-pub fn create_router(state: AppState) -> Router {
-    Router::new()
-        .route("/balance", get(get_balance))
-        .route("/send", post(send_coins))
-        .route("/mine", post(mine))
-        .route("/price", get(get_price))
-        .with_state(state)
-}
-
-// GET /balance?address=xyz
-async fn get_balance(
-    axum::extract::State(state): axum::extract::State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
-) -> Json<BalanceResponse> {
-    let addr = params.get("address").cloned().unwrap_or_default();
-    let blockchain = state.blockchain.lock().unwrap();
-    let balance = blockchain.get_balance(&addr);
-    Json(BalanceResponse {
-        address: addr,
-        balance,
+// GET /supply
+async fn get_supply(state: Arc<AppState>) -> Json<SupplyResponse> {
+    let total = *state.total_supply.lock().unwrap();
+    let mined = *state.mined_coins.lock().unwrap();
+    let circulating = mined; // assuming all mined coins are circulating
+    Json(SupplyResponse {
+        total_supply: total,
+        mined_coins: mined,
+        circulating_supply: circulating,
     })
-}
-
-// POST /send { recipient, amount }
-async fn send_coins(
-    axum::extract::State(state): axum::extract::State<AppState>,
-    Json(payload): Json<SendRequest>,
-) -> Json<&'static str> {
-    let wallet = state.wallet.lock().unwrap();
-    let tx = wallet.create_transaction(&payload.recipient, payload.amount);
-    drop(wallet);
-
-    let mut blockchain = state.blockchain.lock().unwrap();
-    blockchain.add_transaction(tx);
-    Json("Transaction submitted")
-}
-
-// POST /mine
-async fn mine(
-    axum::extract::State(state): axum::extract::State<AppState>,
-) -> Json<&'static str> {
-    let mut blockchain = state.blockchain.lock().unwrap();
-    blockchain.mine_pending_transactions();
-    Json("Block mined successfully")
 }
 
 // GET /price
-async fn get_price(
-    axum::extract::State(state): axum::extract::State<AppState>,
-) -> Json<PriceResponse> {
-    let blockchain = state.blockchain.lock().unwrap();
-    let price = blockchain.current_price;
+async fn get_price(state: Arc<AppState>) -> Json<PriceResponse> {
+    let mined = *state.mined_coins.lock().unwrap();
+    let remaining = 21_000_000 - mined;
+    let base_price = 0.25;
+    let demand_factor = 1.0 + (mined as f64 / 1_000_000.0);
+    let price = (base_price * demand_factor).max(0.25); // never below $0.25
     Json(PriceResponse {
         current_price: price,
     })
+}
+
+pub fn create_router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/supply", get({
+            let state = Arc::clone(&state);
+            move || get_supply(state.clone())
+        }))
+        .route("/price", get({
+            let state = Arc::clone(&state);
+            move || get_price(state.clone())
+        }))
 }
