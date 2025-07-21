@@ -1,203 +1,219 @@
-/* Reset + base */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* Base Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: sans-serif;
   color: #fff;
   background: #000;
-  background-image: url('background.jpg'); /* replace with your actual image */
-  background-size: cover;
-  background-attachment: fixed;
-  background-position: center;
-  background-repeat: no-repeat;
-  line-height: 1.5;
+  line-height: 1.4;
   overflow-x: hidden;
 }
 
-/* Container for responsiveness */
-.container {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-/* Hero section */
+/* HERO */
 .hero {
-  text-align: center;
-  padding: 100px 20px 60px;
   position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+.hero .bg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  filter: brightness(0.4);
+}
+.hero .overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
   z-index: 2;
 }
-
-.hero h1 {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #fff;
-}
-
-.hero span {
-  color: #f9a825; /* quantum highlight */
-}
-
-/* Buttons */
-.button-primary, .button-secondary {
-  display: inline-block;
-  padding: 12px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  margin: 10px 5px;
-  border-radius: 8px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.3s ease;
-}
-
-.button-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.button-secondary {
-  background-color: #0d1117;
-  color: #00bfff;
-  border: 2px solid #00bfff;
-}
-
-/* Info Cards */
-.card {
-  background: rgba(0, 0, 0, 0.6); /* see-through effect */
-  padding: 20px;
-  border-radius: 15px;
-  margin: 20px 0;
+.hero .content {
+  position: relative;
+  z-index: 3;
+  max-width: 90%;
+  margin: 0 auto;
+  padding-top: 18vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
-
-.card img {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 12px;
-}
-
-.card h2 {
-  color: #f9a825;
-  font-size: 1.1rem;
-  margin-bottom: 8px;
-}
-
-.card p {
+.hero h1 {
+  font-size: 2.2rem;
   color: #fff;
+  margin-bottom: 1rem;
+}
+.hero h1 span { color: #fda800; }
+#buy-btn {
+  background: #007bff;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #fff;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+.whitepaper {
+  display: inline-block;
+  background: rgba(0,0,0,0.7);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #00bfff;
   font-size: 0.95rem;
 }
 
-/* Chart Box */
-.chart {
-  background: rgba(0, 0, 0, 0.3); /* more transparent */
-  border-radius: 15px;
-  padding: 10px;
-  margin: 20px 0;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+/* CHART CARD */
+.chart-card {
+  background: rgba(0, 0, 0, 0.2); /* more transparent now */
+  backdrop-filter: blur(6px);
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border-radius: 12px;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(255,255,255,0.05);
 }
-
-/* Tabs */
-.tabs {
+.chart-card h2 { font-size: 1.2rem; margin-bottom: 0.2rem; }
+#price { font-size: 2.5rem; margin: 0.2rem 0; }
+#change { font-size: 1rem; }
+#priceChart {
+  background-color: rgba(0, 0, 0, 0.1);  /* Chart canvas transparency */
+  border-radius: 10px;
+}
+.intervals {
+  margin-top: 1rem;
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin: 10px 0;
+  gap: 1rem;
 }
-
-.tabs button {
-  background: transparent;
+.intervals button {
+  background: none;
+  border: none;
   color: #fff;
   font-weight: bold;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 8px 12px;
-  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.4rem 0.6rem;
+  position: relative;
+}
+.intervals button.active::after,
+.intervals button:hover::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: #fda800;
 }
 
-.tabs button.active {
-  border-bottom: 2px solid #f9a825;
+/* FEATURES */
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  margin: 3rem auto;
+  max-width: 800px;
+  padding: 0 1rem;
 }
+.feature {
+  background: rgba(0,0,0,0.5);
+  border-radius: 12px;
+  text-align: center;
+  padding: 1.5rem;
+  flex: 1 1 220px;
+}
+.feature img { width: 64px; height: 64px; margin-bottom: 1rem; }
+.feature h3 {
+  color: #fda800;
+  margin-bottom: 0.6rem;
+  font-size: 1.1rem;
+}
+.feature p { font-size: 0.95rem; line-height: 1.3; }
 
-/* Email Signup */
+/* SIGNUP */
 .signup {
   text-align: center;
-  padding: 30px 20px;
+  padding: 2rem 1rem;
 }
-
 .signup h2 {
-  font-size: 1.4rem;
-  margin-bottom: 15px;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
 }
-
-.signup input[type="email"] {
-  padding: 10px;
+#signupForm {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+#signupForm input {
+  padding: 0.8rem;
   border: none;
-  border-radius: 8px;
-  width: 70%;
-  margin-bottom: 10px;
+  border-radius: 6px;
+  width: 220px;
   font-size: 1rem;
 }
-
-.signup button {
-  background: #f9a825;
-  color: #000;
-  padding: 10px 16px;
-  font-weight: bold;
+#signupForm button {
+  padding: 0.8rem 1.2rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
+  background: #fda800;
+  color: #000;
+  font-weight: bold;
   cursor: pointer;
-  margin-left: 10px;
 }
-
-/* Footer Terms */
 .terms {
-  font-size: 0.8rem;
-  color: #aaa;
-  text-align: center;
-  margin-top: 10px;
+  font-size: 0.85rem;
 }
-
 .terms a {
   color: #00bfff;
   text-decoration: underline;
 }
 
-/* Responsive Tweak */
+/* FINAL MOBILE TWEAKS */
 @media (max-width: 480px) {
+  body {
+    padding: 0;
+    margin: 0;
+  }
+
   .hero h1 {
     font-size: 1.6rem;
+    padding: 0 1rem;
   }
 
-  .card img {
-    width: 48px;
-    height: 48px;
+  .chart-card {
+    width: 92%;
+    padding: 1.2rem;
   }
 
-  .signup input[type="email"] {
-    width: 100%;
-    margin-bottom: 10px;
+  #price { font-size: 2.2rem; }
+  .features {
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  .signup button {
-    width: 100%;
-    margin-top: 10px;
+  .feature {
+    padding: 1.2rem;
   }
 
-  .tabs {
-    flex-wrap: wrap;
-    gap: 10px;
+  .signup h2 {
+    font-size: 1.5rem;
   }
 
-  .button-primary, .button-secondary {
-    width: 100%;
-    margin: 5px 0;
+  #signupForm input {
+    width: 90%;
+    max-width: 280px;
+  }
+
+  .whitepaper {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
   }
 }
