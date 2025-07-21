@@ -1,32 +1,22 @@
 mod wallet;
+mod revstop;
+mod cli;
+mod blockchain;
+
 use wallet::Wallet;
-use std::sync::{Arc, Mutex};
-use std::net::TcpListener;
-use std::io::prelude::*;
+use revstop::RevStop;
+use cli::run_cli;
 
 fn main() {
-    println!("🚀 QuantumCoin Web Server Running");
+    println!("🚀 QuantumCoin CLI Web Server Launched");
 
-    // Initialize the wallet
-    let wallet = Arc::new(Mutex::new(Wallet::load_from_file("wallet_key.json")
-        .unwrap_or_else(|| Wallet::new())));
+    // Load wallet and RevStop state
+    let mut wallet = Wallet::load_from_files().expect("Failed to load wallet");
+    let mut revstop = RevStop::load_status().unwrap_or_else(|_| {
+        println!("⚠️  RevStop status not found, defaulting to unlocked.");
+        RevStop::new()
+    });
 
-    // Show wallet address and balance
-    let wallet_ref = wallet.lock().unwrap();
-    println!("🔐 Wallet Address: {}", wallet_ref.get_address());
-    println!("💰 Wallet Balance: {} QTC", wallet_ref.get_balance());
-    drop(wallet_ref);
-
-    // Start web server
-    let listener = TcpListener::bind("0.0.0.0:8080").expect("❌ Failed to bind to port 8080");
-    println!("==> Your service is live 🎉");
-    println!("==> Available at your primary URL");
-
-    for stream in listener.incoming() {
-        if let Ok(mut stream) = stream {
-            println!("✅ Incoming connection");
-            let response = b"QuantumCoin Node Live\n";
-            stream.write_all(response).unwrap();
-        }
-    }
+    // Run CLI interface
+    run_cli(&mut wallet, &mut revstop);
 }
