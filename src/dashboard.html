@@ -1,45 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumCoin Admin Dashboard</title>
-    <link rel="stylesheet" href="dashboard.css">
+  <meta charset="UTF-8">
+  <title>QuantumCoin Wallet Dashboard</title>
+  <style>
+    body { font-family: Arial; background: #0b0f1a; color: white; text-align: center; }
+    input, button { padding: 8px; margin: 5px; border-radius: 5px; border: none; }
+    .box { margin: 20px auto; padding: 20px; width: 300px; background: #1b1f2a; border-radius: 10px; }
+    .hidden { display: none; }
+  </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h1>QuantumCoin Dashboard</h1>
-        <div class="section">
-            <h2>Wallet Address</h2>
-            <p id="wallet-address">Loading...</p>
-        </div>
-        <div class="section">
-            <h2>RevStop Status</h2>
-            <p id="revstop-status">Loading...</p>
-        </div>
-        <div class="section">
-            <h2>Current Price</h2>
-            <p id="coin-price">Loading...</p>
-        </div>
-        <button onclick="fetchData()">🔄 Refresh</button>
-    </div>
+  <h1>QuantumCoin Dashboard</h1>
 
-    <script>
-        async function fetchData() {
-            const addressRes = await fetch('/api/address');
-            const addressData = await addressRes.json();
-            document.getElementById('wallet-address').textContent = addressData.address;
+  <div class="box">
+    <h3>Balance Checker</h3>
+    <input id="balanceKey" placeholder="Your Public Key" style="width: 100%;" />
+    <button onclick="checkBalance()">Check Balance</button>
+    <p id="balanceResult"></p>
+  </div>
 
-            const revstopRes = await fetch('/api/revstop');
-            const revstopData = await revstopRes.json();
-            document.getElementById('revstop-status').textContent = revstopData.revstop_enabled ? "✅ Enabled" : "❌ Disabled";
+  <div class="box">
+    <h3>Send QTC</h3>
+    <input id="sender" placeholder="Sender Key (Base64)" style="width: 100%;" />
+    <input id="recipient" placeholder="Recipient Key" style="width: 100%;" />
+    <input id="amount" placeholder="Amount" type="number" />
+    <button onclick="sendCoins()">Send</button>
+    <p id="sendResult"></p>
+  </div>
 
-            const priceRes = await fetch('/api/price');
-            const priceData = await priceRes.json();
-            document.getElementById('coin-price').textContent = `$${priceData.price}`;
-        }
+  <div class="box">
+    <h3>Mine New Block</h3>
+    <button onclick="mineBlock()">Mine</button>
+    <p id="mineResult"></p>
+  </div>
 
-        fetchData(); // Initial load
-    </script>
+  <div class="box">
+    <h3>Recent Transactions</h3>
+    <button onclick="loadTransactions()">Load</button>
+    <ul id="txList"></ul>
+  </div>
+
+  <script>
+    async function checkBalance() {
+      const key = document.getElementById('balanceKey').value;
+      const res = await fetch(`http://localhost:8080/balance/${key}`);
+      const data = await res.text();
+      document.getElementById('balanceResult').innerText = `Balance: ${data} QTC`;
+    }
+
+    async function sendCoins() {
+      const sender = document.getElementById('sender').value;
+      const recipient = document.getElementById('recipient').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+
+      const res = await fetch('http://localhost:8080/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender, recipient, amount })
+      });
+      const data = await res.text();
+      document.getElementById('sendResult').innerText = data;
+    }
+
+    async function mineBlock() {
+      const res = await fetch('http://localhost:8080/mine', {
+        method: 'POST'
+      });
+      const data = await res.text();
+      document.getElementById('mineResult').innerText = data;
+    }
+
+    async function loadTransactions() {
+      const res = await fetch('http://localhost:8080/transactions`);
+      const txs = await res.json();
+      const list = document.getElementById('txList');
+      list.innerHTML = "";
+      txs.forEach(tx => {
+        const li = document.createElement('li');
+        li.innerText = `${tx.sender.slice(0,6)} → ${tx.recipient.slice(0,6)} : ${tx.amount} QTC`;
+        list.appendChild(li);
+      });
+    }
+  </script>
 </body>
 </html>
