@@ -1,123 +1,77 @@
-/* Reset default styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+/* Existing styles */
 
 body {
-  background-color: #000;
-  color: #fff;
-  overflow-x: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #121212;
+  color: #ffffff;
 }
 
-/* Background image */
-.bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -2;
-}
-
-/* Dark overlay for contrast */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: -1;
-}
-
-/* Container for all content */
-.content {
-  position: relative;
-  padding: 40px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+header {
+  background-color: #1e1e1e;
+  padding: 20px 0;
   text-align: center;
-  z-index: 1;
+  border-bottom: 1px solid #333;
 }
 
-/* Hero Text */
-h1 {
+header h1 {
+  margin: 0;
   font-size: 2.5em;
-  margin-bottom: 20px;
-}
-
-h1 span {
   color: #ffaa00;
 }
 
-/* Buy button */
-#buy-btn {
-  background-color: #007bff;
-  border: none;
-  padding: 12px 24px;
-  font-size: 16px;
-  color: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-bottom: 20px;
-  transition: background-color 0.3s;
-}
-
-#buy-btn:hover {
-  background-color: #0056b3;
-}
-
-/* Whitepaper link button */
-.whitepaper-btn {
-  display: inline-block;
-  background-color: #0d1b2a;
-  padding: 10px 20px;
-  border-radius: 6px;
-  color: #00bfff;
-  text-decoration: none;
+nav {
   margin-top: 10px;
-  margin-bottom: 40px;
-  transition: background-color 0.3s;
 }
 
-.whitepaper-btn:hover {
-  background-color: #1a2b3c;
-}
-
-/* Chart card */
-.chart-card {
-  background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 12px;
-  padding: 20px;
-  margin: 30px auto;
-  max-width: 600px;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-}
-
-.chart-card .header {
-  margin-bottom: 15px;
-}
-
-.chart-card h2 {
-  font-size: 1.5em;
-  margin-bottom: 5px;
+nav a {
+  color: #ffaa00;
+  text-decoration: none;
+  margin: 0 15px;
   font-weight: bold;
+  transition: color 0.3s;
 }
 
-#price {
-  font-size: 1.8em;
-  font-weight: bold;
+nav a:hover {
+  color: #ff8800;
 }
 
-#change {
-  color: #00ff00;
+main {
+  padding: 40px 20px;
+  text-align: center;
 }
 
-/* Time interval buttons */
+section {
+  margin-bottom: 60px;
+}
+
+h2 {
+  font-size: 2em;
+  margin-bottom: 20px;
+  color: #ffaa00;
+}
+
+p {
+  font-size: 1.1em;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+footer {
+  background-color: #1e1e1e;
+  padding: 20px 0;
+  text-align: center;
+  border-top: 1px solid #333;
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+.chart-container {
+  margin-top: 40px;
+}
+
 .intervals {
   margin-top: 15px;
 }
@@ -227,4 +181,40 @@ h1 span {
   .chart-card {
     width: 90%;
   }
+}
+
+/* ✅ Whitepaper button and text fix */
+.whitepaper-container {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.whitepaper-button {
+  background-color: #ffaa00;
+  color: #000;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: 0.3s;
+  display: inline-block;
+}
+
+.whitepaper-button:hover {
+  background-color: #ff8800;
+}
+
+.whitepaper-note {
+  font-size: 0.9em;
+  color: #ccc;
+  margin-top: 8px;
+}
+
+/* ✅ Chart centering fix */
+.chart-card {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  width: 100%;
 }
