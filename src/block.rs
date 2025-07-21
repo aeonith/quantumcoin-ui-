@@ -4,7 +4,7 @@ use chrono::Utc;
 
 use crate::transaction::Transaction;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Block {
     pub index: u64,
     pub timestamp: i64,
@@ -15,7 +15,6 @@ pub struct Block {
 }
 
 impl Block {
-    /// Hashes all block fields except `hash` itself.
     fn calc_hash(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.index.to_le_bytes());
@@ -28,39 +27,37 @@ impl Block {
         format!("{:x}", hasher.finalize())
     }
 
-    /// Simple, slow proof-of-work (four leading zeros).
-    pub fn mine(&mut self) {
-        while !self.hash.starts_with("0000") {
+    pub fn mine(&mut self, difficulty: usize) {
+        let target = "0".repeat(difficulty);
+        while &self.hash[..difficulty] != target {
             self.nonce += 1;
             self.hash = self.calc_hash();
         }
     }
 
-    pub fn new_genesis(recipient_addr: &str) -> Self {
-        let mut genesis = Self {
+    pub fn new_genesis(recipient: &str) -> Self {
+        let mut b = Block {
             index: 0,
             timestamp: Utc::now().timestamp(),
             prev_hash: "0".repeat(64),
             nonce: 0,
             hash: String::new(),
-            transactions: vec![Transaction::coinbase(recipient_addr)],
+            transactions: vec![crate::transaction::Transaction::coinbase(recipient)],
         };
-        genesis.hash = genesis.calc_hash();
-        genesis
+        b.hash = b.calc_hash();
+        b
     }
 
-    pub fn new(next_index: u64,
-               prev_hash: String,
-               txs: Vec<Transaction>) -> Self {
-        let mut block = Self {
-            index: next_index,
+    pub fn new(index: u64, prev_hash: String, txs: Vec<Transaction>, diff: usize) -> Self {
+        let mut b = Block {
+            index,
             timestamp: Utc::now().timestamp(),
             prev_hash,
             nonce: 0,
             hash: String::new(),
             transactions: txs,
         };
-        block.mine();
-        block
+        b.mine(diff);
+        b
     }
 }
