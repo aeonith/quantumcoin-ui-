@@ -1,11 +1,12 @@
 use axum::{
     routing::{get, post},
-    Router, Json, extract::State
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use crate::{blockchain::Blockchain, wallet::Wallet, transaction::Transaction};
-use std::net::SocketAddr;
+use crate::blockchain::Blockchain;
+use crate::wallet::Wallet;
+use crate::transaction::Transaction;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -13,74 +14,80 @@ pub struct AppState {
     pub wallet: Arc<Mutex<Wallet>>,
 }
 
+// Used for POST /send
 #[derive(Deserialize)]
 pub struct SendRequest {
-    pub to: String,
+    pub recipient: String,
     pub amount: f64,
 }
 
-#[derive(Deserialize)]
-pub struct CreateWalletRequest {}
-
+// Used for GET /balance
 #[derive(Serialize)]
 pub struct BalanceResponse {
+    pub address: String,
     pub balance: f64,
 }
 
+// Used for GET /price
 #[derive(Serialize)]
-pub struct StatusResponse {
-    pub message: String,
+pub struct PriceResponse {
+    pub current_price: f64,
 }
 
-pub async fn send_transaction(
-    State(state): State<AppState>,
-    Json(payload): Json<SendRequest>,
-) -> Json<StatusResponse> {
-    let mut wallet = state.wallet.lock().unwrap();
-    let blockchain = state.blockchain.lock().unwrap();
-
-    match wallet.create_transaction(&payload.to, payload.amount) {
-        Ok(tx) => {
-            drop(wallet); // unlock
-            drop(blockchain); // unlock
-            let mut chain = state.blockchain.lock().unwrap();
-            chain.add_transaction(tx);
-            Json(StatusResponse {
-                message: "Transaction added.".to_string(),
-            })
-        }
-        Err(e) => Json(StatusResponse {
-            message: format!("Error: {}", e),
-        }),
-    }
-}
-
-pub async fn get_balance(State(state): State<AppState>) -> Json<BalanceResponse> {
-    let wallet = state.wallet.lock().unwrap();
-    Json(BalanceResponse {
-        balance: wallet.balance,
-    })
-}
-
-pub async fn mine(State(state): State<AppState>) -> Json<StatusResponse> {
-    let mut blockchain = state.blockchain.lock().unwrap();
-    let wallet = state.wallet.lock().unwrap();
-    blockchain.mine_pending_transactions(&wallet);
-    Json(StatusResponse {
-        message: "Block mined.".to_string(),
-    })
-}
-
-pub async fn routes(state: AppState) -> Router {
+// Create the router with all endpoints
+pub fn create_router(state: AppState) -> Router {
     Router::new()
-        .route("/api/balance", get(get_balance))
-        .route("/api/send", post(send_transaction))
-        .route("/api/mine", post(mine))
+        .route("/balance", get(get_balance))
+        .route("/send", post(send_coins))
+        .route("/mine", post(mine))
+        .route("/price", get(get_price))
         .with_state(state)
 }
 
-// To launch this API server:
-// let state = AppState { blockchain: Arc::new(Mutex::new(...)), wallet: Arc::new(Mutex::new(...)) };
-// axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
-//     .serve(routes(state).await.into_make_service())
-//     .await.unwrap();
+// GET /balance?address=xyz
+async fn get_balance(
+    axum::extract::State(state): axum::extract::State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Json<BalanceResponse> {
+    let addr = params.get("address").cloned().unwrap_or_default();
+    let blockchain = state.blockchain.lock().unwrap();
+    let balance = blockchain.get_balance(&addr);
+    Json(BalanceResponse {
+        address: addr,
+        balance,
+    })
+}
+
+// POST /send { recipient, amount }
+async fn send_coins(
+    axum::extract::State(state): axum::extract::State<AppState>,
+    Json(payload): Json<SendRequest>,
+) -> Json<&'static str> {
+    let wallet = state.wallet.lock().unwrap();
+    let tx = wallet.create_transaction(&payload.recipient, payload.amount);
+    drop(wallet);
+
+    let mut blockchain = state.blockchain.lock().unwrap();
+    blockchain.add_transaction(tx);
+    Json("Transaction submitted")
+}
+
+// POST /mine
+async fn mine(
+    axum::extract::State(state): axum::extract::State<AppState>,
+) -> Json<&'static str> {
+    let mut blockchain = state.blockchain.lock().unwrap();
+    blockchain.mine_pending_transactions();
+    Json("Block mined successfully")
+}
+
+// GET /price
+async fn get_price(
+    axum::extract::State(state): axum::extract::State<AppState>,
+) -> Json<PriceResponse> {
+    let blockchain = state.blockchain.lock().unwrap();
+    let price = blockchain.current_price;
+    Json(PriceResponse {
+        current_price: price,
+    })
+}
