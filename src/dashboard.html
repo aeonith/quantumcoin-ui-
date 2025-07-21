@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumCoin Admin Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>QuantumCoin Dashboard</h1>
+        <div class="section">
+            <h2>Wallet Address</h2>
+            <p id="wallet-address">Loading...</p>
+        </div>
+        <div class="section">
+            <h2>RevStop Status</h2>
+            <p id="revstop-status">Loading...</p>
+        </div>
+        <div class="section">
+            <h2>Current Price</h2>
+            <p id="coin-price">Loading...</p>
+        </div>
+        <button onclick="fetchData()">🔄 Refresh</button>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const addressRes = await fetch('/api/address');
+            const addressData = await addressRes.json();
+            document.getElementById('wallet-address').textContent = addressData.address;
+
+            const revstopRes = await fetch('/api/revstop');
+            const revstopData = await revstopRes.json();
+            document.getElementById('revstop-status').textContent = revstopData.revstop_enabled ? "✅ Enabled" : "❌ Disabled";
+
+            const priceRes = await fetch('/api/price');
+            const priceData = await priceRes.json();
+            document.getElementById('coin-price').textContent = `$${priceData.price}`;
+        }
+
+        fetchData(); // Initial load
+    </script>
+</body>
+</html>
