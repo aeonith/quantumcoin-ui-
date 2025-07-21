@@ -1,48 +1,74 @@
+use actix_files::Files;
+use actix_web::{web, App, HttpResponse, HttpServer};
+use std::sync::Mutex;
+
+mod block;
+mod blockchain;
+mod transaction;
 mod wallet;
+mod revstop;
+mod cli;
 
-use crate::wallet::Wallet;
-use std::fs;
+use blockchain::Blockchain;
+use wallet::Wallet;
+use revstop::{RevStop, is_revstop_active};
 
-fn main() {
-    println!("🚀 QuantumCoin Engine Initialized");
+struct AppState {
+    blockchain: Mutex<Blockchain>,
+    wallet:     Mutex<Wallet>,
+    revstop:    Mutex<RevStop>,
+}
 
-    // Load or create wallet
-    let wallet_path = "wallet.json";
+/* ===== simple REST helpers for your front-end ===== */
 
-    let wallet = if fs::metadata(wallet_path).is_ok() {
-        match Wallet::load_from_file(wallet_path) {
-            Some(w) => {
-                println!("🔐 Wallet loaded successfully.");
-                w
-            },
-            None => {
-                println!("❌ Failed to load wallet. Creating a new one...");
-                let w = Wallet::new();
-                if w.save_to_file(wallet_path) {
-                    println!("💾 New wallet created and saved.");
-                }
-                w
-            }
-        }
-    } else {
-        println!("📁 No wallet file found. Creating new wallet...");
-        let w = Wallet::new();
-        if w.save_to_file(wallet_path) {
-            println!("💾 New wallet saved successfully.");
-        }
-        w
-    };
+async fn api_wallet_address(data: web::Data<AppState>) -> HttpResponse {
+    let w = data.wallet.lock().unwrap();
+    HttpResponse::Ok().json(serde_json::json!({ "address": w.get_address() }))
+}
 
-    // Show public address
-    println!("🔑 Public Wallet Address: {}", wallet.public_key);
+async fn api_check_revstop(data: web::Data<AppState>) -> HttpResponse {
+    let r = data.revstop.lock().unwrap();
+    HttpResponse::Ok().json(serde_json::json!({ "revstop_enabled": r.enabled }))
+}
 
-    // Simulate a message signing & verification test
-    let message = b"QuantumCoin genesis";
-    match wallet.sign_message(message) {
-        Some(signature) => {
-            let valid = wallet.verify_signature(message, &signature);
-            println!("✅ Signature valid: {}", valid);
-        },
-        None => println!("❌ Failed to sign message."),
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    /* --- load or bootstrap local data --- */
+    let mut wallet = Wallet::load_from_files().unwrap_or_else(|_| Wallet::generate());
+    let mut blockchain = Blockchain::load_from_file("blockchain.json")
+        .unwrap_or_else(|| Blockchain::new_with_genesis(wallet.get_address()));
+    let revstop  = RevStop::load_status().unwrap_or_else(|| RevStop::new(false));
+
+    /* --- persist (just to ensure the files exist) --- */
+    wallet.save_to_files().ok();
+    blockchain.save_to_file("blockchain.json").ok();
+    revstop.save_status().ok();
+
+    let state = web::Data::new(AppState {
+        blockchain: Mutex::new(blockchain),
+        wallet:     Mutex::new(wallet),
+        revstop:    Mutex::new(revstop),
+    });
+
+    /* --- spawn CLI in a background thread so you still get a REPL locally --- */
+    {
+        let s = state.clone();
+        std::thread::spawn(move || {
+            let mut bc = s.blockchain.lock().unwrap();
+            let mut w  = s.wallet.lock().unwrap();
+            cli::start_cli(&mut w, &mut bc);
+        });
     }
+
+    /* --- Actix server --- */
+    HttpServer::new(move || {
+        App::new()
+            .app_data(state.clone())
+            .route("/api/wallet_address", web::get().to(api_wallet_address))
+            .route("/api/revstop",        web::get().to(api_check_revstop))
+            .service(Files::new("/", "./static").index_file("index.html"))
+    })
+    .bind(("0.0.0.0", std::env::var("PORT").unwrap_or_else(|_| "8080".into()).parse().unwrap()))?
+    .run()
+    .await
 }
