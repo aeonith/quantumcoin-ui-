@@ -1,61 +1,89 @@
-use axum::{
-    routing::get,
-    Json, Router,
-};
-use serde::Serialize;
-use std::sync::{Arc, Mutex};
+use actix_web::{web, App, HttpServer, HttpResponse, Responder};
+use serde::{Deserialize, Serialize};
+use crate::blockchain::Blockchain;
+use crate::wallet::Wallet;
+use std::sync::Mutex;
 
-// Example shared state for blockchain
-#[derive(Clone)]
+#[derive(Deserialize)]
+pub struct SendRequest {
+    sender: String,
+    recipient: String,
+    amount: f64,
+}
+
+#[derive(Serialize)]
+pub struct BalanceResponse {
+    address: String,
+    balance: f64,
+}
+
+#[derive(Serialize)]
+pub struct MessageResponse {
+    message: String,
+}
+
+// Shared Blockchain state
 pub struct AppState {
-    pub total_supply: Arc<Mutex<u64>>,
-    pub mined_coins: Arc<Mutex<u64>>,
+    pub blockchain: Mutex<Blockchain>,
+    pub wallet: Mutex<Wallet>,
 }
 
-#[derive(Serialize)]
-struct SupplyResponse {
-    total_supply: u64,
-    mined_coins: u64,
-    circulating_supply: u64,
+async fn get_balance(data: web::Data<AppState>, path: web::Path<String>) -> impl Responder {
+    let address = path.into_inner();
+    let chain = data.blockchain.lock().unwrap();
+    let balance = chain.get_balance(&address);
+    HttpResponse::Ok().json(BalanceResponse { address, balance })
 }
 
-#[derive(Serialize)]
-struct PriceResponse {
-    current_price: f64,
+async fn send_transaction(data: web::Data<AppState>, tx: web::Json<SendRequest>) -> impl Responder {
+    let mut chain = data.blockchain.lock().unwrap();
+    let sender = tx.sender.clone();
+    let recipient = tx.recipient.clone();
+    let amount = tx.amount;
+
+    match chain.create_transaction(&sender, &recipient, amount) {
+        Ok(_) => HttpResponse::Ok().json(MessageResponse {
+            message: "Transaction queued.".to_string(),
+        }),
+        Err(e) => HttpResponse::BadRequest().json(MessageResponse {
+            message: format!("Error: {}", e),
+        }),
+    }
 }
 
-// GET /supply
-async fn get_supply(state: Arc<AppState>) -> Json<SupplyResponse> {
-    let total = *state.total_supply.lock().unwrap();
-    let mined = *state.mined_coins.lock().unwrap();
-    let circulating = mined; // assuming all mined coins are circulating
-    Json(SupplyResponse {
-        total_supply: total,
-        mined_coins: mined,
-        circulating_supply: circulating,
+async fn mine(data: web::Data<AppState>) -> impl Responder {
+    let mut chain = data.blockchain.lock().unwrap();
+    let miner_address = "QuantumMinerRewardAddress"; // Replace or make dynamic
+    let message = chain.mine_pending_transactions(miner_address);
+    HttpResponse::Ok().json(MessageResponse { message })
+}
+
+async fn transactions(data: web::Data<AppState>) -> impl Responder {
+    let chain = data.blockchain.lock().unwrap();
+    let txs = chain.get_all_transactions(); // You should implement this in blockchain.rs
+    HttpResponse::Ok().json(txs)
+}
+
+pub fn init_routes(cfg: &mut web::ServiceConfig) {
+    cfg
+        .route("/balance/{address}", web::get().to(get_balance))
+        .route("/send", web::post().to(send_transaction))
+        .route("/mine", web::post().to(mine))
+        .route("/transactions", web::get().to(transactions));
+}
+
+pub async fn run_server(blockchain: Blockchain, wallet: Wallet) -> std::io::Result<()> {
+    let data = web::Data::new(AppState {
+        blockchain: Mutex::new(blockchain),
+        wallet: Mutex::new(wallet),
+    });
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(data.clone())
+            .configure(init_routes)
     })
-}
-
-// GET /price
-async fn get_price(state: Arc<AppState>) -> Json<PriceResponse> {
-    let mined = *state.mined_coins.lock().unwrap();
-    let remaining = 21_000_000 - mined;
-    let base_price = 0.25;
-    let demand_factor = 1.0 + (mined as f64 / 1_000_000.0);
-    let price = (base_price * demand_factor).max(0.25); // never below $0.25
-    Json(PriceResponse {
-        current_price: price,
-    })
-}
-
-pub fn create_router(state: Arc<AppState>) -> Router {
-    Router::new()
-        .route("/supply", get({
-            let state = Arc::clone(&state);
-            move || get_supply(state.clone())
-        }))
-        .route("/price", get({
-            let state = Arc::clone(&state);
-            move || get_price(state.clone())
-        }))
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
