@@ -1,6 +1,5 @@
 use actix_web::{web, HttpResponse};
-use crate::{blockchain::Blockchain, wallet::Wallet, transaction::Transaction, user::{User, load_user}};
-use crate::auth::{register, login};
+use crate::{blockchain::Blockchain, wallet::Wallet, transaction::Transaction};
 use std::sync::Mutex;
 
 #[derive(serde::Deserialize)]
@@ -15,8 +14,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
        .service(web::resource("/balance").route(web::get().to(balance)))
        .service(web::resource("/mine").route(web::post().to(mine)))
        .service(web::resource("/send").route(web::post().to(send_tx)))
-       .service(web::resource("/register").route(web::post().to(register)))
-       .service(web::resource("/login").route(web::post().to(login)));
+       .service(web::resource("/price").route(web::get().to(price)));
 }
 
 async fn wallet(wallet: web::Data<Mutex<Wallet>>) -> HttpResponse {
@@ -58,5 +56,13 @@ async fn send_tx(
 
     let tx = w.create_transaction(&req.recipient, req.amount);
     bc.add_transaction(tx);
-    HttpResponse::Ok().json(serde_json::json!({ "status": "sent" }))
+    HttpResponse::Ok().body("Transaction queued")
+}
+
+async fn price(
+    blockchain: web::Data<Mutex<Blockchain>>,
+) -> HttpResponse {
+    let bc = blockchain.lock().unwrap();
+    let price = bc.current_price();
+    HttpResponse::Ok().json(serde_json::json!({ "price": price }))
 }
