@@ -9,58 +9,58 @@
 <body>
 
   <!-- 🎥 Background Video -->
-  <video autoplay muted loop playsinline id="bgVideo">
-    <source src="assets/quantum_bg.mp4" type="video/mp4">
-    Your browser does not support HTML5 video.
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="quantum_bg.mp4" type="video/mp4">
+    Your browser does not support video playback.
   </video>
 
-  <!-- ✨ Overlay Content -->
+  <!-- 🧊 UI Overlay -->
   <div class="overlay">
 
-    <!-- 🚀 HERO -->
+    <!-- Hero Section -->
     <section class="section hero reveal">
       <h1>🚀 QuantumCoin™</h1>
-      <p>Quantum-Secure Currency of the Future</p>
+      <p>The Quantum-Secure Currency of the Future</p>
       <button class="cta">Buy QuantumCoin™</button>
       <a href="#" class="whitepaper">📄 View Whitepaper</a>
     </section>
 
-    <!-- 🔐 AUTH -->
-    <section class="section auth reveal">
+    <!-- Login / Signup -->
+    <section class="section auth reveal" id="authBox">
       <h2 id="authTitle">Sign Up</h2>
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Password" />
-      <input type="password" id="confirmPassword" placeholder="Confirm Password" />
-      <button onclick="toggleAuthMode()" id="authBtn">Create Account</button>
-      <p class="toggle-link" onclick="switchMode()">Already have an account? <span id="toggleText">Login</span></p>
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Password">
+      <input type="password" id="confirm" placeholder="Confirm password">
+      <button id="authBtn">Create Account</button>
+      <p class="toggle" onclick="switchMode()">Already have an account? <span id="altText">Login</span></p>
     </section>
 
-    <!-- 📈 PRICE -->
+    <!-- Price Section -->
     <section class="section card reveal">
       <h2>📉 Current Price</h2>
-      <p>$0.25</p>
+      <p id="price">$0.25</p>
     </section>
 
-    <!-- 👛 WALLET -->
+    <!-- Wallet Info -->
     <section class="section card reveal">
-      <h2>📦 Your Wallet</h2>
-      <p><strong>Address:</strong> Loading...</p>
-      <p><strong>Balance:</strong> Loading... QTC</p>
+      <h2>📦 Wallet</h2>
+      <p><strong>Address:</strong> <span id="addr">Loading…</span></p>
+      <p><strong>Balance:</strong> <span id="bal">0</span> QTC</p>
     </section>
 
-    <!-- ✉️ SEND -->
+    <!-- Send QTC -->
     <section class="section card reveal">
-      <h2>📨 Send QTC</h2>
-      <input type="text" placeholder="Recipient address" />
-      <input type="number" placeholder="Amount" />
-      <input type="password" placeholder="Wallet password" />
+      <h2>📨 Send Coins</h2>
+      <input type="text" placeholder="Recipient address">
+      <input type="number" placeholder="Amount">
+      <input type="password" placeholder="Wallet password">
       <button>Send</button>
     </section>
 
-    <!-- ⛏️ MINE -->
+    <!-- Mining -->
     <section class="section card reveal">
-      <h2>⛏️ Mine New Block</h2>
-      <button>Mine</button>
+      <h2>⛏️ Mine QuantumCoin™</h2>
+      <button class="mineGlow" onclick="mine()">Mine</button>
     </section>
 
   </div>
