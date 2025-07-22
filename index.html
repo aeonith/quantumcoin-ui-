@@ -9,24 +9,24 @@
 <body>
 
   <!-- 🎥 Background Video -->
-  <video autoplay muted loop id="bgVideo">
-    <source src="assets/quantum_bg.mp4" type="video/mp4" />
+  <video autoplay muted loop playsinline id="bgVideo">
+    <source src="assets/quantum_bg.mp4" type="video/mp4">
     Your browser does not support HTML5 video.
   </video>
 
-  <!-- 💎 Overlay -->
+  <!-- ✨ Overlay Content -->
   <div class="overlay">
 
     <!-- 🚀 HERO -->
-    <section class="hero">
+    <section class="section hero reveal">
       <h1>🚀 QuantumCoin™</h1>
-      <p>QuantumCoin™ — Quantum-Secure Currency of the Future</p>
+      <p>Quantum-Secure Currency of the Future</p>
       <button class="cta">Buy QuantumCoin™</button>
-      <a href="#" class="whitepaper">📄 View the QuantumCoin™ Whitepaper</a>
+      <a href="#" class="whitepaper">📄 View Whitepaper</a>
     </section>
 
-    <!-- 💼 AUTH -->
-    <section class="auth" id="authSection">
+    <!-- 🔐 AUTH -->
+    <section class="section auth reveal">
       <h2 id="authTitle">Sign Up</h2>
       <input type="email" id="email" placeholder="Email" />
       <input type="password" id="password" placeholder="Password" />
@@ -36,20 +36,20 @@
     </section>
 
     <!-- 📈 PRICE -->
-    <section class="card">
+    <section class="section card reveal">
       <h2>📉 Current Price</h2>
       <p>$0.25</p>
     </section>
 
     <!-- 👛 WALLET -->
-    <section class="card">
+    <section class="section card reveal">
       <h2>📦 Your Wallet</h2>
       <p><strong>Address:</strong> Loading...</p>
       <p><strong>Balance:</strong> Loading... QTC</p>
     </section>
 
-    <!-- ✉️ SEND QTC -->
-    <section class="card">
+    <!-- ✉️ SEND -->
+    <section class="section card reveal">
       <h2>📨 Send QTC</h2>
       <input type="text" placeholder="Recipient address" />
       <input type="number" placeholder="Amount" />
@@ -58,7 +58,7 @@
     </section>
 
     <!-- ⛏️ MINE -->
-    <section class="card">
+    <section class="section card reveal">
       <h2>⛏️ Mine New Block</h2>
       <button>Mine</button>
     </section>
