@@ -9,43 +9,24 @@
 <body>
 
   <!-- VIDEO BACKGROUND -->
-  <video id="bg-video" autoplay muted loop>
+  <video
+    id="bg-video"
+    autoplay
+    muted
+    loop
+    playsinline
+    poster="quantum-bg.jpg"  <!-- fallback image -->
+  >
     <source src="quantum-bg.mp4" type="video/mp4" />
-    <!-- fallback image for non-video browsers -->
-    <img src="quantum-bg.jpg" alt="Quantum background" />
+    <!-- fallback -->
   </video>
 
-  <!-- SEMI-TRANSPARENT OVERLAY -->
+  <!-- DARK OVERLAY -->
   <div class="overlay"></div>
 
-  <!-- MAIN UI CONTAINER -->
+  <!-- YOUR UI -->
   <div class="ui">
-    <h1 class="logo">🚀 QuantumCoin™</h1>
-    <p class="tagline">Quantum-Secure Currency of the Future</p>
-
-    <div class="card">
-      <h2>📉 Current Price</h2>
-      <p class="price">$0.25</p>
-    </div>
-
-    <div class="card">
-      <h2>💼 Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="addr">Loading…</span></p>
-      <p><strong>Balance:</strong> <span id="bal">Loading…</span> QTC</p>
-    </div>
-
-    <div class="card">
-      <h2>📩 Send QTC</h2>
-      <input id="to"   type="text"   placeholder="Recipient address" />
-      <input id="amt"  type="number" placeholder="Amount" />
-      <input id="pw"   type="password" placeholder="Wallet password" />
-      <button id="sendBtn">Send</button>
-    </div>
-
-    <div class="card">
-      <h2>⛏ Mine New Block</h2>
-      <button id="mineBtn">Mine</button>
-    </div>
+    <!-- … your existing UI … -->
   </div>
 
   <script src="script.js"></script>
