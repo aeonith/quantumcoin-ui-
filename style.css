@@ -1,126 +1,118 @@
-/* Reset */
+/* Reset + Layout */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 body, html {
   height: 100%;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  overflow-x: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  scroll-behavior: smooth;
+  background-color: #000;
+  color: white;
 }
 
-/* 🎥 Video Background */
+/* 🎥 Background */
 #bgVideo {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
-  z-index: -2;
+  z-index: -10;
 }
 
-/* 🟧 Overlay Container */
+/* 💎 Overlay Container */
 .overlay {
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  min-height: 100vh;
+  position: relative;
+  z-index: 10;
   padding: 2rem 1rem;
-  color: white;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 3rem;
 }
 
-/* ✨ Hero */
+/* 🔲 Sections */
+.section {
+  padding: 1.5rem;
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 30px rgba(255, 115, 0, 0.1);
+  transition: all 0.6s ease;
+  opacity: 0;
+  transform: translateY(50px);
+}
+.section.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 🧠 Hero */
 .hero {
   text-align: center;
 }
 .hero h1 {
   font-size: 2.5rem;
   color: #FFA500;
-  margin-bottom: 0.5rem;
 }
 .hero p {
-  font-size: 1.1rem;
   color: #ddd;
-  margin-bottom: 1.2rem;
+  margin: 0.5rem 0 1rem;
 }
 .cta {
+  padding: 0.6rem 1.4rem;
+  border: none;
   background: #007bff;
   color: white;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 5px;
   font-weight: bold;
+  border-radius: 8px;
   cursor: pointer;
 }
 .whitepaper {
   display: block;
-  margin-top: 0.8rem;
-  color: #00d4ff;
-  text-decoration: underline;
-  font-size: 0.95rem;
+  margin-top: 1rem;
+  color: #00f7ff;
+  font-size: 0.9rem;
 }
 
-/* 📦 Cards */
-.card {
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 15px;
-  padding: 1.2rem;
-  box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
-}
-.card h2 {
+/* 🔐 Auth + Cards */
+.auth h2, .card h2 {
   color: #FFA500;
   margin-bottom: 0.8rem;
 }
-
-/* 🧾 Inputs */
 input {
-  display: block;
   width: 100%;
-  padding: 0.6rem;
-  margin: 0.5rem 0;
-  border-radius: 8px;
+  padding: 0.7rem;
+  margin: 0.4rem 0;
+  border-radius: 10px;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   color: white;
 }
 input::placeholder {
-  color: #ccc;
+  color: #bbb;
 }
 button {
   margin-top: 0.5rem;
-  padding: 0.6rem 1rem;
   width: 100%;
+  padding: 0.7rem;
   background: #ff8c00;
   border: none;
   color: black;
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
 }
 button:hover {
-  background: #ffb347;
-}
-
-/* 🔐 Auth */
-.auth {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1.5rem;
-  border-radius: 15px;
-}
-.auth h2 {
-  color: #00ffcc;
-  margin-bottom: 1rem;
+  background: #ffc04d;
 }
 .toggle-link {
-  margin-top: 0.8rem;
-  font-size: 0.9rem;
+  text-align: center;
+  font-size: 0.85rem;
   color: #ccc;
+  margin-top: 0.6rem;
 }
 .toggle-link span {
   color: #00ffff;
