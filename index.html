@@ -1,71 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Background Video (Your path under /quantum-ui/) -->
-  <video autoplay muted loop id="bgVideo">
-    <source src="quantum-ui/quantum_bg.mp4" type="video/mp4" />
-    Your browser does not support video.
+  <!-- Background video -->
+  <video id="bg-video" autoplay muted loop playsinline>
+    <source src="quantum-bg.mp4" type="video/mp4">
+    <!-- fallback image -->
+    <img src="quantum-bg-poster.jpg" alt="Quantum background">
   </video>
 
-  <div class="overlay">
-
-    <header>
-      <h1>🚀 <span class="logo-text">QuantumCoin™</span></h1>
-      <p class="subtitle">The most advanced quantum-secure currency on Earth.</p>
+  <div class="content">
+    <header class="fade-in">
+      <h1>🚀 <span class="brand">QuantumCoin™</span></h1>
+      <p class="tagline">Quantum-Secure Currency of the Future</p>
     </header>
 
-    <section>
+    <section class="panel fade-in">
       <h2>📈 Current Price</h2>
-      <p class="highlight">$<span id="price">0.25</span> QTC</p>
+      <p class="value" id="price">$0.25</p>
     </section>
 
-    <section>
+    <section class="panel fade-in">
       <h2>📦 Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="walletBalance">1250</span> QTC</p>
-      <button onclick="animateBalance()">💫 Refresh Balance</button>
+      <p><strong>Address:</strong> <span id="walletAddress">Loading…</span></p>
+      <p><strong>Balance:</strong> <span id="walletBalance">0</span> QTC</p>
+      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
     </section>
 
-    <section>
+    <section class="panel fade-in">
       <h2>✉️ Send QTC</h2>
-      <input type="text" placeholder="Recipient Address" />
-      <input type="text" placeholder="Amount" />
-      <input type="password" placeholder="Wallet Password" />
+      <input type="text" placeholder="Recipient Address">
+      <input type="number" placeholder="Amount">
+      <input type="password" placeholder="Wallet Password">
       <button>Send Now</button>
     </section>
 
-    <section>
-      <h2>🔐 Create Account</h2>
-      <input type="text" placeholder="Username" />
-      <input type="password" placeholder="Password" />
+    <section class="panel fade-in">
+      <h2>⛏️ Mine New Block</h2>
+      <button>Mine</button>
+    </section>
+
+    <section class="panel fade-in">
+      <h2>🔒 Create Account</h2>
+      <input type="text" placeholder="Username">
+      <input type="password" placeholder="Password">
       <button>Sign Up</button>
     </section>
 
-    <footer>
-      QuantumCoin™ © 2025
+    <footer class="fade-in">
+      QuantumCoin™ © 2025 — Built for the quantum era
     </footer>
-
   </div>
 
-  <script>
-    function animateBalance() {
-      let el = document.getElementById('walletBalance');
-      el.innerText = '0';
-      let i = 0;
-      let target = 1250;
-      let step = setInterval(() => {
-        i += 25;
-        el.innerText = i;
-        if (i >= target) clearInterval(step);
-      }, 20);
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
