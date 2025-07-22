@@ -1,94 +1,76 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey, DetachedSignature};
-use base64::{encode, decode};
-use std::fs::{self, File};
-use std::io::{Write, Read};
-use std::path::Path;
-use std::fmt;
+use sha2::{Sha256, Digest};
+use std::{fs, path::Path};
+use rand::Rng;
 
-#[derive(Clone)]
 pub struct Wallet {
-    pub public_key: PublicKey,
-    pub secret_key: SecretKey,
+    address: String,
+    password_hash: String,
 }
 
 impl Wallet {
-    pub fn new() -> Self {
-        let (pk, sk) = keypair();
-        Wallet { public_key: pk, secret_key: sk }
+    pub fn load_or_create() -> Self {
+        if Path::new("wallet.json").exists() {
+            let data = fs::read_to_string("wallet.json").unwrap();
+            serde_json::from_str(&data).unwrap()
+        } else {
+            let mut rng = rand::thread_rng();
+            let address: String = (0..32).map(|_| rng.gen_range(0..10).to_string()).collect();
+            let password = "default123";
+            let password_hash = Self::hash_password(password);
+
+            let wallet = Wallet { address, password_hash };
+            let json = serde_json::to_string(&wallet).unwrap();
+            fs::write("wallet.json", json).unwrap();
+            wallet
+        }
+    }
+
+    fn hash_password(password: &str) -> String {
+        let mut hasher = Sha256::new();
+        hasher.update(password);
+        format!("{:x}", hasher.finalize())
+    }
+
+    pub fn verify_password(&self, password: &str) -> bool {
+        Self::hash_password(password) == self.password_hash
     }
 
     pub fn get_address(&self) -> String {
-        encode(self.public_key.as_bytes())
+        self.address.clone()
     }
 
-    pub fn sign(&self, data: &[u8]) -> String {
-        let sig = sign_detached(data, &self.secret_key);
-        encode(sig.as_bytes())
-    }
-
-    pub fn verify(&self, data: &[u8], signature_b64: &str) -> bool {
-        if let Ok(sig_bytes) = decode(signature_b64) {
-            if let Ok(sig) = DetachedSignature::from_bytes(&sig_bytes) {
-                return verify_detached(&sig, data, &self.public_key).is_ok();
-            }
-        }
-        false
-    }
-
-    pub fn create_transaction(&self, recipient: &str, amount: f64) -> crate::blockchain::Transaction {
-        let data = format!("{}{}{}", self.get_address(), recipient, amount);
-        let signature = self.sign(data.as_bytes());
-
-        crate::blockchain::Transaction {
-            sender: self.get_address(),
-            recipient: recipient.to_string(),
+    pub fn create_transaction(&self, recipient: String, amount: u64) -> crate::models::Transaction {
+        crate::models::Transaction {
+            sender: self.address.clone(),
+            recipient,
             amount,
-            signature: Some(signature),
-        }
-    }
-
-    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) {
-        fs::write(pub_path, encode(self.public_key.as_bytes())).unwrap();
-        fs::write(priv_path, encode(self.secret_key.as_bytes())).unwrap();
-    }
-
-    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
-        if !Path::new(pub_path).exists() || !Path::new(priv_path).exists() {
-            return None;
-        }
-
-        let mut pub_encoded = String::new();
-        let mut priv_encoded = String::new();
-
-        File::open(pub_path).unwrap().read_to_string(&mut pub_encoded).unwrap();
-        File::open(priv_path).unwrap().read_to_string(&mut priv_encoded).unwrap();
-
-        let pub_bytes = decode(pub_encoded.trim()).ok()?;
-        let priv_bytes = decode(priv_encoded.trim()).ok()?;
-
-        let public_key = PublicKey::from_bytes(&pub_bytes).ok()?;
-        let secret_key = SecretKey::from_bytes(&priv_bytes).ok()?;
-
-        Some(Wallet { public_key, secret_key })
-    }
-
-    pub fn export_with_2fa(&self, code: &str) -> bool {
-        if code.trim() == "123456" {
-            let backup_dir = "wallet_backup";
-            fs::create_dir_all(backup_dir).unwrap();
-
-            let pub_path = format!("{}/pub.key", backup_dir);
-            let priv_path = format!("{}/priv.key", backup_dir);
-            self.save_to_files(&pub_path, &priv_path);
-            true
-        } else {
-            false
         }
     }
 }
 
-impl fmt::Debug for Wallet {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Wallet {{ address: {} }}", self.get_address())
+impl serde::Serialize for Wallet {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: serde::Serializer {
+        let mut state = serializer.serialize_struct("Wallet", 2)?;
+        state.serialize_field("address", &self.address)?;
+        state.serialize_field("password_hash", &self.password_hash)?;
+        state.end()
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Wallet {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: serde::Deserializer<'de> {
+        #[derive(Deserialize)]
+        struct WalletData {
+            address: String,
+            password_hash: String,
+        }
+
+        let data = WalletData::deserialize(deserializer)?;
+        Ok(Wallet {
+            address: data.address,
+            password_hash: data.password_hash,
+        })
     }
 }
