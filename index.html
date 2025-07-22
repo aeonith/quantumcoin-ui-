@@ -2,42 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- 🔁 Background video -->
   <video autoplay muted loop id="bg-video">
     <source src="quantum-bg.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
   </video>
 
-  <div class="container">
-    <h1>🚀 QuantumCoin Dashboard</h1>
+  <div class="overlay"></div>
 
-    <div class="card">
-      <h2>Current Price:</h2>
+  <div class="content-wrapper">
+
+    <header class="hero">
+      <h1>🚀 QuantumCoin</h1>
+      <p class="tagline">Quantum-Secure Currency of the Future</p>
+    </header>
+
+    <section class="card glass">
+      <h2>📈 Current Price</h2>
       <p id="price">$0.25</p>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Your Wallet</h2>
+    <section class="card glass">
+      <h2>💼 Your Wallet</h2>
       <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
       <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Send QTC</h2>
-      <input type="text" placeholder="Recipient address" id="recipient"/>
-      <input type="number" placeholder="Amount" id="amount"/>
-      <input type="password" placeholder="Wallet password" id="password"/>
-      <button onclick="send()">Send</button>
-    </div>
+    <section class="card glass">
+      <h2>📤 Send QTC</h2>
+      <input type="text" placeholder="Recipient address" id="send-to" />
+      <input type="number" placeholder="Amount" id="send-amount" />
+      <input type="password" placeholder="Wallet password" id="send-pass" />
+      <button onclick="sendCoins()">Send</button>
+    </section>
 
-    <div class="card">
-      <h2>Mine New Block</h2>
-      <button onclick="mine()">Mine</button>
-    </div>
+    <section class="card glass">
+      <h2>⛏️ Mine New Block</h2>
+      <button onclick="mineBlock()">Mine</button>
+    </section>
+
+    <footer class="footer">
+      <p>© 2025 QuantumCoin. All rights reserved.</p>
+    </footer>
   </div>
 
   <script src="script.js"></script>
