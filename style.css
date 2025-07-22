@@ -1,89 +1,129 @@
-/* 🎥 Background Video */
-#bg-video {
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+}
+
+/* 🎥 Video Background */
+#bgVideo {
   position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   z-index: -2;
 }
 
-/* 🔲 Dark Overlay */
+/* 🟧 Overlay Container */
 .overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: -1;
-}
-
-/* 🧱 Base Layout */
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  color: #fff;
-  overflow-x: hidden;
-}
-
-.container {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 1rem;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: white;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
-/* 🚀 Header */
-header {
+/* ✨ Hero */
+.hero {
   text-align: center;
-  margin-top: 1rem;
 }
-header h1 {
-  font-size: 2.3rem;
-  color: #ffa733;
-  margin: 0;
+.hero h1 {
+  font-size: 2.5rem;
+  color: #FFA500;
+  margin-bottom: 0.5rem;
 }
-.subtitle {
-  font-size: 1.05rem;
-  color: #e0e0e0;
-  margin-top: 0.3rem;
+.hero p {
+  font-size: 1.1rem;
+  color: #ddd;
+  margin-bottom: 1.2rem;
+}
+.cta {
+  background: #007bff;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.whitepaper {
+  display: block;
+  margin-top: 0.8rem;
+  color: #00d4ff;
+  text-decoration: underline;
+  font-size: 0.95rem;
 }
 
-/* 🧊 Card Sections */
+/* 📦 Cards */
 .card {
-  background-color: rgba(0, 0, 0, 0.6);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 15px;
   padding: 1.2rem;
-  border-radius: 14px;
-  box-shadow: 0 0 12px rgba(255, 165, 0, 0.3);
-  backdrop-filter: blur(8px);
+  box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
+}
+.card h2 {
+  color: #FFA500;
+  margin-bottom: 0.8rem;
 }
 
 /* 🧾 Inputs */
 input {
+  display: block;
   width: 100%;
-  padding: 0.75rem;
-  margin-top: 0.5rem;
-  border: none;
+  padding: 0.6rem;
+  margin: 0.5rem 0;
   border-radius: 8px;
-  font-size: 1rem;
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-/* 🔘 Button */
-button {
-  margin-top: 0.75rem;
-  width: 100%;
-  padding: 0.8rem;
-  background-color: #ff6600;
   border: none;
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
-  font-size: 1rem;
+}
+input::placeholder {
+  color: #ccc;
+}
+button {
+  margin-top: 0.5rem;
+  padding: 0.6rem 1rem;
+  width: 100%;
+  background: #ff8c00;
+  border: none;
+  color: black;
+  font-weight: bold;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.2s;
 }
 button:hover {
-  background-color: #e65c00;
+  background: #ffb347;
+}
+
+/* 🔐 Auth */
+.auth {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1.5rem;
+  border-radius: 15px;
+}
+.auth h2 {
+  color: #00ffcc;
+  margin-bottom: 1rem;
+}
+.toggle-link {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  color: #ccc;
+}
+.toggle-link span {
+  color: #00ffff;
+  cursor: pointer;
+  text-decoration: underline;
 }
