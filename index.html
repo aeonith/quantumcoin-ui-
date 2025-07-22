@@ -1,40 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>QuantumCoin Wallet</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin™</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- 🔁 Background video -->
   <video autoplay muted loop id="bg-video">
-    <source src="bg.mp4" type="video/mp4">
-    Your browser does not support the video tag.
+    <source src="quantum-bg.mp4" type="video/mp4" />
   </video>
 
   <div class="container">
     <h1>🚀 QuantumCoin Dashboard</h1>
 
-    <div class="price-box">
+    <div class="card">
       <h2>Current Price:</h2>
       <p id="price">$0.25</p>
     </div>
 
-    <div class="wallet-box">
+    <div class="card">
       <h2>Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="balance">Loading...</span> QTC</p>
+      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
+      <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
     </div>
 
-    <div class="action-box">
-      <h3>Send QTC</h3>
-      <input id="recipient" type="text" placeholder="Recipient address">
-      <input id="amount" type="number" placeholder="Amount">
-      <input id="password" type="password" placeholder="Wallet password">
+    <div class="card">
+      <h2>Send QTC</h2>
+      <input type="text" placeholder="Recipient address" id="recipient"/>
+      <input type="number" placeholder="Amount" id="amount"/>
+      <input type="password" placeholder="Wallet password" id="password"/>
       <button onclick="send()">Send</button>
     </div>
 
-    <div class="action-box">
-      <h3>Mine New Block</h3>
+    <div class="card">
+      <h2>Mine New Block</h2>
       <button onclick="mine()">Mine</button>
     </div>
   </div>
