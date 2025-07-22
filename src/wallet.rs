@@ -1,31 +1,26 @@
-use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
-use rand::Rng;
+use crate::transaction::Transaction;
+use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Wallet {
     pub address: String,
+    pub password: String,
 }
 
 impl Wallet {
-    pub fn new() -> Self {
-        let random_number: u64 = rand::thread_rng().gen();
-        let address = format!("wallet-{}", random_number);
-        Wallet { address }
+    pub fn get_address(&self) -> String {
+        self.address.clone()
     }
 
-    // This must exist and be `pub`:
-    pub fn load_or_generate() -> Self {
-        let path = "wallet.json";
-        if Path::new(path).exists() {
-            let data = fs::read_to_string(path).expect("Failed to read wallet file");
-            serde_json::from_str(&data).expect("Failed to parse wallet file")
-        } else {
-            let wallet = Wallet::new();
-            let data = serde_json::to_string_pretty(&wallet).expect("Failed to serialize wallet");
-            fs::write(path, data).expect("Failed to write wallet file");
-            wallet
+    pub fn verify_password(&self, input: &str) -> bool {
+        self.password == input
+    }
+
+    pub fn create_transaction(&self, to: String, amount: u64) -> Transaction {
+        Transaction {
+            from: self.address.clone(),
+            to,
+            amount,
         }
     }
 }
