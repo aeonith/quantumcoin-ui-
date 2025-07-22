@@ -1,27 +1,24 @@
 use serde::{Serialize, Deserialize};
 use std::{fs, path::Path};
+use sha2::{Digest, Sha256};
 use crate::transaction::Transaction;
-use sha2::{Sha256, Digest}; // ✅ Fix for E0599
-use hex; // ✅ Fix for E0433
 
-/// A single block in the chain.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Block {
-    pub index:        u64,
-    pub timestamp:    u128,
+    pub index: u64,
+    pub timestamp: u128,
     pub transactions: Vec<Transaction>,
-    pub previous_hash:String,
-    pub hash:         String,
-    pub nonce:        u64,
+    pub previous_hash: String,
+    pub hash: String,
+    pub nonce: u64,
 }
 
-/// The full blockchain.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Blockchain {
-    pub chain:              Vec<Block>,
-    pub difficulty:         u32,
+    pub chain: Vec<Block>,
+    pub difficulty: u32,
     pub pending_transactions: Vec<Transaction>,
-    pub mining_reward:      u64,
+    pub mining_reward: u64,
 }
 
 impl Blockchain {
@@ -33,7 +30,7 @@ impl Blockchain {
         } else {
             let mut bc = Blockchain {
                 chain: vec![],
-                difficulty: 4,
+                difficulty: 5,
                 pending_transactions: vec![],
                 mining_reward: 50,
             };
@@ -74,7 +71,10 @@ impl Blockchain {
         };
 
         loop {
-            let data = format!("{:?}{:?}{:?}{:?}", block.index, block.timestamp, block.nonce, block.transactions);
+            let data = format!(
+                "{}{}{:?}{}",
+                block.index, block.timestamp, block.transactions, block.nonce
+            );
             let hash = Sha256::digest(data.as_bytes());
             let hash_hex = hex::encode(hash);
             if hash_hex.starts_with(&"0".repeat(self.difficulty as usize)) {
@@ -91,7 +91,6 @@ impl Blockchain {
             timestamp: now(),
         };
         block.transactions.push(reward_tx);
-
         self.chain.push(block);
         self.save();
     }
@@ -104,8 +103,12 @@ impl Blockchain {
         let mut balance: i128 = 0;
         for block in &self.chain {
             for tx in &block.transactions {
-                if tx.recipient == address { balance += tx.amount as i128 }
-                if tx.sender    == address { balance -= tx.amount as i128 }
+                if tx.recipient == address {
+                    balance += tx.amount as i128;
+                }
+                if tx.sender == address {
+                    balance -= tx.amount as i128;
+                }
             }
         }
         balance.max(0) as u64
