@@ -1,51 +1,73 @@
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:"Segoe UI",system-ui,sans-serif;background:#000;color:#fff;scroll-behavior:smooth}
-
-#bgVideo{
-  position:fixed;top:0;left:0;width:100vw;height:100vh;
-  object-fit:cover;z-index:-10;
+/* Full-page background video */
+#bgVideo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -10;
+  pointer-events: none;
 }
 
-.overlay{
-  display:flex;flex-direction:column;gap:2.8rem;
-  padding:2.4rem 1.2rem;max-width:680px;margin-inline:auto;
+/* Overall layout container */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: transparent;
+  color: white;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
-.section{
-  padding:1.6rem;border-radius:20px;
-  background:rgba(0,0,0,.45);backdrop-filter:blur(12px);
-  box-shadow:0 0 40px rgba(255,140,0,.18);
-  opacity:0;transform:translateY(60px);transition:all .7s ease;
-}
-.section.reveal{opacity:1;transform:none}
-
-.hero h1{font-size:2.6rem;color:#ff9100;text-shadow:0 0 18px #ff910077}
-.card h2,.auth h2{color:#ff9100;margin-bottom:.9rem}
-p{line-height:1.4}
-a{color:#00e7ff}
-
-input{
-  width:100%;padding:.75rem;border:none;border-radius:12px;
-  margin:.35rem 0;background:rgba(255,255,255,.1);color:#fff;
-}
-input::placeholder{color:#bbb}
-button{
-  width:100%;padding:.75rem;margin-top:.6rem;border:none;
-  border-radius:12px;font-weight:600;cursor:pointer;color:#000;
-  background:#ff9100;box-shadow:0 0 14px #ff910077;
-  transition:background .25s;
-}
-button:hover{background:#ffc46a}
-
-.cta{background:#007bff;color:#fff;box-shadow:0 0 14px #007bff77}
-.cta:hover{background:#5aa9ff}
-.mineGlow{
-  animation:glow 2s ease-in-out infinite alternate;
-}
-@keyframes glow{
-  from{box-shadow:0 0 8px #ff910044,0 0 24px #ff910022}
-  to{box-shadow:0 0 18px #ff9100aa,0 0 54px #ff910066}
+/* Transparent content containers */
+.section {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
+  padding: 40px 25px;
+  margin: 60px auto;
+  width: 90%;
+  max-width: 800px;
+  box-shadow: 0 0 30px rgba(255, 136, 0, 0.3);
 }
 
-.toggle{font-size:.85rem;text-align:center;color:#ccc}
-.toggle span{color:#00e7ff;text-decoration:underline;cursor:pointer}
+/* Buttons */
+.button {
+  background-color: #ff6600;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #e65c00;
+}
+
+/* Title styling */
+h1, h2 {
+  text-align: center;
+  color: #ffbb33;
+  margin-bottom: 20px;
+}
+
+/* Inputs */
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: none;
+  font-size: 16px;
+}
+
+/* Footer or label */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.7;
+  padding: 20px 0;
+}
