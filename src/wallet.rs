@@ -1,51 +1,54 @@
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Deserialize};
+use rand::Rng;
 use sha2::{Sha256, Digest};
 use std::{fs, path::Path};
-use rand::Rng;
+use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Wallet {
-    address: String,
-    password_hash: String,
+    pub address:       String,
+    pub password_hash: String,
+    // TODO: store Dilithium public / private keys here
 }
 
 impl Wallet {
-    pub fn load_or_create() -> Self {
-        if Path::new("wallet.json").exists() {
-            let data = fs::read_to_string("wallet.json").unwrap();
-            serde_json::from_str(&data).unwrap()
+    /// Load from disk or generate a new wallet
+    pub fn load_or_generate() -> Self {
+        let path = "wallet.json";
+        if Path::new(path).exists() {
+            let data = fs::read_to_string(path).expect("read wallet");
+            serde_json::from_str(&data).expect("parse wallet")
         } else {
             let mut rng = rand::thread_rng();
-            let address: String = (0..32).map(|_| rng.gen_range(0..10).to_string()).collect();
-            let password = "default123";
+            let address = Uuid::new_v4().to_string();
+            let password = "default123"; // replace with user‐supplied
             let password_hash = Self::hash_password(password);
-
-            let wallet = Wallet { address, password_hash };
-            let json = serde_json::to_string(&wallet).unwrap();
-            fs::write("wallet.json", json).unwrap();
-            wallet
+            let w = Wallet { address, password_hash };
+            fs::write(path, serde_json::to_string_pretty(&w).unwrap()).unwrap();
+            w
         }
     }
 
-    fn hash_password(password: &str) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(password);
-        format!("{:x}", hasher.finalize())
+    fn hash_password(p: &str) -> String {
+        let mut h = Sha256::new();
+        h.update(p.as_bytes());
+        format!("{:x}", h.finalize())
     }
 
-    pub fn verify_password(&self, password: &str) -> bool {
-        Self::hash_password(password) == self.password_hash
+    pub fn verify_password(&self, p: &str) -> bool {
+        Self::hash_password(p) == self.password_hash
     }
 
     pub fn get_address(&self) -> String {
         self.address.clone()
     }
 
-    pub fn create_transaction(&self, recipient: String, amount: u64) -> crate::models::Transaction {
-        crate::models::Transaction {
-            sender: self.address.clone(),
-            recipient,
+    pub fn create_transaction(&self, recipient: &str, amount: u64) -> crate::transaction::Transaction {
+        crate::transaction::Transaction {
+            sender:    self.address.clone(),
+            recipient: recipient.to_string(),
             amount,
+            timestamp: chrono::Utc::now().timestamp_millis() as u128,
         }
     }
 }
