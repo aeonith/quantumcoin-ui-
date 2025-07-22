@@ -3,6 +3,9 @@ use base64::{encode, decode};
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use serde::{Serialize, Deserialize};
+use rand::{thread_rng, Rng};
+use rand::distributions::Alphanumeric;
+use std::io;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Wallet {
@@ -61,5 +64,37 @@ impl Wallet {
         let pk = PublicKey::from_bytes(&public_key_bytes).unwrap();
         let sig = Signature::from_bytes(&sig_bytes).unwrap();
         verify_detached(&sig, message, &pk).is_ok()
+    }
+
+    pub fn create_transaction(&self, recipient: &str, amount: f64) -> Transaction {
+        let tx = Transaction::new(
+            self.get_address(),
+            recipient.to_string(),
+            amount,
+            None,
+        );
+        tx.sign(self)
+    }
+
+    pub fn export_with_2fa(&self) {
+        let code: String = thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(6)
+            .map(char::from)
+            .collect();
+
+        println!("Your 2FA code is: {}", code);
+        println!("Enter the 2FA code to confirm export:");
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+
+        if input.trim() == code {
+            std::fs::write("wallet_backup.json", serde_json::to_string_pretty(&self).unwrap())
+                .expect("Failed to write backup file.");
+            println!("✅ Wallet exported to wallet_backup.json");
+        } else {
+            println!("❌ Incorrect 2FA code. Export cancelled.");
+        }
     }
 }
