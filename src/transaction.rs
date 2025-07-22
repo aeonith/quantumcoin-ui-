@@ -1,8 +1,10 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+/// A simple transaction: in future you’ll add Dilithium signatures here.
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Transaction {
-    pub from: String,
-    pub to: String,
-    pub amount: u64,
+    pub sender:    String,
+    pub recipient: String,
+    pub amount:    u64,
+    pub timestamp: u128,
 }
