@@ -8,63 +8,57 @@
 </head>
 <body>
 
-  <!-- 🎥 Background Video -->
+  <!-- Background Video -->
   <video id="bgVideo" autoplay muted loop playsinline>
-    <source src="quantum_bg.mp4" type="video/mp4">
-    Your browser does not support video playback.
+    <source src="/quantum_bg.mp4" type="video/mp4" />
+    Your browser does not support HTML5 video.
   </video>
 
-  <!-- 🧊 UI Overlay -->
-  <div class="overlay">
-
-    <!-- Hero Section -->
-    <section class="section hero reveal">
-      <h1>🚀 QuantumCoin™</h1>
-      <p>The Quantum-Secure Currency of the Future</p>
-      <button class="cta">Buy QuantumCoin™</button>
-      <a href="#" class="whitepaper">📄 View Whitepaper</a>
-    </section>
-
-    <!-- Login / Signup -->
-    <section class="section auth reveal" id="authBox">
-      <h2 id="authTitle">Sign Up</h2>
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Password">
-      <input type="password" id="confirm" placeholder="Confirm password">
-      <button id="authBtn">Create Account</button>
-      <p class="toggle" onclick="switchMode()">Already have an account? <span id="altText">Login</span></p>
-    </section>
-
-    <!-- Price Section -->
-    <section class="section card reveal">
-      <h2>📉 Current Price</h2>
-      <p id="price">$0.25</p>
-    </section>
-
-    <!-- Wallet Info -->
-    <section class="section card reveal">
-      <h2>📦 Wallet</h2>
-      <p><strong>Address:</strong> <span id="addr">Loading…</span></p>
-      <p><strong>Balance:</strong> <span id="bal">0</span> QTC</p>
-    </section>
-
-    <!-- Send QTC -->
-    <section class="section card reveal">
-      <h2>📨 Send Coins</h2>
-      <input type="text" placeholder="Recipient address">
-      <input type="number" placeholder="Amount">
-      <input type="password" placeholder="Wallet password">
-      <button>Send</button>
-    </section>
-
-    <!-- Mining -->
-    <section class="section card reveal">
-      <h2>⛏️ Mine QuantumCoin™</h2>
-      <button class="mineGlow" onclick="mine()">Mine</button>
-    </section>
-
+  <!-- Welcome Section -->
+  <div class="section">
+    <h1>QuantumCoin™</h1>
+    <p>The world’s most secure, quantum-resistant digital currency. Powered by cutting-edge tech. ⚡</p>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Wallet Section -->
+  <div class="section">
+    <h2>Your Wallet</h2>
+    <p>Address: <span id="walletAddress">Loading...</span></p>
+    <p>Balance: <span id="walletBalance">0 QTC</span></p>
+    <button class="button" onclick="refreshWallet()">Refresh Balance</button>
+  </div>
+
+  <!-- Price Chart Section -->
+  <div class="section">
+    <h2>Market Price</h2>
+    <p>Current Price: <span id="priceDisplay">$0.25</span></p>
+    <small>Initial listing price — price adjusts after 30 days.</small>
+  </div>
+
+  <!-- Signup Section -->
+  <div class="section">
+    <h2>Create Account</h2>
+    <input type="text" placeholder="Username" id="username" />
+    <input type="password" placeholder="Password" id="password" />
+    <button class="button" onclick="signup()">Sign Up</button>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    QuantumCoin™ &copy; 2025 — All rights reserved.
+  </div>
+
+  <script>
+    function refreshWallet() {
+      // Placeholder for backend API call
+      document.getElementById("walletBalance").textContent = "1250 QTC";
+    }
+
+    function signup() {
+      const username = document.getElementById("username").value;
+      alert("Welcome, " + username + "! Your QuantumCoin™ wallet is being created.");
+    }
+  </script>
+
 </body>
 </html>
