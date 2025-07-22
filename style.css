@@ -1,98 +1,88 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body, html {
-  font-family: 'Segoe UI', sans-serif;
-  height: 100%;
-  overflow-x: hidden;
-  color: #fff;
-}
-
+/* 🔁 Video Background */
 #bgVideo {
   position: fixed;
   top: 0;
   left: 0;
-  min-width: 100%;
-  min-height: 100%;
   z-index: -1;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
-  opacity: 0.9;
+  opacity: 1;
 }
 
-.overlay {
-  backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.3);
-  min-height: 100vh;
-  padding: 2rem;
+/* 🚀 General Reset */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+  background: transparent;
 }
 
+/* 💎 Layout */
 .container {
+  padding: 2rem;
   max-width: 600px;
   margin: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  z-index: 1;
 }
 
+/* 🌠 Title & Subtitle */
 .title {
-  font-size: 2.5rem;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ff8c00;
   text-align: center;
-  color: #ff9933;
-  text-shadow: 0 0 12px #ff6600, 0 0 20px #ff6600;
+  text-shadow: 0 0 20px #ff8c00;
 }
-
 .subtitle {
   text-align: center;
-  font-size: 1.1rem;
+  margin-bottom: 2rem;
   color: #ffcc99;
 }
 
-.card {
+/* 📦 Section Boxes */
+.section {
   background-color: rgba(0, 0, 0, 0.4);
   padding: 1.5rem;
-  border-radius: 20px;
-  box-shadow: 0 0 15px rgba(255, 128, 0, 0.7);
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 0 20px rgba(255, 140, 0, 0.4);
 }
 
-.card h2 {
-  margin-bottom: 1rem;
-  color: #ffa94d;
-  text-shadow: 0 0 8px #ff751a;
-}
-
-input, button {
+/* 📄 Inputs */
+input {
   width: 100%;
   padding: 0.75rem;
-  margin-top: 0.5rem;
+  margin: 0.5rem 0;
   border: none;
-  border-radius: 10px;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
   font-size: 1rem;
 }
 
-input {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: white;
-  outline: none;
-}
-
+/* 🔘 Buttons */
 button {
-  background-color: #ff6600;
-  color: black;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #ff8c00;
+  color: #000;
   font-weight: bold;
+  border: none;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: 0.3s;
+  font-size: 1.1rem;
+  transition: background-color 0.3s ease;
 }
-
 button:hover {
-  background-color: #ff8533;
+  background-color: #ffaa33;
 }
 
+/* 👣 Footer */
 footer {
   text-align: center;
-  padding-top: 2rem;
-  font-size: 0.9rem;
   color: #ccc;
+  font-size: 0.9rem;
+  margin-top: 2rem;
 }
