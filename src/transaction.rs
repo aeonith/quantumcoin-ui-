@@ -1,8 +1,8 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Transaction {
     pub from: String,
     pub to: String,
-    pub amount: f64,
+    pub amount: u64,
 }
