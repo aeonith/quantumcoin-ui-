@@ -1,68 +1,48 @@
+use actix_cors::Cors;
+use actix_files as fs;
+use actix_web::{web, App, HttpServer};
+use std::sync::Mutex;
+
+mod blockchain;
+mod routes;
 mod transaction;
 mod wallet;
-mod blockchain;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
-use serde::Deserialize;
-use std::sync::Mutex;
 use blockchain::Blockchain;
+use routes::{get_balance, send_transaction};
 use wallet::Wallet;
-
-#[derive(Debug, Deserialize)]
-struct TransactionRequest {
-    to: String,
-    amount: u64,
-    password: String,
-}
-
-#[get("/balance")]
-async fn get_balance(wallet: web::Data<Wallet>, blockchain: web::Data<Mutex<Blockchain>>) -> impl Responder {
-    let wallet = wallet.get_ref();
-    let blockchain = blockchain.lock().unwrap();
-    let balance = blockchain.get_balance(&wallet.get_address());
-    HttpResponse::Ok().body(format!("Balance for {}: {}", wallet.get_address(), balance))
-}
-
-#[post("/send")]
-async fn send_transaction(
-    wallet: web::Data<Wallet>,
-    blockchain: web::Data<Mutex<Blockchain>>,
-    info: web::Json<TransactionRequest>,
-) -> impl Responder {
-    let wallet = wallet.get_ref();
-
-    if !wallet.verify_password(&info.password) {
-        return HttpResponse::Unauthorized().body("Invalid password");
-    }
-
-    let tx = wallet.create_transaction(info.to.clone(), info.amount);
-    let mut blockchain = blockchain.lock().unwrap();
-    blockchain.add_transaction(tx);
-
-    HttpResponse::Ok().body("Transaction added")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let wallet = web::Data::new(Wallet {
-        address: "quantum-wallet-001".to_string(),
-        password: "secret".to_string(),
-    });
+    // Initialize wallet and blockchain
+    let wallet = Wallet::load_or_generate("wallet.json".to_string());
+    let blockchain = Blockchain::load_or_create("blockchain.json".to_string());
 
-    let blockchain = web::Data::new(Mutex::new(Blockchain {
-        transactions: vec![],
-    }));
+    let wallet_data = web::Data::new(Mutex::new(wallet));
+    let blockchain_data = web::Data::new(Mutex::new(blockchain));
 
-    println!("🚀 Server running at http://localhost:8080");
-    
+    println!("🚀 QuantumCoin backend running at https://quantumcoin-it.onrender.com");
+
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("https://quantumcoincrypto.com")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![
+                actix_web::http::header::AUTHORIZATION,
+                actix_web::http::header::ACCEPT,
+                actix_web::http::header::CONTENT_TYPE,
+            ])
+            .max_age(3600);
+
         App::new()
-            .app_data(wallet.clone())
-            .app_data(blockchain.clone())
+            .wrap(cors)
+            .app_data(wallet_data.clone())
+            .app_data(blockchain_data.clone())
             .service(get_balance)
             .service(send_transaction)
+            .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
