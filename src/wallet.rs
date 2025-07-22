@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
 use sha2::{Sha256, Digest};
 use std::{fs, path::Path};
 use rand::Rng;
 
+#[derive(Serialize, Deserialize)]
 pub struct Wallet {
     address: String,
     password_hash: String,
@@ -45,32 +47,5 @@ impl Wallet {
             recipient,
             amount,
         }
-    }
-}
-
-impl serde::Serialize for Wallet {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: serde::Serializer {
-        let mut state = serializer.serialize_struct("Wallet", 2)?;
-        state.serialize_field("address", &self.address)?;
-        state.serialize_field("password_hash", &self.password_hash)?;
-        state.end()
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for Wallet {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de> {
-        #[derive(Deserialize)]
-        struct WalletData {
-            address: String,
-            password_hash: String,
-        }
-
-        let data = WalletData::deserialize(deserializer)?;
-        Ok(Wallet {
-            address: data.address,
-            password_hash: data.password_hash,
-        })
     }
 }
