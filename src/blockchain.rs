@@ -1,40 +1,27 @@
-use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
+use crate::transaction::Transaction;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Block {
-    pub index: u64,
-    pub data: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Clone)]
 pub struct Blockchain {
-    pub chain: Vec<Block>,
+    pub transactions: Vec<Transaction>,
 }
 
 impl Blockchain {
-    pub fn new() -> Self {
-        let genesis_block = Block {
-            index: 0,
-            data: String::from("Genesis Block"),
-        };
-        Blockchain {
-            chain: vec![genesis_block],
-        }
+    pub fn get_balance(&self, address: &str) -> u64 {
+        self.transactions
+            .iter()
+            .fold(0i64, |acc, tx| {
+                if tx.to == address {
+                    acc + tx.amount as i64
+                } else if tx.from == address {
+                    acc - tx.amount as i64
+                } else {
+                    acc
+                }
+            })
+            .max(0) as u64
     }
 
-    // This must exist and be `pub`:
-    pub fn load_from_file() -> Self {
-        let path = "blockchain.json";
-        if Path::new(path).exists() {
-            let data = fs::read_to_string(path).expect("Failed to read blockchain file");
-            serde_json::from_str(&data).expect("Failed to parse blockchain file")
-        } else {
-            let blockchain = Blockchain::new();
-            let data = serde_json::to_string_pretty(&blockchain).expect("Failed to serialize blockchain");
-            fs::write(path, data).expect("Failed to write blockchain file");
-            blockchain
-        }
+    pub fn add_transaction(&mut self, tx: Transaction) {
+        self.transactions.push(tx);
     }
 }
