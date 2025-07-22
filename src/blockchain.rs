@@ -1,6 +1,8 @@
 use serde::{Serialize, Deserialize};
 use std::{fs, path::Path};
 use crate::transaction::Transaction;
+use sha2::{Sha256, Digest}; // ✅ Fix for E0599
+use hex; // ✅ Fix for E0433
 
 /// A single block in the chain.
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -17,13 +19,12 @@ pub struct Block {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Blockchain {
     pub chain:              Vec<Block>,
-    pub difficulty:         u32,        // number of leading zeros
+    pub difficulty:         u32,
     pub pending_transactions: Vec<Transaction>,
-    pub mining_reward:      u64,        // reward per block
+    pub mining_reward:      u64,
 }
 
 impl Blockchain {
-    /// Load or initialize with genesis block.
     pub fn load_or_create() -> Self {
         let path = "blockchain.json";
         if Path::new(path).exists() {
@@ -31,7 +32,8 @@ impl Blockchain {
             serde_json::from_str(&data).unwrap()
         } else {
             let mut bc = Blockchain {
-                chain: vec![], difficulty: 4,
+                chain: vec![],
+                difficulty: 4,
                 pending_transactions: vec![],
                 mining_reward: 50,
             };
@@ -61,9 +63,7 @@ impl Blockchain {
         self.chain.last().unwrap()
     }
 
-    /// Proof‐of‐Work mining: find a nonce producing a hash with `difficulty` zeros.
     pub fn mine_pending(&mut self, reward_address: &str) {
-        // create new block with pending txs + reward
         let mut block = Block {
             index: self.chain.len() as u64,
             timestamp: now(),
@@ -73,10 +73,9 @@ impl Blockchain {
             nonce: 0,
         };
 
-        // mining loop
         loop {
             let data = format!("{:?}{:?}{:?}{:?}", block.index, block.timestamp, block.nonce, block.transactions);
-            let hash = sha2::Sha256::digest(data.as_bytes());
+            let hash = Sha256::digest(data.as_bytes());
             let hash_hex = hex::encode(hash);
             if hash_hex.starts_with(&"0".repeat(self.difficulty as usize)) {
                 block.hash = hash_hex;
@@ -85,7 +84,6 @@ impl Blockchain {
             block.nonce += 1;
         }
 
-        // reward transaction
         let reward_tx = Transaction {
             sender: "SYSTEM".into(),
             recipient: reward_address.into(),
