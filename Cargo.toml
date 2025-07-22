@@ -33,4 +33,5 @@ jsonwebtoken = "9.2"
 sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "sqlite", "macros"] }
 
 # Optional TOTP (2FA)
-oath = "0.14"
+otpauth = "1.0"
+qrcode = "0.12"
