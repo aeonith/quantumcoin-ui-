@@ -2,102 +2,97 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body, html {
+  font-family: 'Segoe UI', sans-serif;
   height: 100%;
   overflow-x: hidden;
-  background-color: #000;
   color: #fff;
 }
 
-#bg-video {
+#bgVideo {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+  min-height: 100%;
+  z-index: -1;
   object-fit: cover;
-  z-index: -2;
+  opacity: 0.9;
 }
 
 .overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(10, 10, 20, 0.6);
-  backdrop-filter: blur(2px);
-  z-index: -1;
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.3);
+  min-height: 100vh;
+  padding: 2rem;
 }
 
-.content-wrapper {
-  padding: 2rem 1.2rem;
+.container {
+  max-width: 600px;
+  margin: auto;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-.hero {
+.title {
+  font-size: 2.5rem;
   text-align: center;
-  color: #00e5ff;
-  text-shadow: 0 0 8px #00e5ff;
+  color: #ff9933;
+  text-shadow: 0 0 12px #ff6600, 0 0 20px #ff6600;
 }
 
-.hero h1 {
-  font-size: 2.8rem;
-  margin-bottom: 0.3rem;
-}
-
-.tagline {
-  font-size: 1.2rem;
-  color: #ccc;
+.subtitle {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #ffcc99;
 }
 
 .card {
+  background-color: rgba(0, 0, 0, 0.4);
   padding: 1.5rem;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 0 15px rgba(255, 128, 0, 0.7);
 }
 
 .card h2 {
   margin-bottom: 1rem;
-  color: #00e5ff;
-  text-shadow: 0 0 4px #00e5ff;
+  color: #ffa94d;
+  text-shadow: 0 0 8px #ff751a;
 }
 
-.card input {
+input, button {
   width: 100%;
-  margin: 0.5rem 0;
   padding: 0.75rem;
+  margin-top: 0.5rem;
   border: none;
-  border-radius: 0.5rem;
-  background-color: #222;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+input {
+  background-color: rgba(255, 255, 255, 0.15);
   color: white;
+  outline: none;
 }
 
-.card button {
-  width: 100%;
-  padding: 0.75rem;
-  margin-top: 0.75rem;
-  border: none;
-  border-radius: 0.5rem;
-  background: #00e5ff;
-  color: #000;
+button {
+  background-color: #ff6600;
+  color: black;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: 0.3s;
 }
 
-.card button:hover {
-  background: #00b3cc;
+button:hover {
+  background-color: #ff8533;
 }
 
-.footer {
+footer {
   text-align: center;
-  margin-top: 2rem;
-  color: #888;
+  padding-top: 2rem;
   font-size: 0.9rem;
+  color: #ccc;
 }
