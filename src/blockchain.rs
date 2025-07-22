@@ -1,6 +1,8 @@
 use crate::models::Transaction;
+use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
 
+#[derive(Serialize, Deserialize)]
 pub struct Blockchain {
     transactions: Vec<Transaction>,
 }
@@ -33,29 +35,5 @@ impl Blockchain {
             }
         }
         balance
-    }
-}
-
-impl serde::Serialize for Blockchain {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: serde::Serializer {
-        let mut state = serializer.serialize_struct("Blockchain", 1)?;
-        state.serialize_field("transactions", &self.transactions)?;
-        state.end()
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for Blockchain {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de> {
-        #[derive(Deserialize)]
-        struct BlockchainData {
-            transactions: Vec<Transaction>,
-        }
-
-        let data = BlockchainData::deserialize(deserializer)?;
-        Ok(Blockchain {
-            transactions: data.transactions,
-        })
     }
 }
