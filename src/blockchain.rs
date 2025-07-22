@@ -1,40 +1,39 @@
-use crate::block::Block;
-use crate::transaction::Transaction;
-use std::time::{SystemTime, UNIX_EPOCH};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::Path;
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Block {
+    pub index: u64,
+    pub data: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Blockchain {
     pub chain: Vec<Block>,
 }
 
 impl Blockchain {
     pub fn new() -> Self {
-        let mut blockchain = Blockchain { chain: vec![] };
-        blockchain.create_genesis_block();
-        blockchain
-    }
-
-    fn create_genesis_block(&mut self) {
         let genesis_block = Block {
             index: 0,
-            timestamp: current_timestamp(),
-            transactions: vec![],
-            previous_hash: "0".to_string(),
-            hash: "genesis_hash".to_string(),
-            nonce: 0,
+            data: String::from("Genesis Block"),
         };
-        self.chain.push(genesis_block);
-    }
-
-    pub fn print_chain(&self) {
-        for block in &self.chain {
-            println!("{:#?}", block);
+        Blockchain {
+            chain: vec![genesis_block],
         }
     }
-}
 
-fn current_timestamp() -> u128 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_millis()
+    pub fn load_from_file() -> Self {
+        let path = "blockchain.json";
+        if Path::new(path).exists() {
+            let data = fs::read_to_string(path).expect("Failed to read blockchain file");
+            serde_json::from_str(&data).expect("Failed to parse blockchain file")
+        } else {
+            let blockchain = Blockchain::new();
+            let data = serde_json::to_string_pretty(&blockchain).expect("Failed to serialize blockchain");
+            fs::write(path, data).expect("Failed to write blockchain file");
+            blockchain
+        }
+    }
 }
