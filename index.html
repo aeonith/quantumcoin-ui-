@@ -1,53 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuantumCoin Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuantumCoin</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <video autoplay muted loop id="bg-video">
+  <!-- 🔁 Background Video -->
+  <video autoplay muted loop id="bgVideo">
     <source src="quantum-bg.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
   </video>
 
-  <div class="overlay"></div>
+  <div class="overlay">
+    <div class="container">
+      <h1 class="title">🚀 QuantumCoin</h1>
+      <p class="subtitle">Quantum-Secure Currency of the Future</p>
 
-  <div class="content-wrapper">
+      <section class="card">
+        <h2>📉 Current Price</h2>
+        <p id="price">$0.25</p>
+      </section>
 
-    <header class="hero">
-      <h1>🚀 QuantumCoin</h1>
-      <p class="tagline">Quantum-Secure Currency of the Future</p>
-    </header>
+      <section class="card">
+        <h2>💼 Your Wallet</h2>
+        <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
+        <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
+      </section>
 
-    <section class="card glass">
-      <h2>📈 Current Price</h2>
-      <p id="price">$0.25</p>
-    </section>
+      <section class="card">
+        <h2>📤 Send QTC</h2>
+        <input type="text" placeholder="Recipient address" id="recipient">
+        <input type="number" placeholder="Amount" id="amount">
+        <input type="password" placeholder="Wallet password" id="password">
+        <button onclick="send()">Send</button>
+      </section>
 
-    <section class="card glass">
-      <h2>💼 Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
-    </section>
+      <section class="card">
+        <h2>⛏️ Mine New Block</h2>
+        <button onclick="mine()">Mine</button>
+      </section>
 
-    <section class="card glass">
-      <h2>📤 Send QTC</h2>
-      <input type="text" placeholder="Recipient address" id="send-to" />
-      <input type="number" placeholder="Amount" id="send-amount" />
-      <input type="password" placeholder="Wallet password" id="send-pass" />
-      <button onclick="sendCoins()">Send</button>
-    </section>
-
-    <section class="card glass">
-      <h2>⛏️ Mine New Block</h2>
-      <button onclick="mineBlock()">Mine</button>
-    </section>
-
-    <footer class="footer">
-      <p>© 2025 QuantumCoin. All rights reserved.</p>
-    </footer>
+      <footer>
+        <p>© 2025 QuantumCoin. All rights reserved.</p>
+      </footer>
+    </div>
   </div>
 
   <script src="script.js"></script>
