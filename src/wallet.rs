@@ -1,59 +1,56 @@
 use pqcrypto_dilithium::dilithium2::*;
-use pqcrypto_traits::sign::{PublicKey as _, SecretKey as _};
-use std::fs::{self, File};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
+use serde::{Serialize, Deserialize};
+use std::fs;
+use std::fs::File;
 use std::io::{Read, Write};
-use base64::{encode, decode};
 
+#[derive(Serialize, Deserialize)]
 pub struct Wallet {
-    pub public_key: PublicKey,
-    pub secret_key: SecretKey,
-    pub balance: u64,
+    pub public_key: String,
+    pub secret_key: String,
 }
 
 impl Wallet {
-    pub fn new() -> Self {
-        let (public_key, secret_key) = keypair();
+    pub fn generate() -> Self {
+        let (pk, sk) = keypair();
         Wallet {
-            public_key,
-            secret_key,
-            balance: 1_250_000,
+            public_key: base64::encode(pk.as_bytes()),
+            secret_key: base64::encode(sk.as_bytes()),
         }
     }
 
-    pub fn get_address(&self) -> String {
-        encode(self.public_key.as_bytes())
+    pub fn save_to_file(&self, path: &str) {
+        let data = serde_json::to_string_pretty(&self).expect("Failed to serialize wallet");
+        let mut file = File::create(path).expect("Failed to create wallet file");
+        file.write_all(data.as_bytes()).expect("Failed to write wallet");
     }
 
-    pub fn get_balance(&self) -> u64 {
-        self.balance
+    pub fn load_from_file(path: &str) -> Option<Self> {
+        if let Ok(mut file) = File::open(path) {
+            let mut data = String::new();
+            file.read_to_string(&mut data).ok()?;
+            serde_json::from_str(&data).ok()
+        } else {
+            None
+        }
     }
 
-    pub fn save_to_file(&self, filename: &str) {
-        let pub_encoded = encode(self.public_key.as_bytes());
-        let sec_encoded = encode(self.secret_key.as_bytes());
-
-        let data = format!("{}\n{}\n{}", pub_encoded, sec_encoded, self.balance);
-        fs::write(filename, data).expect("❌ Failed to save wallet");
+    pub fn init_wallet() -> Self {
+        let path = "wallet_key.json";
+        if let Some(wallet) = Wallet::load_from_file(path) {
+            println!("🔐 Loaded existing wallet.");
+            wallet
+        } else {
+            println!("🔐 No wallet found. Generating new one...");
+            let wallet = Wallet::generate();
+            wallet.save_to_file(path);
+            println!("✅ New wallet saved to '{}'", path);
+            wallet
+        }
     }
 
-    pub fn load_from_file(filename: &str) -> Option<Self> {
-        let mut file = File::open(filename).ok()?;
-        let mut content = String::new();
-        file.read_to_string(&mut content).ok()?;
-
-        let mut lines = content.lines();
-        let pub_line = lines.next()?;
-        let sec_line = lines.next()?;
-        let balance_line = lines.next()?;
-
-        let pub_bytes = decode(pub_line).ok()?;
-        let sec_bytes = decode(sec_line).ok()?;
-        let balance = balance_line.parse::<u64>().ok()?;
-
-        Some(Wallet {
-            public_key: PublicKey::from_bytes(&pub_bytes).ok()?,
-            secret_key: SecretKey::from_bytes(&sec_bytes).ok()?,
-            balance,
-        })
+    pub fn get_address(&self) -> &str {
+        &self.public_key
     }
 }
