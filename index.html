@@ -9,35 +9,46 @@
 <body>
 
   <!-- 🎥 Background Video -->
-  <video id="bg-video" autoplay muted loop playsinline>
-    <source src="quantum-bg.mp4" type="video/mp4" />
+  <video autoplay muted loop id="bgVideo">
+    <source src="assets/quantum_bg.mp4" type="video/mp4" />
     Your browser does not support HTML5 video.
   </video>
 
-  <!-- Dark Overlay for readability -->
-  <div class="overlay"></div>
+  <!-- 💎 Overlay -->
+  <div class="overlay">
 
-  <!-- 🚀 App Content -->
-  <div class="container">
-    <header>
+    <!-- 🚀 HERO -->
+    <section class="hero">
       <h1>🚀 QuantumCoin™</h1>
-      <p class="subtitle">Quantum-Secure Currency of the Future</p>
-    </header>
+      <p>QuantumCoin™ — Quantum-Secure Currency of the Future</p>
+      <button class="cta">Buy QuantumCoin™</button>
+      <a href="#" class="whitepaper">📄 View the QuantumCoin™ Whitepaper</a>
+    </section>
 
-    <!-- 📉 Current Price -->
+    <!-- 💼 AUTH -->
+    <section class="auth" id="authSection">
+      <h2 id="authTitle">Sign Up</h2>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" />
+      <button onclick="toggleAuthMode()" id="authBtn">Create Account</button>
+      <p class="toggle-link" onclick="switchMode()">Already have an account? <span id="toggleText">Login</span></p>
+    </section>
+
+    <!-- 📈 PRICE -->
     <section class="card">
       <h2>📉 Current Price</h2>
       <p>$0.25</p>
     </section>
 
-    <!-- 🧾 Wallet Info -->
+    <!-- 👛 WALLET -->
     <section class="card">
       <h2>📦 Your Wallet</h2>
       <p><strong>Address:</strong> Loading...</p>
       <p><strong>Balance:</strong> Loading... QTC</p>
     </section>
 
-    <!-- ✉️ Send QTC -->
+    <!-- ✉️ SEND QTC -->
     <section class="card">
       <h2>📨 Send QTC</h2>
       <input type="text" placeholder="Recipient address" />
@@ -46,11 +57,12 @@
       <button>Send</button>
     </section>
 
-    <!-- ⛏️ Mining -->
+    <!-- ⛏️ MINE -->
     <section class="card">
       <h2>⛏️ Mine New Block</h2>
       <button>Mine</button>
     </section>
+
   </div>
 
   <script src="script.js"></script>
