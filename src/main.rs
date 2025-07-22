@@ -1,59 +1,31 @@
+use std::sync::{Arc, Mutex};
+
 mod blockchain;
 mod cli;
-mod secure_wallet;
-mod mining;
-mod validator;
-mod revstop;
-mod network;
 mod peer;
+mod revstop;
+mod transaction;
+mod wallet;
 
-use std::sync::{Arc, Mutex};
-use secure_wallet::SecureWallet;
 use blockchain::Blockchain;
+use wallet::Wallet;
 
 fn main() {
-    println!("🔐 QuantumCoin Node Starting...");
+    // === Load Wallet (from file or generate new) ===
+    let wallet = Wallet::load_or_generate().expect("🛑 Failed to load or generate wallet.");
 
-    let password = prompt_password();
-
-    let wallet = SecureWallet::load(&password).unwrap_or_else(|| {
-        println!("🔑 No wallet found. Creating new one...");
-        let w = SecureWallet::generate(&password);
-        w
-    });
-
-    let blockchain = Blockchain::load_from_disk().unwrap_or_else(|| {
-        println!("🧱 No blockchain found. Creating genesis block...");
-        Blockchain::new(&wallet)
-    });
-
+    // === Load Blockchain ===
+    let blockchain = Blockchain::load_or_new();
     let blockchain = Arc::new(Mutex::new(blockchain));
-    let wallet = Arc::new(wallet);
 
-    // Start CLI thread
-    let cli_blockchain = Arc::clone(&blockchain);
-    let cli_wallet = Arc::clone(&wallet);
-    std::thread::spawn(move || {
-        cli::start(cli_wallet, cli_blockchain);
-    });
-
-    // Start networking thread
-    let net_blockchain = Arc::clone(&blockchain);
-    let net_wallet = Arc::clone(&wallet);
-    std::thread::spawn(move || {
-        network::start_networking(net_wallet, net_blockchain);
-    });
-
-    loop {
-        std::thread::park();
+    // === Start Peer-to-Peer Server in Background Thread ===
+    {
+        let chain_clone = Arc::clone(&blockchain);
+        std::thread::spawn(move || {
+            peer::start_peer_server(chain_clone, 6001);
+        });
     }
-}
 
-fn prompt_password() -> String {
-    use rpassword::read_password;
-    println!("Please enter your wallet password:");
-    read_password().unwrap_or_else(|_| {
-        println!("Failed to read password.");
-        std::process::exit(1);
-    })
+    // === Launch CLI Interface ===
+    cli::start_cli(wallet, blockchain);
 }
