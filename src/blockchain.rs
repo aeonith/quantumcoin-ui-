@@ -1,19 +1,20 @@
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::block::Block;
 use crate::transaction::Transaction;
-use crate::wallet::Wallet;
+use crate::wallet::SecureWallet;
 
 use serde::{Serialize, Deserialize};
 
 const BLOCKCHAIN_FILE: &str = "data/blockchain.json";
-const INITIAL_REWARD: u64 = 50;
-const MAX_SUPPLY: u64 = 22_000_000 * 100; // in atomic units (like satoshis)
 
-#[derive(Serialize, Deserialize, Debug)]
+const INITIAL_REWARD: u64 = 50 * 100; // scaled by 100 for decimals
+const MAX_SUPPLY: u64 = 22_000_000 * 100; // total supply scaled
+const BLOCKS_PER_YEAR: u64 = 365 * 144; // approx 144 blocks/day
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Blockchain {
     pub chain: Vec<Block>,
     pub pending_transactions: Vec<Transaction>,
@@ -22,7 +23,7 @@ pub struct Blockchain {
 }
 
 impl Blockchain {
-    pub fn new(genesis_wallet: &Wallet) -> Self {
+    pub fn new(genesis_wallet: &SecureWallet) -> Self {
         let mut blockchain = Blockchain {
             chain: vec![],
             pending_transactions: vec![],
@@ -52,14 +53,14 @@ impl Blockchain {
         self.pending_transactions.push(tx);
     }
 
-    pub fn mine_pending_transactions(&mut self, miner_wallet: &Wallet) {
+    pub fn mine_pending_transactions(&mut self, miner_address: &str) {
         if self.total_supply >= MAX_SUPPLY {
             println!("💡 Maximum supply reached. No new coins will be created.");
             return;
         }
 
         let reward = self.current_reward();
-        let reward_tx = Transaction::new_reward(miner_wallet.get_address(), reward);
+        let reward_tx = Transaction::new_reward(miner_address.to_string(), reward);
         let mut transactions = self.pending_transactions.clone();
         transactions.push(reward_tx);
 
@@ -77,7 +78,8 @@ impl Blockchain {
     }
 
     fn current_reward(&self) -> u64 {
-        let years_since_genesis = (self.chain.len() as u64) / (365 * 144); // approx 144 blocks/day
+        let blocks_mined = self.chain.len() as u64;
+        let years_since_genesis = blocks_mined / BLOCKS_PER_YEAR;
         let halvings = years_since_genesis / 2;
         INITIAL_REWARD >> halvings
     }
@@ -106,20 +108,20 @@ impl Blockchain {
     }
 
     pub fn get_balance(&self, address: &str) -> u64 {
-        let mut balance = 0;
+        let mut balance: i64 = 0;
 
         for block in &self.chain {
             for tx in &block.transactions {
                 if tx.recipient == address {
-                    balance += tx.amount;
+                    balance += tx.amount as i64;
                 }
                 if tx.sender == address {
-                    balance -= tx.amount;
+                    balance -= tx.amount as i64;
                 }
             }
         }
 
-        balance
+        if balance < 0 { 0 } else { balance as u64 }
     }
 
     pub fn is_valid_chain(&self) -> bool {
@@ -136,5 +138,18 @@ impl Blockchain {
             }
         }
         true
+    }
+
+    pub fn get_last_n_transactions(&self, n: usize) -> Vec<Transaction> {
+        let mut txs = vec![];
+        for block in self.chain.iter().rev() {
+            for tx in block.transactions.iter().rev() {
+                txs.push(tx.clone());
+                if txs.len() == n {
+                    return txs;
+                }
+            }
+        }
+        txs
     }
 }
