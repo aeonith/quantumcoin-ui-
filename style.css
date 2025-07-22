@@ -1,4 +1,4 @@
-/* ========== BACKGROUND VIDEO ========== */
+/* 🎥 Background Video */
 #bg-video {
   position: fixed;
   top: 0; left: 0;
@@ -8,82 +8,82 @@
   z-index: -2;
 }
 
-/* ========== DARK OVERLAY ========== */
+/* 🔲 Dark Overlay */
 .overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
   z-index: -1;
 }
 
-/* ========== MAIN UI ========== */
+/* 🧱 Base Layout */
 body {
   margin: 0;
-  padding: 0;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   color: #fff;
   overflow-x: hidden;
 }
 
-.ui {
+.container {
   max-width: 420px;
-  margin: 1.5rem auto;
+  margin: 0 auto;
   padding: 1rem;
-  position: relative;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 🚀 Header */
+header {
   text-align: center;
+  margin-top: 1rem;
+}
+header h1 {
+  font-size: 2.3rem;
+  color: #ffa733;
+  margin: 0;
+}
+.subtitle {
+  font-size: 1.05rem;
+  color: #e0e0e0;
+  margin-top: 0.3rem;
 }
 
-/* ========== LOGO / TITLE ========== */
-.logo {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #ff8c1a;
-  margin-bottom: 0.5rem;
-}
-
-/* ========== TAGLINE ========== */
-.tagline {
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-  color: #f2f2f2;
-}
-
-/* ========== CARD BOX ========== */
+/* 🧊 Card Sections */
 .card {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.2rem;
-  box-shadow: 0 0 12px rgba(255, 140, 26, 0.3);
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 1.2rem;
+  border-radius: 14px;
+  box-shadow: 0 0 12px rgba(255, 165, 0, 0.3);
+  backdrop-filter: blur(8px);
 }
 
-/* ========== INPUT FIELDS ========== */
+/* 🧾 Inputs */
 input {
-  display: block;
-  width: 90%;
-  padding: 0.8rem;
-  margin: 0.6rem auto;
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
   border: none;
   border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.9);
   font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
-/* ========== BUTTONS ========== */
+/* 🔘 Button */
 button {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.8rem;
   background-color: #ff6600;
-  color: white;
-  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 10px;
+  color: white;
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease;
 }
-
 button:hover {
   background-color: #e65c00;
 }
