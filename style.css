@@ -1,131 +1,66 @@
-/* -------- RESET -------- */
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  color:#fff;
-  line-height:1.4;
-  overflow-x:hidden;
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  color: #fff;
+  background: rgba(0,0,0,0.8);
+  height: 100%;
+  overflow: hidden;
 }
 
-/* -------- VIDEO BACKGROUND -------- */
-.video-bg{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  z-index:-2;
-}
-.video-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);       /* darken video a bit */
-  backdrop-filter:blur(2px);        /* subtle glassy feel */
-  z-index:-1;
+#bg-video {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%; 
+  min-height: 100%;
+  z-index: -1;
+  opacity: 0.4;
+  object-fit: cover;
 }
 
-/* -------- HERO -------- */
-.hero{
-  text-align:center;
-  padding:18vh 1rem 5vh;
-}
-.hero h1{
-  font-size:clamp(2.2rem,5vw,3rem);
-  font-weight:700;
-  max-width:700px;
-  margin:0 auto 1.2rem;
-}
-.hero h1 span{color:#fda800}
-#buy-btn{
-  background:#007bff;
-  color:#fff;
-  border:none;
-  padding:.9rem 2.4rem;
-  border-radius:6px;
-  font-size:1rem;
-  cursor:pointer;
-  margin-bottom:1rem;
-}
-.whitepaper{
-  display:inline-block;
-  background:rgba(0,0,0,.65);
-  padding:.6rem 1.1rem;
-  border-radius:6px;
-  color:#00bfff;
-  text-decoration:none;
-  font-size:.95rem;
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 40px 20px;
+  background: rgba(10, 10, 10, 0.7);
+  border-radius: 10px;
+  margin-top: 50px;
 }
 
-/* -------- CHART -------- */
-.chart-card{
-  background:rgba(0,0,0,.65);
-  width:min(92%,440px);
-  margin:4rem auto 3rem;
-  padding:2rem 1.5rem 1.2rem;
-  border-radius:14px;
-  text-align:center;
-}
-.chart-card h2{font-size:1.3rem;margin-bottom:.3rem}
-#price{font-size:3rem;font-weight:600}
-#change{font-size:1rem}
-#priceChart{
-  width:100% !important;
-  height:260px !important;          /* bigger chart */
-  margin-top:1rem;
-}
-.intervals{
-  margin-top:1rem;
-  display:flex;
-  justify-content:center;
-  gap:1.3rem;
-  font-size:.9rem;
-}
-.intervals button{
-  background:none;border:none;color:#fff;cursor:pointer;font-weight:600;position:relative
-}
-.intervals button.active::after,
-.intervals button:hover::after{
-  content:"";position:absolute;left:50%;transform:translateX(-50%);
-  bottom:-6px;width:60%;height:2px;background:#fda800;
+h1, h2, h3 {
+  text-align: center;
 }
 
-/* -------- FEATURES -------- */
-.features{
-  display:flex;flex-direction:column;align-items:center;gap:2rem;
-  padding:0 1rem 3rem;
+.wallet-box, .price-box, .action-box {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: rgba(255,255,255,0.05);
+  border-radius: 10px;
 }
-.feature{
-  background:rgba(0,0,0,.6);
-  width:min(90%,420px);
-  padding:2rem 1.5rem;
-  border-radius:14px;
-  text-align:center;
-}
-.feature img{width:68px;height:68px;margin-bottom:1rem}
-.feature h3{color:#fda800;font-size:1.15rem;margin-bottom:.7rem;line-height:1.25}
-.feature p{font-size:.97rem}
 
-/* -------- SIGN-UP -------- */
-.signup{
-  text-align:center;
-  padding:3rem 1rem 4rem;
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  background: #333;
+  color: #fff;
 }
-.signup h2{font-size:1.9rem;margin-bottom:1.2rem}
-#signupForm{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-bottom:1rem}
-#signupForm input{
-  width:260px;max-width:100%;
-  padding:.9rem;border:none;border-radius:6px;font-size:1rem
-}
-#signupForm button{
-  background:#fda800;color:#000;padding:.9rem 1.4rem;
-  border:none;border-radius:6px;font-weight:600;cursor:pointer
-}
-.terms{font-size:.84rem}
-.terms a{color:#00bfff;text-decoration:underline}
 
-/* -------- MOBILE TWEAKS -------- */
-@media(max-width:480px){
-  #priceChart{height:220px}
-  .feature{padding:1.3rem}
-  .feature p{font-size:.9rem}
+button {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background-color: #00b894;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #019874;
 }
