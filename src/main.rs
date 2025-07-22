@@ -1,23 +1,24 @@
-mod block;
 mod blockchain;
 mod cli;
-mod transaction;
-mod wallet;
+mod secure_wallet;
+mod mining;
+mod validator;
 mod revstop;
-mod peer;
 mod network;
+mod peer;
 
-use blockchain::Blockchain;
-use wallet::Wallet;
 use std::sync::{Arc, Mutex};
+use secure_wallet::SecureWallet;
+use blockchain::Blockchain;
 
 fn main() {
     println!("🔐 QuantumCoin Node Starting...");
 
-    let wallet = Wallet::load_from_files().unwrap_or_else(|_| {
+    let password = prompt_password();
+
+    let wallet = SecureWallet::load(&password).unwrap_or_else(|| {
         println!("🔑 No wallet found. Creating new one...");
-        let w = Wallet::new();
-        w.save_to_files().unwrap();
+        let w = SecureWallet::generate(&password);
         w
     });
 
@@ -27,24 +28,32 @@ fn main() {
     });
 
     let blockchain = Arc::new(Mutex::new(blockchain));
-    let wallet = Arc::new(wallet.clone());
+    let wallet = Arc::new(wallet);
 
-    // 🧠 Start CLI thread
+    // Start CLI thread
     let cli_blockchain = Arc::clone(&blockchain);
     let cli_wallet = Arc::clone(&wallet);
     std::thread::spawn(move || {
         cli::start(cli_wallet, cli_blockchain);
     });
 
-    // 🌐 Start network thread
+    // Start networking thread
     let net_blockchain = Arc::clone(&blockchain);
     let net_wallet = Arc::clone(&wallet);
     std::thread::spawn(move || {
         network::start_networking(net_wallet, net_blockchain);
     });
 
-    // Keep alive
     loop {
         std::thread::park();
     }
+}
+
+fn prompt_password() -> String {
+    use rpassword::read_password;
+    println!("Please enter your wallet password:");
+    read_password().unwrap_or_else(|_| {
+        println!("Failed to read password.");
+        std::process::exit(1);
+    })
 }
