@@ -1,121 +1,51 @@
-/* Reset + Layout */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-body, html {
-  height: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  scroll-behavior: smooth;
-  background-color: #000;
-  color: white;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:"Segoe UI",system-ui,sans-serif;background:#000;color:#fff;scroll-behavior:smooth}
+
+#bgVideo{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  object-fit:cover;z-index:-10;
 }
 
-/* 🎥 Background */
-#bgVideo {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -10;
+.overlay{
+  display:flex;flex-direction:column;gap:2.8rem;
+  padding:2.4rem 1.2rem;max-width:680px;margin-inline:auto;
 }
 
-/* 💎 Overlay Container */
-.overlay {
-  position: relative;
-  z-index: 10;
-  padding: 2rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
+.section{
+  padding:1.6rem;border-radius:20px;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(12px);
+  box-shadow:0 0 40px rgba(255,140,0,.18);
+  opacity:0;transform:translateY(60px);transition:all .7s ease;
+}
+.section.reveal{opacity:1;transform:none}
+
+.hero h1{font-size:2.6rem;color:#ff9100;text-shadow:0 0 18px #ff910077}
+.card h2,.auth h2{color:#ff9100;margin-bottom:.9rem}
+p{line-height:1.4}
+a{color:#00e7ff}
+
+input{
+  width:100%;padding:.75rem;border:none;border-radius:12px;
+  margin:.35rem 0;background:rgba(255,255,255,.1);color:#fff;
+}
+input::placeholder{color:#bbb}
+button{
+  width:100%;padding:.75rem;margin-top:.6rem;border:none;
+  border-radius:12px;font-weight:600;cursor:pointer;color:#000;
+  background:#ff9100;box-shadow:0 0 14px #ff910077;
+  transition:background .25s;
+}
+button:hover{background:#ffc46a}
+
+.cta{background:#007bff;color:#fff;box-shadow:0 0 14px #007bff77}
+.cta:hover{background:#5aa9ff}
+.mineGlow{
+  animation:glow 2s ease-in-out infinite alternate;
+}
+@keyframes glow{
+  from{box-shadow:0 0 8px #ff910044,0 0 24px #ff910022}
+  to{box-shadow:0 0 18px #ff9100aa,0 0 54px #ff910066}
 }
 
-/* 🔲 Sections */
-.section {
-  padding: 1.5rem;
-  border-radius: 15px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 30px rgba(255, 115, 0, 0.1);
-  transition: all 0.6s ease;
-  opacity: 0;
-  transform: translateY(50px);
-}
-.section.reveal {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* 🧠 Hero */
-.hero {
-  text-align: center;
-}
-.hero h1 {
-  font-size: 2.5rem;
-  color: #FFA500;
-}
-.hero p {
-  color: #ddd;
-  margin: 0.5rem 0 1rem;
-}
-.cta {
-  padding: 0.6rem 1.4rem;
-  border: none;
-  background: #007bff;
-  color: white;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.whitepaper {
-  display: block;
-  margin-top: 1rem;
-  color: #00f7ff;
-  font-size: 0.9rem;
-}
-
-/* 🔐 Auth + Cards */
-.auth h2, .card h2 {
-  color: #FFA500;
-  margin-bottom: 0.8rem;
-}
-input {
-  width: 100%;
-  padding: 0.7rem;
-  margin: 0.4rem 0;
-  border-radius: 10px;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-input::placeholder {
-  color: #bbb;
-}
-button {
-  margin-top: 0.5rem;
-  width: 100%;
-  padding: 0.7rem;
-  background: #ff8c00;
-  border: none;
-  color: black;
-  font-weight: bold;
-  border-radius: 8px;
-  cursor: pointer;
-}
-button:hover {
-  background: #ffc04d;
-}
-.toggle-link {
-  text-align: center;
-  font-size: 0.85rem;
-  color: #ccc;
-  margin-top: 0.6rem;
-}
-.toggle-link span {
-  color: #00ffff;
-  cursor: pointer;
-  text-decoration: underline;
-}
+.toggle{font-size:.85rem;text-align:center;color:#ccc}
+.toggle span{color:#00e7ff;text-decoration:underline;cursor:pointer}
