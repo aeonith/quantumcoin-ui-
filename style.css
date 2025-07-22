@@ -1,98 +1,42 @@
-/* reset */
-* { margin:0; padding:0; box-sizing:border-box; }
-
-/* full-screen video bg */
+/* ===================== VIDEO BACKGROUND ===================== */
 #bg-video {
-  position:fixed; top:50%; left:50%;
-  width:auto; height:100%;
-  transform:translate(-50%,-50%);
-  z-index:-2;
-  object-fit:cover;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* cover entire screen, cropping if needed */
+  z-index: -2;
 }
 
-/* dark overlay to help text legibility */
+/* semi-transparent overlay to darken */
 .overlay {
-  position:fixed; top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.5);
-  z-index:-1;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: -1;
 }
 
-/* center content */
+/* ===================== REST OF YOUR CSS ===================== */
+/* (leave your .ui, .card, input, button, etc. styles unchanged) */
+
 body {
-  font-family:Arial,sans-serif;
-  color:#fff;
-  height:100vh;
-  overflow-y:auto;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+  color: #fff;
+  background: #000;
 }
+
+/* center the UI container */
 .ui {
-  max-width:400px;
-  margin:2rem auto;
-  padding:1rem;
-  text-align:center;
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 1rem;
+  text-align: center;
+  position: relative;
+  z-index: 1; /* ensure above video & overlay */
 }
 
-/* Neon orange glow */
-.logo {
-  font-size:2rem;
-  color:#ff7f00;
-  text-shadow:0 0 8px rgba(255,127,0,0.8),
-              0 0 16px rgba(255,127,0,0.6);
-}
-.tagline {
-  margin-bottom:1.5rem;
-  font-size:1rem;
-  color:#ffe5cc;
-}
-
-/* cards with transparent bg + orange border glow */
-.card {
-  background:rgba(0,0,0,0.3);
-  border:2px solid rgba(255,127,0,0.6);
-  border-radius:12px;
-  padding:1rem;
-  margin-bottom:1rem;
-  box-shadow:0 0 16px rgba(255,127,0,0.4);
-}
-.card h2 {
-  margin-bottom:0.5rem;
-  color:#ff9f33;
-  text-shadow:0 0 6px rgba(255,159,51,0.8);
-}
-
-/* price text */
-.price {
-  font-size:1.5rem;
-  color:#fff;
-}
-
-/* inputs + buttons */
-input {
-  width:100%;
-  padding:0.75rem;
-  margin:0.5rem 0;
-  border:none;
-  border-radius:6px;
-  background:rgba(255,255,255,0.1);
-  color:#fff;
-  font-size:1rem;
-}
-input::placeholder {
-  color:rgba(255,255,255,0.6);
-}
-button {
-  width:100%;
-  padding:0.75rem;
-  margin-top:0.5rem;
-  border:none;
-  border-radius:6px;
-  background:#ff7f00;
-  color:#000;
-  font-size:1rem;
-  font-weight:bold;
-  cursor:pointer;
-  transition:filter .2s;
-}
-button:hover {
-  filter:brightness(1.1);
-}
+/* … your .logo, .tagline, .card, input, button, etc. … */
