@@ -3,101 +3,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
+  <title>QuantumCoin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <!-- Background Video -->
   <video autoplay muted loop id="bg-video">
-    <source src="quantum-ui-background.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
+    <source src="/quantum-ui/quantum-ui-background.mp4" type="video/mp4" />
+    Your browser does not support HTML5 video.
   </video>
 
-  <main class="main-content">
-    
-    <!-- Hero -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h1>🚀 QuantumCoin™</h1>
-        <p>The most advanced quantum-secure currency on Earth.</p>
-      </div>
+  <!-- Column Overlay -->
+  <div class="column-overlay"></div>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <section class="glass-section">
+      <h1>🚀 <span class="highlight">QuantumCoin™</span></h1>
+      <p>The most advanced quantum-secure currency on Earth.</p>
     </section>
 
-    <!-- Current Price -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h2>📈 Current Price</h2>
-        <p>$0.25 QTC</p>
-      </div>
+    <section class="glass-section">
+      <h2>📈 <span class="highlight">Current Price</span></h2>
+      <p>$0.25 QTC</p>
     </section>
 
-    <!-- Wallet -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h2>📦 Your Wallet</h2>
-        <p><strong>Address:</strong> Loading...</p>
-        <p><strong>Balance:</strong> 1250 QTC</p>
-        <button class="glass-button">🔁 Refresh Balance</button>
-      </div>
+    <section class="glass-section">
+      <h2>📦 <span class="highlight">Your Wallet</span></h2>
+      <p><strong>Address:</strong> Loading...</p>
+      <p><strong>Balance:</strong> 1250 QTC</p>
+      <button>🔄 Refresh Balance</button>
     </section>
 
-    <!-- Send QTC -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h2>✉️ Send QTC</h2>
-        <form>
-          <input class="glass-input" type="text" placeholder="Recipient Address" required />
-          <input class="glass-input" type="number" placeholder="Amount" required />
-          <button class="glass-button">Send Now</button>
-        </form>
-      </div>
+    <section class="glass-section">
+      <h2>✉️ <span class="highlight">Send QTC</span></h2>
+      <input type="text" placeholder="Recipient Address" />
+      <input type="number" placeholder="Amount" />
+      <button>Send Now</button>
     </section>
 
-    <!-- Signup -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h2>🔐 Create Account</h2>
-        <form>
-          <input class="glass-input" type="text" placeholder="Wallet Address" required />
-          <input class="glass-input" type="password" placeholder="Password" required />
-          <button class="glass-button">Sign Up</button>
-        </form>
-      </div>
+    <section class="glass-section">
+      <h2>🔐 <span class="highlight">Create Account</span></h2>
+      <input type="text" placeholder="Wallet Address" />
+      <input type="password" placeholder="Password" />
+      <button>Sign Up</button>
     </section>
 
-    <!-- Login -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h2>🔓 Login</h2>
-        <form>
-          <input class="glass-input" type="text" placeholder="Wallet Address" required />
-          <input class="glass-input" type="password" placeholder="Password" required />
-          <button class="glass-button">Log In</button>
-        </form>
-      </div>
+    <section class="glass-section">
+      <h2>🔑 <span class="highlight">Login</span></h2>
+      <input type="text" placeholder="Wallet Address" />
+      <input type="password" placeholder="Password" />
+      <button>Log In</button>
     </section>
 
-    <!-- Buy/Sell QTC -->
-    <section class="section glass-section">
-      <div class="section-content">
-        <h2>💱 Buy / Sell QTC</h2>
-        <form>
-          <input class="glass-input" type="number" placeholder="Amount in USD" required />
-          <select class="glass-input">
-            <option value="buy">Buy QTC</option>
-            <option value="sell">Sell QTC</option>
-          </select>
-          <button class="glass-button">Submit</button>
-        </form>
-      </div>
+    <section class="glass-section">
+      <h2>💱 <span class="highlight">Buy / Sell QTC</span></h2>
+      <input type="number" placeholder="Amount in USD" />
+      <select>
+        <option>Buy QTC</option>
+        <option>Sell QTC</option>
+      </select>
+      <button>Submit</button>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <p>QuantumCoin™ © 2025 — Built for the quantum era</p>
+    <footer>
+      QuantumCoin™ © 2025 — Built for the quantum era
     </footer>
 
-  </main>
+  </div>
 </body>
 </html>
