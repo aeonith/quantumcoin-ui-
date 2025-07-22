@@ -1,4 +1,3 @@
-[package]
 name = "quantumcoin"
 version = "0.1.0"
 edition = "2021"
@@ -10,7 +9,7 @@ actix-cors = "0.7.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 base64 = "0.21.0"
-pqcrypto-dilithium = "0.3.3" # Correct crate name and version
+pqcrypto-dilithium = "0.3.3"
 pqcrypto-traits = "0.3.5"
 chrono = "0.4"
 rand = "0.8.5"
@@ -21,17 +20,10 @@ once_cell = "1.18"
 lazy_static = "1.4.0"
 sha2 = "0.10"
 anyhow = "1"
-hex = "0.4" # Added to fix unresolved crate error
-# Password hashing
+hex = "0.4"
 argon2 = "0.5"
 rand_core = "0.6"
-
-# JSON web tokens for session auth
 jsonwebtoken = "9.2"
-
-# SQLite or PostgreSQL for account data
 sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "sqlite", "macros"] }
-
-# Optional TOTP (2FA)
 otpauth = "0.5"
 qrcode = "0.12"
