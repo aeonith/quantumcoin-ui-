@@ -1,27 +1,33 @@
-use serde::{Deserialize, Serialize};
-use std::{fs, error::Error};
+use std::fs::{File, OpenOptions, remove_file};
+use std::io::{Write, Read};
+use std::path::Path;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct RevStop {
-    pub enabled: bool,
+const REVSTOP_FILE: &str = "revstop.lock";
+
+pub fn enable_revstop(password: &str) -> std::io::Result<()> {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(REVSTOP_FILE)?;
+    file.write_all(password.as_bytes())?;
+    Ok(())
 }
 
-impl RevStop {
-    pub fn load(path: &str) -> Result<Self, Box<dyn Error>> {
-        let data = fs::read_to_string(path)?;
-        Ok(serde_json::from_str(&data)?)
+pub fn disable_revstop(password: &str) -> std::io::Result<bool> {
+    if !Path::new(REVSTOP_FILE).exists() {
+        return Ok(false);
     }
-
-    pub fn default_and_save(path: &str) -> Result<Self, Box<dyn Error>> {
-        let r = RevStop { enabled: false };
-        fs::write(path, serde_json::to_string_pretty(&r)?)?;
-        Ok(r)
+    let mut file = File::open(REVSTOP_FILE)?;
+    let mut stored_password = String::new();
+    file.read_to_string(&mut stored_password)?;
+    if stored_password == password {
+        remove_file(REVSTOP_FILE)?;
+        Ok(true)
+    } else {
+        Ok(false)
     }
+}
 
-    pub fn save_status(&self, path: &str) -> Result<(), Box<dyn Error>> {
-        fs::write(path, serde_json::to_string_pretty(self)?)?;
-        Ok(())
-    }
-
-    pub fn is_active(&self) -> bool { self.enabled }
+pub fn is_revstop_enabled() -> bool {
+    Path::new(REVSTOP_FILE).exists()
 }
