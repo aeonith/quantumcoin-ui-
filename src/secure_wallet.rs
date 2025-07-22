@@ -7,12 +7,15 @@ use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use base64::{encode, decode};
 
+use crate::transaction::Transaction;
+
 const SEED_FILE: &str = "wallet/seedphrase.txt";
 const PRIVATE_FILE: &str = "wallet/private_encrypted.bin";
 const PUBLIC_FILE: &str = "wallet/public.key";
 const SALT: &[u8] = b"QuantumCoinSalt";
 const ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100_000) };
 
+#[derive(Clone)]
 pub struct SecureWallet {
     pub public_key: PublicKey,
     secret_key: Option<SecretKey>,
@@ -66,13 +69,33 @@ impl SecureWallet {
 
     pub fn get_address(&self) -> String {
         let hash = ring::digest::digest(&ring::digest::SHA256, self.public_key.as_bytes());
-        encode(&hash.as_ref()[..20])
+        encode(&hash.as_ref()[..20]) // First 20 bytes base64 as address
     }
 
     fn generate_seed_phrase() -> String {
         let mut entropy = [0u8; 16];
         OsRng.fill_bytes(&mut entropy);
         hex::encode(entropy)
+    }
+
+    pub fn create_transaction(&self, recipient: &str, amount: u64) -> Transaction {
+        let tx = Transaction {
+            sender: self.get_address(),
+            recipient: recipient.to_string(),
+            amount,
+            signature: None,
+        };
+        let message = format!("{}:{}:{}", tx.sender, tx.recipient, tx.amount);
+        let sig_b64 = self.sign_message(message.as_bytes()).unwrap();
+        Transaction {
+            signature: Some(sig_b64),
+            ..tx
+        }
+    }
+
+    pub fn export_with_2fa(&self) {
+        // Placeholder: implement your 2FA export logic here
+        println!("🔐 Wallet export feature coming soon.");
     }
 }
 
