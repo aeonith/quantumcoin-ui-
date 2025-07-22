@@ -1,68 +1,55 @@
 use actix_web::{web, HttpResponse};
-use crate::{blockchain::Blockchain, wallet::Wallet, transaction::Transaction};
+use crate::{wallet::Wallet, blockchain::Blockchain};
 use std::sync::Mutex;
+use serde::Deserialize;
+use otpauth::TOTP;
+use qrcode::{QrCode, render::unicode};
 
-#[derive(serde::Deserialize)]
-pub struct SendRequest {
-    pub recipient: String,
-    pub amount: u64,
+#[derive(Deserialize)]
+pub struct TwoFASetup {
+    pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct TwoFACheck {
+    pub code: String,
     pub password: String,
 }
 
 pub fn init(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::resource("/wallet").route(web::get().to(wallet)))
-       .service(web::resource("/balance").route(web::get().to(balance)))
-       .service(web::resource("/mine").route(web::post().to(mine)))
-       .service(web::resource("/send").route(web::post().to(send_tx)))
-       .service(web::resource("/price").route(web::get().to(price)));
+    cfg.service(web::resource("/setup-2fa").route(web::post().to(setup_2fa)))
+       .service(web::resource("/verify-2fa").route(web::post().to(verify_2fa)));
 }
 
-async fn wallet(wallet: web::Data<Mutex<Wallet>>) -> HttpResponse {
+async fn setup_2fa(wallet: web::Data<Mutex<Wallet>>, req: web::Json<TwoFASetup>) -> HttpResponse {
+    let mut w = wallet.lock().unwrap();
+    if !w.verify_password(&req.password) {
+        return HttpResponse::Unauthorized().body("Wrong password");
+    }
+
+    let secret = TOTP::generate_secret();
+    w.enable_2fa(secret.clone());
+
+    let qr_url = TOTP::from_base32(&secret).unwrap().get_url("QuantumCoin", "user@quantumcoin.com");
+    let qr = QrCode::new(qr_url.clone()).unwrap();
+    let image = qr.render::<unicode::Dense1x2>().build();
+
+    HttpResponse::Ok().json(serde_json::json!({
+        "secret": secret,
+        "qr_url": qr_url,
+        "qr_ascii": image
+    }))
+}
+
+async fn verify_2fa(wallet: web::Data<Mutex<Wallet>>, req: web::Json<TwoFACheck>) -> HttpResponse {
     let w = wallet.lock().unwrap();
-    HttpResponse::Ok().json(&*w)
-}
-
-async fn balance(
-    blockchain: web::Data<Mutex<Blockchain>>,
-    wallet: web::Data<Mutex<Wallet>>,
-) -> HttpResponse {
-    let bc = blockchain.lock().unwrap();
-    let w  = wallet.lock().unwrap();
-    let b = bc.get_balance(&w.get_address());
-    HttpResponse::Ok().json(serde_json::json!({ "balance": b }))
-}
-
-async fn mine(
-    blockchain: web::Data<Mutex<Blockchain>>,
-    wallet: web::Data<Mutex<Wallet>>,
-) -> HttpResponse {
-    let mut bc = blockchain.lock().unwrap();
-    let w      = wallet.lock().unwrap();
-    bc.mine_pending(&w.get_address());
-    HttpResponse::Ok().body("Mined a new block")
-}
-
-async fn send_tx(
-    blockchain: web::Data<Mutex<Blockchain>>,
-    wallet: web::Data<Mutex<Wallet>>,
-    req: web::Json<SendRequest>,
-) -> HttpResponse {
-    let mut bc = blockchain.lock().unwrap();
-    let w = wallet.lock().unwrap();
-
     if !w.verify_password(&req.password) {
         return HttpResponse::Unauthorized().body("Bad password");
     }
 
-    let tx = w.create_transaction(&req.recipient, req.amount);
-    bc.add_transaction(tx);
-    HttpResponse::Ok().body("Transaction queued")
-}
-
-async fn price(
-    blockchain: web::Data<Mutex<Blockchain>>,
-) -> HttpResponse {
-    let bc = blockchain.lock().unwrap();
-    let price = bc.current_price();
-    HttpResponse::Ok().json(serde_json::json!({ "price": price }))
+    if w.verify_2fa(&req.code) {
+        HttpResponse::Ok().body("✅ 2FA Verified")
+    } else {
+        HttpResponse::Unauthorized().body("❌ Invalid 2FA Code")
+    }
 }
