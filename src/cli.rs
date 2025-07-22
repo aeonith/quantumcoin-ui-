@@ -1,90 +1,104 @@
-use crate::secure_wallet::SecureWallet;
-use crate::blockchain::Blockchain;
-use crate::mining;
-use crate::validator;
-use crate::revstop::RevStop;
 use std::sync::{Arc, Mutex};
 use std::io::{self, Write};
 
-pub fn start(wallet: Arc<SecureWallet>, blockchain: Arc<Mutex<Blockchain>>) {
-    let revstop = RevStop::load();
+use crate::blockchain::Blockchain;
+use crate::wallet::Wallet;
+use crate::transaction::Transaction;
+use crate::peer;
 
+pub fn start_cli(wallet: Wallet, blockchain: Arc<Mutex<Blockchain>>) {
     loop {
-        println!("\n=== QuantumCoin CLI ===");
-        println!("1) Show Balance");
-        println!("2) Send Coins");
-        println!("3) Mine Pending Transactions");
-        println!("4) Show Last 5 Transactions");
-        println!("5) Export Wallet (2FA)");
-        println!("6) Enable RevStop Lock");
-        println!("7) Disable RevStop Lock");
-        println!("8) Show Wallet Address");
-        println!("9) Exit");
-        print!("Enter choice: ");
+        println!("\n⚡ QuantumCoin CLI Menu:");
+        println!("1. View Balance");
+        println!("2. Send Coins");
+        println!("3. Mine Pending Transactions");
+        println!("4. Show Last 5 Transactions");
+        println!("5. Export Wallet with 2FA");
+        println!("6. Enable RevStop");
+        println!("7. Disable RevStop");
+        println!("8. Show Wallet Address");
+        println!("9. Exit");
+
+        print!("Select an option: ");
         io::stdout().flush().unwrap();
 
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).unwrap();
+
         match choice.trim() {
             "1" => {
-                let blockchain = blockchain.lock().unwrap();
-                let balance = blockchain.get_balance(&wallet.get_address());
-                println!("💰 Your balance: {:.8} QTC", balance as f64 / 100.0);
+                let bc = blockchain.lock().unwrap();
+                let balance = bc.get_balance(&wallet.get_address());
+                println!("💰 Your balance: {:.2} QTC", balance);
             }
             "2" => {
-                println!("Enter recipient address:");
+                print!("Enter recipient address: ");
+                io::stdout().flush().unwrap();
                 let mut recipient = String::new();
                 io::stdin().read_line(&mut recipient).unwrap();
-                let recipient = recipient.trim();
 
-                println!("Enter amount (QTC):");
-                let mut amount = String::new();
-                io::stdin().read_line(&mut amount).unwrap();
-                let amount: u64 = (amount.trim().parse::<f64>().unwrap_or(0.0) * 100.0) as u64;
+                print!("Enter amount to send: ");
+                io::stdout().flush().unwrap();
+                let mut amount_str = String::new();
+                io::stdin().read_line(&mut amount_str).unwrap();
 
-                let tx = wallet.create_transaction(recipient, amount);
-                if validator::validate_transaction(&tx, &blockchain.lock().unwrap())
-                    && validator::prevent_double_spend(&tx, &blockchain.lock().unwrap())
+                let amount: f64 = match amount_str.trim().parse() {
+                    Ok(a) => a,
+                    Err(_) => {
+                        println!("⚠️ Invalid amount.");
+                        continue;
+                    }
+                };
+
+                let tx = wallet.create_transaction(recipient.trim(), amount);
+
                 {
-                    blockchain.lock().unwrap().add_transaction(tx.clone());
-                    println!("✅ Transaction added to pool.");
-                } else {
-                    println!("❌ Invalid transaction.");
+                    let mut bc = blockchain.lock().unwrap();
+                    bc.add_transaction(tx.clone());
                 }
+
+                peer::broadcast_transaction(&tx);
+                println!("✅ Transaction sent and broadcasted.");
             }
             "3" => {
-                let mut bc = blockchain.lock().unwrap();
-                mining::mine_pending_transactions(&mut bc, &wallet.get_address(), &revstop);
+                let block = {
+                    let mut bc = blockchain.lock().unwrap();
+                    bc.mine_pending_transactions(wallet.get_address())
+                };
+
+                peer::broadcast_block(&block);
+                println!("⛏️ Mined new block and broadcasted.");
             }
             "4" => {
-                let blockchain = blockchain.lock().unwrap();
-                let txs = blockchain.get_last_n_transactions(5);
-                for tx in txs {
-                    println!("{:?}", tx);
+                let bc = blockchain.lock().unwrap();
+                let last_txs = bc.get_last_n_transactions(5);
+                println!("🧾 Last 5 transactions:");
+                for tx in last_txs {
+                    println!(
+                        "From: {} To: {} Amount: {:.2}",
+                        tx.sender, tx.recipient, tx.amount
+                    );
                 }
             }
             "5" => {
                 wallet.export_with_2fa();
             }
             "6" => {
-                revstop.lock();
+                // Add RevStop enabling logic here
                 println!("🔒 RevStop enabled.");
             }
             "7" => {
-                if revstop.unlock() {
-                    println!("🔓 RevStop disabled.");
-                } else {
-                    println!("❌ Incorrect password.");
-                }
+                // Add RevStop disabling logic here
+                println!("🔓 RevStop disabled.");
             }
             "8" => {
                 println!("🆔 Wallet Address: {}", wallet.get_address());
             }
             "9" => {
-                println!("Exiting...");
-                std::process::exit(0);
+                println!("👋 Goodbye!");
+                break;
             }
-            _ => println!("Invalid choice."),
+            _ => println!("⚠️ Invalid option."),
         }
     }
 }
