@@ -1,56 +1,43 @@
-mod wallet;
+mod p2p;
 mod blockchain;
-mod models;
+mod wallet;
+mod transaction;
+mod routes;
 
-use actix_web::{web, App, HttpServer, HttpResponse, Responder};
+use actix_web::{web, App, HttpServer};
+use actix_cors::Cors;
 use std::sync::{Arc, Mutex};
-use wallet::Wallet;
 use blockchain::Blockchain;
-use models::{TransactionRequest};
+use wallet::Wallet;
+use p2p::start_node;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let wallet = Arc::new(Mutex::new(Wallet::load_or_create()));
+    // Initialize blockchain & wallet
     let blockchain = Arc::new(Mutex::new(Blockchain::load_or_create()));
+    let wallet     = Arc::new(Mutex::new(Wallet::load_or_generate()));
+
+    // Start P2P node on port 6000, peers list initially empty
+    let peers = Arc::new(Mutex::new(vec![]));
+    let p2p_peers = peers.clone();
+    std::thread::spawn(move || start_node(6000, p2p_peers));
+
+    println!("★ QuantumCoin Node & API live on :8080");
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("https://quantumcoincrypto.com")
+            .allowed_methods(vec!["GET","POST"])
+            .allowed_headers(vec!["Content-Type"])
+            .max_age(3600);
+
         App::new()
-            .app_data(web::Data::from(wallet.clone()))
+            .wrap(cors)
             .app_data(web::Data::from(blockchain.clone()))
-            .route("/address", web::get().to(get_address))
-            .route("/balance", web::get().to(get_balance))
-            .route("/send", web::post().to(send_transaction))
+            .app_data(web::Data::from(wallet.clone()))
+            .configure(routes::init)
     })
     .bind("0.0.0.0:8080")?
     .run()
     .await
 }
-
-async fn get_address(wallet: web::Data<Mutex<Wallet>>) -> impl Responder {
-    let wallet = wallet.lock().unwrap();
-    HttpResponse::Ok().body(wallet.get_address())
-}
-
-async fn get_balance(blockchain: web::Data<Mutex<Blockchain>>, wallet: web::Data<Mutex<Wallet>>) -> impl Responder {
-    let blockchain = blockchain.lock().unwrap();
-    let wallet = wallet.lock().unwrap();
-    let balance = blockchain.get_balance(&wallet.get_address());
-    HttpResponse::Ok().body(balance.to_string())
-}
-
-async fn send_transaction(
-    blockchain: web::Data<Mutex<Blockchain>>,
-    wallet: web::Data<Mutex<Wallet>>,
-    req: web::Json<TransactionRequest>
-) -> impl Responder {
-    let mut blockchain = blockchain.lock().unwrap();
-    let wallet = wallet.lock().unwrap();
-
-    if wallet.verify_password(&req.password) {
-        let tx = wallet.create_transaction(req.recipient.clone(), req.amount);
-        blockchain.add_transaction(tx);
-        HttpResponse::Ok().body("Transaction sent")
-    } else {
-        HttpResponse::Unauthorized().body("Invalid password")
-    }
-} 
