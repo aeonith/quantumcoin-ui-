@@ -24,6 +24,7 @@ impl Blockchain {
         }
     }
 
+    // This must exist and be `pub`:
     pub fn load_from_file() -> Self {
         let path = "blockchain.json";
         if Path::new(path).exists() {
