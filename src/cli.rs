@@ -1,26 +1,25 @@
-use std::sync::{Arc, Mutex};
 use std::io::{self, Write};
-
-use crate::blockchain::Blockchain;
+use std::sync::{Arc, Mutex};
 use crate::wallet::Wallet;
-use crate::transaction::Transaction;
-use crate::peer;
-use crate::revstop;
+use crate::blockchain::Blockchain;
+use crate::revstop::RevStop;
+use crate::peer::broadcast_transaction;
 
-pub fn start_cli(wallet: Wallet, blockchain: Arc<Mutex<Blockchain>>) {
+pub fn run_cli(wallet: Arc<Mutex<Wallet>>, blockchain: Arc<Mutex<Blockchain>>, revstop: Arc<Mutex<RevStop>>) {
     loop {
-        println!("\n⚡ QuantumCoin CLI Menu:");
-        println!("1. View Balance");
-        println!("2. Send Coins");
-        println!("3. Mine Pending Transactions");
-        println!("4. Show Last 5 Transactions");
-        println!("5. Export Wallet with 2FA");
-        println!("6. Enable RevStop");
-        println!("7. Disable RevStop");
-        println!("8. Show Wallet Address");
-        println!("9. Exit");
+        println!("\n=== QuantumCoin CLI ===");
+        println!("1. Show Wallet Address");
+        println!("2. Check Balance");
+        println!("3. Send Coins");
+        println!("4. Mine Transactions");
+        println!("5. Show Mining Progress");
+        println!("6. Show Last 5 Transactions");
+        println!("7. Enable RevStop");
+        println!("8. Disable RevStop");
+        println!("9. Export Wallet (with 2FA)");
+        println!("10. Exit");
 
-        print!("Select an option: ");
+        print!("Choose an option: ");
         io::stdout().flush().unwrap();
 
         let mut choice = String::new();
@@ -28,101 +27,102 @@ pub fn start_cli(wallet: Wallet, blockchain: Arc<Mutex<Blockchain>>) {
 
         match choice.trim() {
             "1" => {
-                let bc = blockchain.lock().unwrap();
-                let balance = bc.get_balance(&wallet.get_address());
-                println!("💰 Your balance: {:.2} QTC", balance);
+                let wallet = wallet.lock().unwrap();
+                println!("Wallet Address: {}", wallet.get_address());
             }
             "2" => {
-                print!("Enter recipient address: ");
-                io::stdout().flush().unwrap();
-                let mut recipient = String::new();
-                io::stdin().read_line(&mut recipient).unwrap();
+                let bc = blockchain.lock().unwrap();
+                let wallet = wallet.lock().unwrap();
+                println!("Balance: {} QTC", bc.get_balance(&wallet.get_address()));
+            }
+            "3" => {
+                let mut to = String::new();
+                let mut amount = String::new();
 
-                print!("Enter amount to send: ");
+                print!("Recipient Address: ");
                 io::stdout().flush().unwrap();
-                let mut amount_str = String::new();
-                io::stdin().read_line(&mut amount_str).unwrap();
+                io::stdin().read_line(&mut to).unwrap();
 
-                let amount: f64 = match amount_str.trim().parse() {
+                print!("Amount to Send: ");
+                io::stdout().flush().unwrap();
+                io::stdin().read_line(&mut amount).unwrap();
+
+                let amount: f64 = match amount.trim().parse() {
                     Ok(a) => a,
                     Err(_) => {
-                        println!("⚠️ Invalid amount.");
+                        println!("Invalid amount.");
                         continue;
                     }
                 };
 
-                let tx = wallet.create_transaction(recipient.trim(), amount);
+                let tx = {
+                    let wallet = wallet.lock().unwrap();
+                    wallet.create_transaction(to.trim(), amount)
+                };
 
                 {
                     let mut bc = blockchain.lock().unwrap();
                     bc.add_transaction(tx.clone());
                 }
 
-                peer::broadcast_transaction(&tx);
-                println!("✅ Transaction sent and broadcasted.");
-            }
-            "3" => {
-                let block = {
-                    let mut bc = blockchain.lock().unwrap();
-                    bc.mine_pending_transactions(wallet.get_address())
-                };
-
-                peer::broadcast_block(&block);
-                println!("⛏️ Mined new block and broadcasted.");
+                broadcast_transaction(tx); // Peer-to-peer logic
+                println!("Transaction sent & broadcasted!");
             }
             "4" => {
-                let bc = blockchain.lock().unwrap();
-                let last_txs = bc.get_last_n_transactions(5);
-                println!("🧾 Last 5 transactions:");
-                for tx in last_txs {
-                    println!(
-                        "From: {} To: {} Amount: {:.2}",
-                        tx.sender, tx.recipient, tx.amount
-                    );
-                }
+                let wallet = wallet.lock().unwrap();
+                let mut bc = blockchain.lock().unwrap();
+                bc.mine_pending_transactions(&wallet);
+                println!("Block mined and rewards sent!");
             }
             "5" => {
-                wallet.export_with_2fa();
+                let bc = blockchain.lock().unwrap();
+                bc.show_mining_progress();
             }
             "6" => {
-                if revstop::is_revstop_enabled() {
-                    println!("🔒 RevStop is already enabled.");
-                } else {
-                    print!("Set a password to enable RevStop: ");
-                    io::stdout().flush().unwrap();
-                    let mut password = String::new();
-                    io::stdin().read_line(&mut password).unwrap();
-                    let password = password.trim();
-                    match revstop::enable_revstop(password) {
-                        Ok(_) => println!("🔒 RevStop enabled."),
-                        Err(e) => println!("❌ Failed to enable RevStop: {}", e),
-                    }
+                let bc = blockchain.lock().unwrap();
+                let wallet = wallet.lock().unwrap();
+                let txs = bc.get_last_n_transactions(&wallet.get_address(), 5);
+                println!("Last 5 Transactions:");
+                for tx in txs {
+                    println!("{}", tx);
                 }
             }
             "7" => {
-                if !revstop::is_revstop_enabled() {
-                    println!("🔓 RevStop is not enabled.");
-                } else {
-                    print!("Enter password to disable RevStop: ");
-                    io::stdout().flush().unwrap();
-                    let mut password = String::new();
-                    io::stdin().read_line(&mut password).unwrap();
-                    let password = password.trim();
-                    match revstop::disable_revstop(password) {
-                        Ok(true) => println!("🔓 RevStop disabled."),
-                        Ok(false) => println!("❌ Incorrect password."),
-                        Err(e) => println!("❌ Failed to disable RevStop: {}", e),
-                    }
-                }
+                let mut rev = revstop.lock().unwrap();
+                rev.lock();
+                println!("RevStop is now enabled. Wallet frozen.");
             }
             "8" => {
-                println!("🆔 Wallet Address: {}", wallet.get_address());
+                let mut password = String::new();
+                print!("Enter RevStop password to unlock: ");
+                io::stdout().flush().unwrap();
+                io::stdin().read_line(&mut password).unwrap();
+
+                let mut rev = revstop.lock().unwrap();
+                if rev.unlock(password.trim()) {
+                    println!("RevStop disabled. Wallet reactivated.");
+                } else {
+                    println!("Incorrect password.");
+                }
             }
             "9" => {
-                println!("👋 Goodbye!");
+                let mut auth_code = String::new();
+                print!("Enter 2FA code: ");
+                io::stdout().flush().unwrap();
+                io::stdin().read_line(&mut auth_code).unwrap();
+
+                let wallet = wallet.lock().unwrap();
+                if wallet.export_with_2fa(auth_code.trim()) {
+                    println!("Wallet exported successfully.");
+                } else {
+                    println!("2FA failed. Wallet not exported.");
+                }
+            }
+            "10" => {
+                println!("Exiting QuantumCoin CLI. Goodbye.");
                 break;
             }
-            _ => println!("⚠️ Invalid option."),
+            _ => println!("Invalid option."),
         }
     }
 }
