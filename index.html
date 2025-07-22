@@ -79,3 +79,36 @@
   </div>
 </body>
 </html>
+<!-- SIGNUP SECTION -->
+<section id="signup" class="section transparent-card">
+  <h2>Create Your QuantumCoin™ Wallet</h2>
+  <form id="signup-form">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    
+    <label>
+      <input type="checkbox" id="terms" required>
+      I agree to the <a href="#terms-modal" onclick="document.getElementById('terms-modal').style.display='block'">Terms and Conditions</a>
+    </label>
+
+    <button type="submit">Create Account</button>
+  </form>
+</section>
+
+<!-- TERMS & CONDITIONS MODAL -->
+<div id="terms-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('terms-modal').style.display='none'">&times;</span>
+    <h3>QuantumCoin™ Terms & Conditions</h3>
+    <p>
+      By creating an account or using QuantumCoin™, you agree that:
+      <ul>
+        <li>You are solely responsible for managing your private keys and backup phrases.</li>
+        <li>QuantumCoin™ is decentralized, and the creators are not liable for any financial loss, wallet issues, or bugs.</li>
+        <li>All transactions are final and irreversible.</li>
+        <li>You use this platform at your own risk, and QuantumCoin™ cannot be held legally accountable for misuse or mismanagement.</li>
+      </ul>
+      You agree to these terms by checking the box above. If you do not agree, do not use this platform.
+    </p>
+  </div>
+</div>
