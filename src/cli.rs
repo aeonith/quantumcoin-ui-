@@ -5,6 +5,7 @@ use crate::blockchain::Blockchain;
 use crate::wallet::Wallet;
 use crate::transaction::Transaction;
 use crate::peer;
+use crate::revstop;
 
 pub fn start_cli(wallet: Wallet, blockchain: Arc<Mutex<Blockchain>>) {
     loop {
@@ -84,12 +85,35 @@ pub fn start_cli(wallet: Wallet, blockchain: Arc<Mutex<Blockchain>>) {
                 wallet.export_with_2fa();
             }
             "6" => {
-                // Add RevStop enabling logic here
-                println!("🔒 RevStop enabled.");
+                if revstop::is_revstop_enabled() {
+                    println!("🔒 RevStop is already enabled.");
+                } else {
+                    print!("Set a password to enable RevStop: ");
+                    io::stdout().flush().unwrap();
+                    let mut password = String::new();
+                    io::stdin().read_line(&mut password).unwrap();
+                    let password = password.trim();
+                    match revstop::enable_revstop(password) {
+                        Ok(_) => println!("🔒 RevStop enabled."),
+                        Err(e) => println!("❌ Failed to enable RevStop: {}", e),
+                    }
+                }
             }
             "7" => {
-                // Add RevStop disabling logic here
-                println!("🔓 RevStop disabled.");
+                if !revstop::is_revstop_enabled() {
+                    println!("🔓 RevStop is not enabled.");
+                } else {
+                    print!("Enter password to disable RevStop: ");
+                    io::stdout().flush().unwrap();
+                    let mut password = String::new();
+                    io::stdin().read_line(&mut password).unwrap();
+                    let password = password.trim();
+                    match revstop::disable_revstop(password) {
+                        Ok(true) => println!("🔓 RevStop disabled."),
+                        Ok(false) => println!("❌ Incorrect password."),
+                        Err(e) => println!("❌ Failed to disable RevStop: {}", e),
+                    }
+                }
             }
             "8" => {
                 println!("🆔 Wallet Address: {}", wallet.get_address());
