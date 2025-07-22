@@ -15,6 +15,7 @@ impl Wallet {
         Wallet { address }
     }
 
+    // This must exist and be `pub`:
     pub fn load_or_generate() -> Self {
         let path = "wallet.json";
         if Path::new(path).exists() {
