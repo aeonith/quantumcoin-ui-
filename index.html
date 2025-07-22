@@ -3,54 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
+  <title>QuantumCoin™ Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- 🔁 Background Video -->
-  <video autoplay muted loop playsinline id="bgVideo">
-    <source src="quantum-bg.mp4" type="video/mp4">
-    Your browser does not support HTML5 video.
+  <!-- VIDEO BACKGROUND -->
+  <video id="bg-video" autoplay muted loop>
+    <source src="quantum-bg.mp4" type="video/mp4" />
+    <!-- fallback image for non-video browsers -->
+    <img src="quantum-bg.jpg" alt="Quantum background" />
   </video>
 
-  <!-- 🚀 Title Section -->
-  <div class="container">
-    <h1 class="title">🚀 QuantumCoin™</h1>
-    <p class="subtitle">QuantumCoin™ — Quantum-Secure Currency of the Future</p>
+  <!-- SEMI-TRANSPARENT OVERLAY -->
+  <div class="overlay"></div>
 
-    <!-- 📈 Current Price -->
-    <div class="section">
+  <!-- MAIN UI CONTAINER -->
+  <div class="ui">
+    <h1 class="logo">🚀 QuantumCoin™</h1>
+    <p class="tagline">Quantum-Secure Currency of the Future</p>
+
+    <div class="card">
       <h2>📉 Current Price</h2>
-      <p id="price">$0.25</p>
+      <p class="price">$0.25</p>
     </div>
 
-    <!-- 👛 Wallet Info -->
-    <div class="section">
+    <div class="card">
       <h2>💼 Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="walletBalance">Loading...</span> QTC</p>
+      <p><strong>Address:</strong> <span id="addr">Loading…</span></p>
+      <p><strong>Balance:</strong> <span id="bal">Loading…</span> QTC</p>
     </div>
 
-    <!-- ✉️ Send QTC -->
-    <div class="section">
-      <h2>📬 Send QTC</h2>
-      <input type="text" id="recipient" placeholder="Recipient address" />
-      <input type="number" id="amount" placeholder="Amount" />
-      <input type="password" id="password" placeholder="Wallet password" />
-      <button onclick="sendQTC()">Send</button>
+    <div class="card">
+      <h2>📩 Send QTC</h2>
+      <input id="to"   type="text"   placeholder="Recipient address" />
+      <input id="amt"  type="number" placeholder="Amount" />
+      <input id="pw"   type="password" placeholder="Wallet password" />
+      <button id="sendBtn">Send</button>
     </div>
 
-    <!-- ⛏️ Mine Block -->
-    <div class="section">
-      <h2>⛏️ Mine New Block</h2>
-      <button onclick="mineBlock()">Mine</button>
+    <div class="card">
+      <h2>⛏ Mine New Block</h2>
+      <button id="mineBtn">Mine</button>
     </div>
-
-    <!-- 👣 Footer -->
-    <footer>
-      <p>© 2025 QuantumCoin™. All rights reserved.</p>
-    </footer>
   </div>
 
   <script src="script.js"></script>
