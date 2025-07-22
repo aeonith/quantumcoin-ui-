@@ -8,59 +8,64 @@
 </head>
 <body>
 
-  <!-- Background Video -->
+  <!-- Background Video (Your path under /quantum-ui/) -->
   <video autoplay muted loop id="bgVideo">
-    <source src="/quantum_bg.mp4" type="video/mp4" />
-    Your browser does not support HTML5 video.
+    <source src="quantum-ui/quantum_bg.mp4" type="video/mp4" />
+    Your browser does not support video.
   </video>
 
-  <!-- Hero Section -->
-  <section class="section">
-    <h1>🚀 QuantumCoin™</h1>
-    <p>The most advanced quantum-secure currency on Earth.</p>
-  </section>
+  <div class="overlay">
 
-  <!-- Price -->
-  <section class="section">
-    <h2>📈 Current Price</h2>
-    <p>$<span id="price">0.25</span> QTC</p>
-  </section>
+    <header>
+      <h1>🚀 <span class="logo-text">QuantumCoin™</span></h1>
+      <p class="subtitle">The most advanced quantum-secure currency on Earth.</p>
+    </header>
 
-  <!-- Wallet -->
-  <section class="section">
-    <h2>📦 Your Wallet</h2>
-    <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
-    <p><strong>Balance:</strong> <span id="walletBalance">Loading...</span> QTC</p>
-    <button class="button" onclick="refreshBalance()">Refresh Balance</button>
-  </section>
+    <section>
+      <h2>📈 Current Price</h2>
+      <p class="highlight">$<span id="price">0.25</span> QTC</p>
+    </section>
 
-  <!-- Send -->
-  <section class="section">
-    <h2>✉️ Send QTC</h2>
-    <input type="text" id="recipient" placeholder="Recipient Address" />
-    <input type="text" id="amount" placeholder="Amount" />
-    <input type="password" id="password" placeholder="Wallet Password" />
-    <button class="button">Send</button>
-  </section>
+    <section>
+      <h2>📦 Your Wallet</h2>
+      <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
+      <p><strong>Balance:</strong> <span id="walletBalance">1250</span> QTC</p>
+      <button onclick="animateBalance()">💫 Refresh Balance</button>
+    </section>
 
-  <!-- Signup -->
-  <section class="section">
-    <h2>🔐 Sign Up</h2>
-    <input type="text" placeholder="Username" />
-    <input type="password" placeholder="Password" />
-    <button class="button">Create Account</button>
-  </section>
+    <section>
+      <h2>✉️ Send QTC</h2>
+      <input type="text" placeholder="Recipient Address" />
+      <input type="text" placeholder="Amount" />
+      <input type="password" placeholder="Wallet Password" />
+      <button>Send Now</button>
+    </section>
 
-  <!-- Footer -->
-  <div class="footer">
-    QuantumCoin™ © 2025
+    <section>
+      <h2>🔐 Create Account</h2>
+      <input type="text" placeholder="Username" />
+      <input type="password" placeholder="Password" />
+      <button>Sign Up</button>
+    </section>
+
+    <footer>
+      QuantumCoin™ © 2025
+    </footer>
+
   </div>
 
   <script>
-    function refreshBalance() {
-      document.getElementById("walletBalance").innerText = "1250";
+    function animateBalance() {
+      let el = document.getElementById('walletBalance');
+      el.innerText = '0';
+      let i = 0;
+      let target = 1250;
+      let step = setInterval(() => {
+        i += 25;
+        el.innerText = i;
+        if (i >= target) clearInterval(step);
+      }, 20);
     }
   </script>
-
 </body>
 </html>
