@@ -1,18 +1,27 @@
-use std::fs;
-use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Mutex;
+use std::fs::{read_to_string, write};
 
-const REVSTOP_FILE: &str = "revstop_status.json";
-
-pub fn is_revstop_active(public_key: &str) -> bool {
-    let data = fs::read_to_string(REVSTOP_FILE).unwrap_or_else(|_| "{}".to_string());
-    let map: HashMap<String, bool> = serde_json::from_str(&data).unwrap_or_default();
-    map.get(public_key).copied().unwrap_or(false)
+lazy_static::lazy_static! {
+    static ref REVSTOP_DB: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
 }
 
-pub fn get_revstop_status(public_key: &str) -> String {
-    if is_revstop_active(public_key) {
+pub fn is_revstop_active(address: &str) -> bool {
+    REVSTOP_DB.lock().unwrap().contains(address)
+}
+
+pub fn enable_revstop(address: &str) {
+    REVSTOP_DB.lock().unwrap().insert(address.to_string());
+}
+
+pub fn disable_revstop(address: &str) {
+    REVSTOP_DB.lock().unwrap().remove(address);
+}
+
+pub fn get_revstop_status(address: &str) -> String {
+    if is_revstop_active(address) {
         "🔒 RevStop is ACTIVE".to_string()
     } else {
-        "🔓 RevStop is NOT active".to_string()
+        "🔓 RevStop is INACTIVE".to_string()
     }
 }
