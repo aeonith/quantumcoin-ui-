@@ -1,17 +1,11 @@
-use pqcrypto_dilithium::dilithium2::{
-    keypair, sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature, SignedMessage,
-};
-use pqcrypto_traits::sign::{
-    SecretKey as SecretKeyTrait,
-    PublicKey as PublicKeyTrait,
-    DetachedSignature as DetachedSigTrait,
-    SignedMessage as SignedMsgTrait,
-};
-use base64::{encode, decode};
-use std::fs::File;
-use std::io::{Read, Write};
+use pqcrypto_dilithium::dilithium2::{keypair, sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _};
+use base64::{engine::general_purpose, Engine as _};
+use std::fs::{File, read_to_string};
+use std::io::{Write, Error};
+use std::path::Path;
 
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone)]
 pub struct Wallet {
     pub public_key: String,
     pub private_key: String,
@@ -19,48 +13,45 @@ pub struct Wallet {
 
 impl Wallet {
     pub fn new() -> Self {
-        let (pk, sk) = keypair();
-        Wallet {
-            public_key: encode(pk.as_bytes()),
-            private_key: encode(sk.as_bytes()),
+        // Check if keys already exist
+        let pub_path = "wallet_public.key";
+        let priv_path = "wallet_private.key";
+
+        if Path::new(pub_path).exists() && Path::new(priv_path).exists() {
+            // Load existing keys
+            let public_key = read_to_string(pub_path).unwrap_or_default();
+            let private_key = read_to_string(priv_path).unwrap_or_default();
+            return Wallet { public_key, private_key };
         }
+
+        // Otherwise, generate and save new keys
+        let (pk, sk) = keypair();
+        let public_key = general_purpose::STANDARD.encode(pk.as_bytes());
+        let private_key = general_purpose::STANDARD.encode(sk.as_bytes());
+
+        // Save to files
+        let _ = File::create(pub_path).and_then(|mut f| f.write_all(public_key.as_bytes()));
+        let _ = File::create(priv_path).and_then(|mut f| f.write_all(private_key.as_bytes()));
+
+        Wallet { public_key, private_key }
     }
 
     pub fn save_to_files(&self, pub_path: &str, priv_path: &str) {
-        let mut pub_file = File::create(pub_path).unwrap();
-        let mut priv_file = File::create(priv_path).unwrap();
-        pub_file.write_all(self.public_key.as_bytes()).unwrap();
-        priv_file.write_all(self.private_key.as_bytes()).unwrap();
-    }
-
-    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Self {
-        let mut pub_file = File::open(pub_path).unwrap();
-        let mut priv_file = File::open(priv_path).unwrap();
-        let mut pub_key = String::new();
-        let mut priv_key = String::new();
-        pub_file.read_to_string(&mut pub_key).unwrap();
-        priv_file.read_to_string(&mut priv_key).unwrap();
-        Wallet {
-            public_key: pub_key,
-            private_key: priv_key,
-        }
+        let _ = File::create(pub_path).and_then(|mut f| f.write_all(self.public_key.as_bytes()));
+        let _ = File::create(priv_path).and_then(|mut f| f.write_all(self.private_key.as_bytes()));
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        let sk_bytes = decode(&self.private_key).unwrap();
+        let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        let signed = sign(message, &sk);
-        signed.as_bytes().to_vec()
+        sign(message, &sk).as_bytes().to_vec()
     }
 
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        let pk_bytes = decode(&self.public_key).unwrap();
+        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).unwrap();
         let pk = PublicKey::from_bytes(&pk_bytes).unwrap();
-
-        match DetachedSignature::from_bytes(signature) {
-            Ok(sig) => verify_detached_signature(&sig, message, &pk).is_ok(),
-            Err(_) => false,
-        }
+        let sig = DetachedSignature::from_bytes(signature).unwrap();
+        verify_detached_signature(&sig, message, &pk).is_ok()
     }
 
     pub fn get_address(&self) -> String {
