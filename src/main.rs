@@ -11,31 +11,32 @@ use actix_web::{web, App, HttpServer};
 use std::sync::{Arc, Mutex};
 
 use blockchain::Blockchain;
+use cli::run as cli_run;
 use wallet::Wallet;
 use p2p::start_node;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // CLI entry
+    // If a CLI subcommand is passed, execute it and exit
     if let Some(cmd) = std::env::args().nth(1) {
-        return cli::run(&cmd);
+        return cli_run(&cmd);
     }
 
-    // Load or create blockchain & wallet
+    // Load or create blockchain + wallet
     let blockchain = Arc::new(Mutex::new(Blockchain::load_or_create()));
     let wallet = Arc::new(Mutex::new(Wallet::load_or_generate()));
-    let peers = Arc::new(Mutex::new(vec![]));
+    let peers = Arc::new(Mutex::new(Vec::new()));
 
-    // Start P2P networking thread
+    // Start P2P thread
     {
         let bc = blockchain.clone();
         let ps = peers.clone();
         std::thread::spawn(move || start_node(6000, bc, ps));
     }
 
-    println!("🚀 QuantumCoin node listening at http://localhost:8080");
+    println!("🚀 QuantumCoin node running at http://localhost:8080");
 
-    // HTTP Server for API
+    // HTTP API server
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
@@ -45,9 +46,9 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .app_data(web::Data::from(blockchain.clone()))
-            .app_data(web::Data::from(wallet.clone()))
-            .app_data(web::Data::from(peers.clone()))
+            .app_data(web::Data::new(blockchain.clone()))
+            .app_data(web::Data::new(wallet.clone()))
+            .app_data(web::Data::new(peers.clone()))
             .configure(routes::init)
     })
     .bind("0.0.0.0:8080")?
