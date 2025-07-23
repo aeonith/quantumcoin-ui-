@@ -1,57 +1,45 @@
-mod wallet;
+use actix_cors::Cors;
+use actix_web::{web, App, HttpServer};
+use std::sync::{Arc, Mutex};
+
 mod blockchain;
+mod wallet;
 mod routes;
-mod revstop;
 mod p2p;
 
-use crate::wallet::Wallet;
-use crate::blockchain::Blockchain;
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
+use blockchain::Blockchain;
+use wallet::Wallet;
+use p2p::start_node;
 
-#[rocket::main]
-async fn main() -> Result<(), rocket::Error> {
-    let wallet = Wallet::load_from_files();
-
-    let blockchain = Arc::new(Mutex::new(
-        Blockchain::load_from_file()
-            .unwrap_or_else(|| Blockchain::new(&wallet.public_key)),
-    ));
-
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // Load blockchain and wallet
+    let blockchain = Arc::new(Mutex::new(Blockchain::load_or_create()));
+    let wallet = Arc::new(Mutex::new(Wallet::load_or_generate()));
     let peers = Arc::new(Mutex::new(vec![]));
 
-    {
-        let blockchain_clone = blockchain.clone();
-        let peers_clone = peers.clone();
-        thread::spawn(move || {
-            p2p::start_node(6000, blockchain_clone, peers_clone);
-        });
-    }
+    // Start P2P networking in separate thread
+    let p2p_peers = peers.clone();
+    std::thread::spawn(move || start_node(6000, p2p_peers));
 
-    {
-        let pubkey = wallet.public_key.clone();
-        let chain = blockchain.clone();
-        thread::spawn(move || loop {
-            {
-                let chain = chain.lock().unwrap();
-                let height = chain.blocks.len();
-                let mined = chain.total_mined;
-                println!(
-                    "🧱 Height: {} | 💰 Mined: {} QTC | 🧠 RevStop: {}",
-                    height,
-                    mined,
-                    revstop::get_revstop_status(&pubkey)
-                );
-            }
-            thread::sleep(Duration::from_secs(60));
-        });
-    }
+    println!("✅ QuantumCoin Node running at http://localhost:8080");
 
-    rocket::build()
-        .manage(blockchain)
-        .manage(peers)
-        .mount("/", routes::get_routes())
-        .launch()
-        .await
+    // HTTP Server with CORS for frontend access
+    HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
+
+        App::new()
+            .wrap(cors)
+            .app_data(web::Data::new(blockchain.clone()))
+            .app_data(web::Data::new(wallet.clone()))
+            .app_data(web::Data::new(peers.clone()))
+            .configure(routes::init_routes)
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
 }
