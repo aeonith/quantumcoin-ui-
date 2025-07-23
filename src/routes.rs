@@ -47,16 +47,17 @@ async fn send(
 ) -> HttpResponse {
     let wallet = w.lock().unwrap();
     let data = format!("{}{}{}", wallet.address(), &req.to, req.amount);
-    let sig_bytes = general_purpose::STANDARD.decode(&req.signature).unwrap();
-    if !wallet.verify(data.as_bytes(), &sig_bytes) {
+    let sig = general_purpose::STANDARD.decode(&req.signature).unwrap();
+    if !wallet.verify(data.as_bytes(), &sig) {
         return HttpResponse::BadRequest().body("Invalid signature");
     }
+
     let tx = Transaction::new(
         wallet.address(),
         req.to.clone(),
         req.amount,
-        Some(req.signature.clone()),
         SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+        Some(req.signature.clone()),
     );
     let mut chain = bc.lock().unwrap();
     if is_revstop_active(&wallet.address()) {
