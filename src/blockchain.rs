@@ -43,3 +43,11 @@ impl Blockchain {
         balance
     }
 }
+impl Blockchain {
+    // Already present methods...
+
+    pub fn load_from_file(filename: &str) -> Option<Self> {
+        let data = std::fs::read_to_string(filename).ok()?;
+        serde_json::from_str(&data).ok()
+    }
+}
