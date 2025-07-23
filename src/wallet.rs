@@ -1,12 +1,11 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{DetachedSignature as TraitDetachedSignature, PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
+use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, verify_detached, PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, DetachedSignature as TraitDetachedSignature};
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use serde::{Serialize, Deserialize};
 
 const WALLET_FILE: &str = "wallet_key.json";
-const REVSTOP_LOCK_FILE: &str = "revstop_lock.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Wallet {
@@ -62,14 +61,23 @@ impl Wallet {
     pub fn sign_message(&self, message: &[u8]) -> Option<Vec<u8>> {
         let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).ok()?;
         let sk = SecretKey::from_bytes(&sk_bytes).ok()?;
-        let signature = sign_detached(message, &sk);
+        let signature = detached_sign(message, &sk);
         Some(signature.as_bytes().to_vec())
     }
 
     pub fn verify_signature(&self, message: &[u8], signature_bytes: &[u8]) -> bool {
-        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).ok()?;
-        let pk = PublicKey::from_bytes(&pk_bytes).ok()?;
-        let signature = DetachedSignature::from_bytes(signature_bytes).ok()?;
+        let pk_bytes = match general_purpose::STANDARD.decode(&self.public_key) {
+            Ok(b) => b,
+            Err(_) => return false,
+        };
+        let pk = match PublicKey::from_bytes(&pk_bytes) {
+            Ok(p) => p,
+            Err(_) => return false,
+        };
+        let signature = match DetachedSignature::from_bytes(signature_bytes) {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
         verify_detached(&signature, message, &pk).is_ok()
     }
 
@@ -77,8 +85,7 @@ impl Wallet {
         if code.len() < 6 {
             return None;
         }
-        let mut combined = format!("{}:{}:{}", self.public_key, self.private_key, code);
-        let encoded = general_purpose::STANDARD.encode(combined.as_bytes());
-        Some(encoded)
+        let combined = format!("{}:{}:{}", self.public_key, self.private_key, code);
+        Some(general_purpose::STANDARD.encode(combined.as_bytes()))
     }
 }
