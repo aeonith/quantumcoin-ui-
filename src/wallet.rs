@@ -1,9 +1,10 @@
 use pqcrypto_dilithium::dilithium2::{
-    keypair, sign_detached, PublicKey, SecretKey, DetachedSignature,
+    keypair, detached_sign, PublicKey, SecretKey, DetachedSignature,
 };
+use pqcrypto_traits::sign::{Signer, Verifier, SecretKey as SecretKeyTrait, PublicKey as PublicKeyTrait, DetachedSignature as DetachedSignatureTrait};
 use base64::{encode, decode};
 use serde::{Serialize, Deserialize};
-use std::fs::{self, File};
+use std::fs;
 use std::io::{Read, Write};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -43,7 +44,7 @@ impl Wallet {
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
         let sk_bytes = decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        let sig = sign_detached(message, &sk);
+        let sig = detached_sign(message, &sk);
         sig.as_bytes().to_vec()
     }
 
