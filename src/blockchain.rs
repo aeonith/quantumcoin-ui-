@@ -9,8 +9,8 @@ use std::{
 use crate::transaction::Transaction;
 
 const CHAIN_FILE: &str = "blockchain.json";
-const DIFFICULTY_INTERVAL: usize = 10;    // adjust every 10 blocks
-const TARGET_TIME: u64 = 60;             // target 60s per block
+const DIFFICULTY_INTERVAL: usize = 10;
+const TARGET_TIME: u64 = 60;
 const INITIAL_DIFFICULTY: usize = 4;
 const INITIAL_REWARD: u64 = 50;
 const GENESIS_REWARD: u64 = 1_250_000;
@@ -50,8 +50,12 @@ impl Block {
     fn calculate_hash(&self) -> String {
         let data = format!(
             "{}{}{:?}{}{}{}",
-            self.index, self.timestamp, self.transactions,
-            self.previous_hash, self.nonce, self.reward
+            self.index,
+            self.timestamp,
+            self.transactions,
+            self.previous_hash,
+            self.nonce,
+            self.reward
         );
         let mut hasher = Sha256::new();
         hasher.update(data.as_bytes());
@@ -111,9 +115,11 @@ impl Blockchain {
 
     pub fn mine_pending(&mut self, miner: &str) {
         let ts = now();
+        // reward
         let reward_tx = Transaction::new("0".into(), miner.into(), self.reward, ts, None);
         self.pending.push(reward_tx);
 
+        // block
         let last = self.blocks.last().unwrap();
         let mut blk = Block::new(
             self.blocks.len(),
@@ -126,9 +132,11 @@ impl Blockchain {
         self.blocks.push(blk);
         self.pending.clear();
 
+        // adjust difficulty
         if self.blocks.len() % DIFFICULTY_INTERVAL == 0 {
             self.adjust_difficulty();
         }
+
         self.save();
     }
 
@@ -143,7 +151,7 @@ impl Blockchain {
         } else if actual > expected * 2 && self.difficulty > 1 {
             self.difficulty -= 1;
         }
-        println!("🔧 Difficulty adjusted to {}", self.difficulty);
+        println!("🔧 Difficulty now {}", self.difficulty);
     }
 
     pub fn get_balance(&self, addr: &str) -> u64 {
