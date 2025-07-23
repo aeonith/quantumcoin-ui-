@@ -1,8 +1,8 @@
 use pqcrypto_dilithium::dilithium2::{keypair, sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _};
+use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _, SignedMessage}; // <- added
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{File, read_to_string};
-use std::io::{Write, Error};
+use std::io::Write;
 use std::path::Path;
 
 #[derive(Clone)]
@@ -13,23 +13,19 @@ pub struct Wallet {
 
 impl Wallet {
     pub fn new() -> Self {
-        // Check if keys already exist
         let pub_path = "wallet_public.key";
         let priv_path = "wallet_private.key";
 
         if Path::new(pub_path).exists() && Path::new(priv_path).exists() {
-            // Load existing keys
             let public_key = read_to_string(pub_path).unwrap_or_default();
             let private_key = read_to_string(priv_path).unwrap_or_default();
             return Wallet { public_key, private_key };
         }
 
-        // Otherwise, generate and save new keys
         let (pk, sk) = keypair();
         let public_key = general_purpose::STANDARD.encode(pk.as_bytes());
         let private_key = general_purpose::STANDARD.encode(sk.as_bytes());
 
-        // Save to files
         let _ = File::create(pub_path).and_then(|mut f| f.write_all(public_key.as_bytes()));
         let _ = File::create(priv_path).and_then(|mut f| f.write_all(private_key.as_bytes()));
 
@@ -44,7 +40,7 @@ impl Wallet {
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
         let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        sign(message, &sk).as_bytes().to_vec()
+        sign(message, &sk).as_bytes().to_vec() // <- this works now
     }
 
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
