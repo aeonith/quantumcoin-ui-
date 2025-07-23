@@ -3,7 +3,7 @@ use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, verify_detached_sig
 use pqcrypto_traits::sign::{PublicKey as _, SecretKey as _, DetachedSignature as _};
 use serde::{Deserialize, Serialize};
 use std::{
-    fs::{self, File},
+    fs::File,
     io::{Read, Write},
 };
 
@@ -32,15 +32,17 @@ impl Wallet {
             public_key: pub_b64,
             secret_key: sec_b64,
         };
-        fs::write("wallet.json", serde_json::to_string_pretty(&w).unwrap()).unwrap();
+        let mut f = File::create("wallet.json").unwrap();
+        f.write_all(serde_json::to_string_pretty(&w).unwrap().as_bytes())
+            .unwrap();
         w
     }
 
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
         let sk_bytes = general_purpose::STANDARD.decode(&self.secret_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        let sig: DetachedSignature = detached_sign(data, &sk);
-        sig.as_bytes().to_vec()
+        let ds: DetachedSignature = detached_sign(data, &sk);
+        ds.as_bytes().to_vec()
     }
 
     pub fn verify(&self, data: &[u8], sig: &[u8]) -> bool {
