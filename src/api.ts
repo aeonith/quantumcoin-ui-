@@ -1,5 +1,5 @@
 // src/api.ts
-const BASE_URL = "http://localhost:8080"; // Change if deployed
+const BASE_URL = "https://quantumcoin-ui-1rust1.onrender.com";
 
 export const fetchAddress = async (): Promise<string> => {
   const res = await fetch(`${BASE_URL}/address`);
