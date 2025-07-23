@@ -35,7 +35,7 @@ pub async fn mine_block(
     miner: web::Query<String>,
 ) -> impl Responder {
     let mut chain = blockchain.lock().unwrap();
-    let result = chain.mine_pending(&miner);
+    let result = chain.mine_pending_transactions(&miner);
     HttpResponse::Ok().body(format!("Block mined: {}", result))
 }
 
