@@ -1,97 +1,93 @@
-use rocket::{get, post, serde::json::Json};
+use crate::blockchain::Blockchain;
+use crate::wallet::Wallet;
+use crate::revstop;
+use actix_web::{get, post, web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
-use crate::wallet::Wallet;
-use crate::blockchain::{Blockchain, Transaction};
-use crate::revstop::{is_revstop_active, get_revstop_status};
-
 #[derive(Serialize)]
-pub struct BalanceResponse {
-    pub balance: u64,
+struct BalanceResponse {
+    address: String,
+    balance: u64,
 }
 
 #[derive(Deserialize)]
-pub struct SendRequest {
-    pub to: String,
-    pub amount: u64,
-}
-
-#[derive(Deserialize)]
-pub struct ExportRequest {
-    pub code: String,
-}
-
-#[derive(Serialize)]
-pub struct AddressResponse {
-    pub address: String,
+struct SendRequest {
+    to: String,
+    amount: u64,
 }
 
 #[get("/balance")]
-pub fn balance() -> Json<BalanceResponse> {
-    let wallet = Wallet::load_from_files();
-    Json(BalanceResponse {
-        balance: wallet.get_balance(),
+async fn balance(
+    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
+) -> impl Responder {
+    let chain = blockchain.lock().unwrap();
+    let wallet = wallet.lock().unwrap();
+    let balance = chain.get_balance(&wallet.public_key);
+    HttpResponse::Ok().json(BalanceResponse {
+        address: wallet.public_key.clone(),
+        balance,
     })
 }
 
 #[get("/address")]
-pub fn address() -> Json<AddressResponse> {
-    let wallet = Wallet::load_from_files();
-    Json(AddressResponse {
-        address: wallet.public_key,
-    })
+async fn address(wallet: web::Data<Arc<Mutex<Wallet>>>) -> impl Responder {
+    let wallet = wallet.lock().unwrap();
+    HttpResponse::Ok().body(wallet.get_address())
 }
 
-#[post("/send", format = "application/json", data = "<req>")]
-pub fn send(req: Json<SendRequest>, blockchain: &rocket::State<Arc<Mutex<Blockchain>>>) -> String {
-    let wallet = Wallet::load_from_files();
-
-    if is_revstop_active(&wallet.public_key) {
-        return "❌ RevStop protection is active. Transaction blocked.".to_string();
-    }
-
-    let tx = Transaction {
-        sender: wallet.public_key.clone(),
-        recipient: req.to.clone(),
-        amount: req.amount,
-        signature: None, // Optionally sign this
-    };
-
+#[post("/send")]
+async fn send(
+    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
+    req: web::Json<SendRequest>,
+) -> impl Responder {
     let mut chain = blockchain.lock().unwrap();
-    if chain.add_transaction(tx) {
-        chain.save_to_disk();
-        "✅ Transaction added.".to_string()
-    } else {
-        "❌ Transaction failed.".to_string()
+    let wallet = wallet.lock().unwrap();
+    if req.amount == 0 {
+        return HttpResponse::BadRequest().body("Amount must be greater than 0");
     }
+    let tx = chain.create_transaction(&wallet.public_key, &req.to, req.amount);
+    chain.add_transaction(tx);
+    HttpResponse::Ok().body("Transaction submitted")
 }
 
-#[get("/mine")]
-pub fn mine(blockchain: &rocket::State<Arc<Mutex<Blockchain>>>) -> String {
-    let wallet = Wallet::load_from_files();
+#[post("/mine")]
+async fn mine(blockchain: web::Data<Arc<Mutex<Blockchain>>>) -> impl Responder {
     let mut chain = blockchain.lock().unwrap();
-    chain.mine_pending_transactions(&wallet.public_key);
-    chain.save_to_disk();
-    "⛏️ Mining complete.".to_string()
+    chain.mine_pending_transactions();
+    HttpResponse::Ok().body("Block mined")
 }
 
 #[get("/revstop")]
-pub fn revstop_status() -> String {
-    let wallet = Wallet::load_from_files();
-    if get_revstop_status(&wallet.public_key) {
-        "🔒 RevStop is ACTIVE".to_string()
-    } else {
-        "🔓 RevStop is NOT active".to_string()
+async fn revstop_status(wallet: web::Data<Arc<Mutex<Wallet>>>) -> impl Responder {
+    let wallet = wallet.lock().unwrap();
+    let status = revstop::get_revstop_status(&wallet.public_key);
+    HttpResponse::Ok().body(format!("RevStop: {}", status))
+}
+
+#[post("/export")]
+async fn export(
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
+    body: web::Json<serde_json::Value>,
+) -> impl Responder {
+    let password = body["password"].as_str().unwrap_or_default();
+    let wallet = wallet.lock().unwrap();
+    match wallet.export_with_2fa(password) {
+        Ok(_) => HttpResponse::Ok().body("Wallet exported with 2FA"),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {}", e)),
     }
 }
 
-#[post("/export", format = "application/json", data = "<req>")]
-pub fn export(req: Json<ExportRequest>) -> String {
-    let wallet = Wallet::load_from_files();
-    if let Some(encoded) = wallet.export_with_2fa(&req.code) {
-        format!("✅ Exported: {}", encoded)
-    } else {
-        "❌ Export failed: invalid code.".to_string()
-    }
+pub fn get_routes() -> Vec<actix_web::Route> {
+    actix_web::web::scope("")
+        .service(balance)
+        .service(address)
+        .service(send)
+        .service(mine)
+        .service(revstop_status)
+        .service(export)
+        .into_inner()
+        .routes
 }
