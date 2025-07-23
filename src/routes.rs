@@ -1,7 +1,8 @@
 use actix_web::{web, HttpResponse};
-use base64::Engine;
+use base64::engine::general_purpose;
 use serde::Deserialize;
 use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::{
     blockchain::Blockchain,
@@ -22,7 +23,7 @@ pub fn init(cfg: &mut web::ServiceConfig) {
        .route("/address", web::get().to(address))
        .route("/send", web::post().to(send))
        .route("/mine", web::post().to(mine))
-       .route("/revstop-status", web::get().to(revstop_status));
+       .route("/revstop", web::get().to(revstop_status));
 }
 
 async fn balance(
@@ -31,13 +32,12 @@ async fn balance(
 ) -> HttpResponse {
     let chain = bc.lock().unwrap();
     let wallet = w.lock().unwrap();
-    let bal = chain.get_balance(&wallet.get_address());
-    HttpResponse::Ok().json(bal)
+    HttpResponse::Ok().json(chain.get_balance(&wallet.address()))
 }
 
 async fn address(w: web::Data<Arc<Mutex<Wallet>>>) -> HttpResponse {
     let wallet = w.lock().unwrap();
-    HttpResponse::Ok().json(wallet.get_address())
+    HttpResponse::Ok().json(wallet.address())
 }
 
 async fn send(
@@ -46,22 +46,24 @@ async fn send(
     req: web::Json<SendRequest>,
 ) -> HttpResponse {
     let wallet = w.lock().unwrap();
-    let data = format!("{}{}{}", wallet.get_address(), &req.to, req.amount);
+    let data = format!("{}{}{}", wallet.address(), &req.to, req.amount);
     let sig_bytes = general_purpose::STANDARD.decode(&req.signature).unwrap();
-    if !wallet.verify_signature(data.as_bytes(), &sig_bytes) {
+    if !wallet.verify(data.as_bytes(), &sig_bytes) {
         return HttpResponse::BadRequest().body("Invalid signature");
     }
-
     let tx = Transaction::new(
-        wallet.get_address(),
+        wallet.address(),
         req.to.clone(),
         req.amount,
         Some(req.signature.clone()),
         SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
     );
     let mut chain = bc.lock().unwrap();
+    if is_revstop_active(&wallet.address()) {
+        return HttpResponse::Forbidden().body("RevStop active");
+    }
     chain.add_transaction(tx);
-    HttpResponse::Ok().body("✅ Transaction added")
+    HttpResponse::Ok().body("Transaction queued")
 }
 
 async fn mine(
@@ -70,12 +72,11 @@ async fn mine(
 ) -> HttpResponse {
     let wallet = w.lock().unwrap();
     let mut chain = bc.lock().unwrap();
-    chain.mine_pending_transactions(&wallet.get_address());
-    HttpResponse::Ok().body("⛏️ Block mined")
+    chain.mine_pending(&wallet.address());
+    HttpResponse::Ok().body("Block mined")
 }
 
 async fn revstop_status(w: web::Data<Arc<Mutex<Wallet>>>) -> HttpResponse {
     let wallet = w.lock().unwrap();
-    let status = get_revstop_status(&wallet.get_address());
-    HttpResponse::Ok().body(status)
+    HttpResponse::Ok().body(get_revstop_status(&wallet.address()))
 }
