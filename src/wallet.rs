@@ -54,3 +54,21 @@ impl Wallet {
         self.public_key.clone()
     }
 }
+impl Wallet {
+    // Already present methods...
+
+    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
+        let pub_key = std::fs::read_to_string(pub_path).ok()?;
+        let priv_key = std::fs::read_to_string(priv_path).ok()?;
+        Some(Wallet {
+            public_key: pub_key,
+            private_key: priv_key,
+        })
+    }
+
+    pub fn new_and_save() -> Self {
+        let wallet = Self::new();
+        wallet.save_to_files("public.key", "private.key");
+        wallet
+    }
+}
