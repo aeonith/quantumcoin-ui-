@@ -1,27 +1,36 @@
-use lazy_static::lazy_static;
-use std::collections::HashSet;
-use std::sync::Mutex;
+use std::fs::{self, File};
+use std::io::{Read, Write};
 
-lazy_static! {
-    static ref LOCKED: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
-}
+pub struct RevStop;
 
-pub fn is_revstop_active(addr: &str) -> bool {
-    LOCKED.lock().unwrap().contains(addr)
-}
-
-pub fn get_revstop_status(addr: &str) -> String {
-    if is_revstop_active(addr) {
-        "🔒 ACTIVE".into()
-    } else {
-        "🔓 INACTIVE".into()
+impl RevStop {
+    pub fn lock(password: &str) {
+        fs::write("revstop.lock", password).unwrap();
     }
-}
 
-pub fn lock_address(addr: &str) {
-    LOCKED.lock().unwrap().insert(addr.to_string());
-}
+    pub fn unlock(input_password: &str) -> bool {
+        if let Ok(mut file) = File::open("revstop.lock") {
+            let mut stored = String::new();
+            file.read_to_string(&mut stored).unwrap();
+            stored.trim() == input_password.trim()
+        } else {
+            false
+        }
+    }
 
-pub fn unlock_address(addr: &str) {
-    LOCKED.lock().unwrap().remove(addr);
+    pub fn is_active() -> bool {
+        File::open("revstop.lock").is_ok()
+    }
+
+    pub fn status() -> String {
+        if Self::is_active() {
+            "🔒 RevStop Protection Active".to_string()
+        } else {
+            "🔓 RevStop Protection Disabled".to_string()
+        }
+    }
+
+    pub fn clear() {
+        let _ = fs::remove_file("revstop.lock");
+    }
 }
