@@ -1,17 +1,15 @@
 use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_dilithium::dilithium2::verify_detached;
+use pqcrypto_dilithium::dilithium2::verify_detached_signature;
+use pqcrypto_traits::sign::{PublicKey as PKTrait, SecretKey as SKTrait, DetachedSignature as SigTrait};
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use serde::{Serialize, Deserialize};
 
-const WALLET_FILE: &str = "wallet_key.json";
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Wallet {
     pub public_key: String,
     pub private_key: String,
-    pub balance: u64,
 }
 
 impl Wallet {
@@ -19,43 +17,18 @@ impl Wallet {
         let (pk, sk) = keypair();
         let public_key = general_purpose::STANDARD.encode(pk.as_bytes());
         let private_key = general_purpose::STANDARD.encode(sk.as_bytes());
-
-        Wallet {
-            public_key,
-            private_key,
-            balance: 0,
-        }
-    }
-
-    pub fn get_balance(&self) -> u64 {
-        self.balance
-    }
-
-    pub fn adjust_balance(&mut self, delta: i64) {
-        if delta.is_negative() {
-            let amount = delta.wrapping_abs() as u64;
-            self.balance = self.balance.saturating_sub(amount);
-        } else {
-            self.balance = self.balance.saturating_add(delta as u64);
-        }
+        Self { public_key, private_key }
     }
 
     pub fn save_to_files(&self) {
-        if let Ok(json) = serde_json::to_string_pretty(self) {
-            let _ = fs::write(WALLET_FILE, json);
-        }
+        fs::write("wallet_public.key", &self.public_key).expect("Unable to save public key");
+        fs::write("wallet_private.key", &self.private_key).expect("Unable to save private key");
     }
 
     pub fn load_from_files() -> Self {
-        if let Ok(mut file) = File::open(WALLET_FILE) {
-            let mut data = String::new();
-            if file.read_to_string(&mut data).is_ok() {
-                if let Ok(wallet) = serde_json::from_str::<Wallet>(&data) {
-                    return wallet;
-                }
-            }
-        }
-        Wallet::generate()
+        let public_key = fs::read_to_string("wallet_public.key").unwrap_or_default();
+        let private_key = fs::read_to_string("wallet_private.key").unwrap_or_default();
+        Self { public_key, private_key }
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Option<Vec<u8>> {
@@ -66,26 +39,42 @@ impl Wallet {
     }
 
     pub fn verify_signature(&self, message: &[u8], signature_bytes: &[u8]) -> bool {
-        let pk_bytes = match general_purpose::STANDARD.decode(&self.public_key) {
-            Ok(b) => b,
-            Err(_) => return false,
-        };
-        let pk = match PublicKey::from_bytes(&pk_bytes) {
-            Ok(p) => p,
-            Err(_) => return false,
-        };
-        let signature = match DetachedSignature::from_bytes(signature_bytes) {
-            Ok(s) => s,
-            Err(_) => return false,
-        };
-        verify_detached(&signature, message, &pk).is_ok()
+        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).ok()?;
+        let pk = PublicKey::from_bytes(&pk_bytes).ok()?;
+        let signature = DetachedSignature::from_bytes(signature_bytes).ok()?;
+        verify_detached_signature(&signature, message, &pk).is_ok()
     }
 
-    pub fn export_with_2fa(&self, code: &str) -> Option<String> {
-        if code.len() < 6 {
-            return None;
-        }
-        let combined = format!("{}:{}:{}", self.public_key, self.private_key, code);
-        Some(general_purpose::STANDARD.encode(combined.as_bytes()))
+    pub fn get_address(&self) -> String {
+        self.public_key.clone()
     }
+
+    pub fn export_with_2fa(&self, password: &str) -> Result<(), String> {
+        let combined = format!("{}:{}", self.public_key, self.private_key);
+        let encrypted = xor_encrypt(&combined, password);
+        fs::write("wallet_backup.qtc", encrypted).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    pub fn import_with_2fa(password: &str) -> Result<Self, String> {
+        let encrypted = fs::read("wallet_backup.qtc").map_err(|e| e.to_string())?;
+        let decrypted = xor_decrypt(&encrypted, password);
+        let parts: Vec<&str> = decrypted.split(':').collect();
+        if parts.len() != 2 {
+            return Err("Invalid backup format".to_string());
+        }
+        Ok(Self {
+            public_key: parts[0].to_string(),
+            private_key: parts[1].to_string(),
+        })
+    }
+}
+
+// Simple XOR encryption for 2FA export
+fn xor_encrypt(data: &str, key: &str) -> Vec<u8> {
+    data.bytes().zip(key.bytes().cycle()).map(|(a, b)| a ^ b).collect()
+}
+
+fn xor_decrypt(data: &[u8], key: &str) -> String {
+    String::from_utf8(data.iter().zip(key.bytes().cycle()).map(|(a, b)| a ^ b).collect()).unwrap_or_default()
 }
