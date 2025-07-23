@@ -15,7 +15,8 @@ use revstop::RevStop;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let blockchain = Arc::new(Mutex::new(Blockchain::new()));
-    let wallet = Arc::new(Mutex::new(Wallet::load_from_files("public.key", "private.key")));
+    let wallet = Arc::new(Mutex::new(Wallet::load_from_files("public
+    let wallet = Arc::new(Mutex::new(Wallet::new()));
     let revstop = Arc::new(Mutex::new(RevStop::load_status("revstop_status.json")));
 
     HttpServer::new(move || {
