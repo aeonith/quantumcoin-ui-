@@ -1,39 +1,36 @@
-use std::{net::{TcpListener, TcpStream}, io::{Read, Write}, thread, sync::{Arc, Mutex}};
-use crate::transaction::Transaction;
+use std::net::{TcpListener, TcpStream};
+use std::sync::{Arc, Mutex};
+use std::io::{Read, Write};
+use crate::blockchain::Blockchain;
 
-/// Simple message type: JSON of a Transaction or Block
-#[derive(Debug, Clone)]
-pub enum Message {
-    Transaction(Transaction),
-    Block(String), // TODO: full Block JSON
-}
-
-pub fn start_node(my_port: u16, peers: Arc<Mutex<Vec<String>>>) {
-    let listener = TcpListener::bind(("0.0.0.0", my_port)).expect("bind failed");
-    println!("P2P node listening on {}", my_port);
+pub fn start_node(port: u16, blockchain: Arc<Mutex<Blockchain>>, peers: Arc<Mutex<Vec<String>>>) {
+    let listener = TcpListener::bind(("0.0.0.0", port)).expect("P2P bind failed");
+    println!("🌐 P2P node listening on port {}", port);
 
     for stream in listener.incoming() {
-        if let Ok(mut stream) = stream {
-            let peers = peers.clone();
-            thread::spawn(move || handle_connection(&mut stream, peers));
+        match stream {
+            Ok(mut s) => {
+                let chain = blockchain.clone();
+                let peer_list = peers.clone();
+                std::thread::spawn(move || handle_connection(&mut s, chain, peer_list));
+            }
+            Err(e) => {
+                println!("❌ Connection error: {}", e);
+            }
         }
     }
 }
 
-fn handle_connection(stream: &mut TcpStream, peers: Arc<Mutex<Vec<String>>>) {
-    let mut buf = Vec::new();
-    if stream.read_to_end(&mut buf).is_ok() {
-        let msg = String::from_utf8_lossy(&buf);
-        println!("[P2P] Received: {}", msg);
-        // TODO: parse JSON, update mempool or chain
-    }
-}
+fn handle_connection(stream: &mut TcpStream, blockchain: Arc<Mutex<Blockchain>>, _peers: Arc<Mutex<Vec<String>>>) {
+    let mut buffer = [0u8; 512];
+    if let Ok(size) = stream.read(&mut buffer) {
+        let received = String::from_utf8_lossy(&buffer[..size]);
+        println!("🌐 P2P message received: {}", received);
 
-/// Broadcast to all known peers
-pub fn broadcast(peers: &Arc<Mutex<Vec<String>>>, msg: &str) {
-    for peer in peers.lock().unwrap().iter() {
-        if let Ok(mut s) = TcpStream::connect(peer) {
-            let _ = s.write_all(msg.as_bytes());
+        if received.trim() == "GET_BLOCKCHAIN" {
+            let chain = blockchain.lock().unwrap();
+            let json = serde_json::to_string(&*chain).unwrap_or_else(|_| "[]".to_string());
+            let _ = stream.write_all(json.as_bytes());
         }
     }
 }
