@@ -36,3 +36,11 @@ impl Transaction {
         format!("{}{}{}", self.sender, self.recipient, self.amount)
     }
 }
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Transaction {
+    pub sender: String,
+    pub recipient: String,
+    pub amount: u64,
+}
