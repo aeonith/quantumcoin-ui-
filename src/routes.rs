@@ -1,18 +1,11 @@
-use actix_web::{web, HttpResponse};
-use serde::Deserialize;
-use crate::blockchain::Blockchain;
-use crate::wallet::Wallet;
-use crate::transaction::Transaction;
-use crate::revstop::{is_revstop_active, get_revstop_status};
+use actix_web::{get, post, web, HttpResponse, Responder};
+use base64::engine::general_purpose;
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
-use base64::decode;
 
-pub fn init(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::resource("/send").route(web::post().to(send)));
-    cfg.service(web::resource("/mine").route(web::post().to(mine)));
-    cfg.service(web::resource("/balance").route(web::get().to(balance)));
-    cfg.service(web::resource("/revstop-status").route(web::get().to(rev_status)));
-}
+use crate::blockchain::Blockchain;
+use crate::transaction::Transaction;
+use crate::wallet::Wallet;
 
 #[derive(Deserialize)]
 pub struct SendRequest {
@@ -21,48 +14,52 @@ pub struct SendRequest {
     pub signature: String,
 }
 
-async fn send(
-    req: web::Json<SendRequest>,
+#[get("/balance")]
+async fn balance(
     blockchain: web::Data<Arc<Mutex<Blockchain>>>,
     wallet: web::Data<Arc<Mutex<Wallet>>>,
-) -> HttpResponse {
-    let wallet = wallet.lock().unwrap();
-    let signature_bytes = decode(&req.signature).unwrap();
-    let signature = pqcrypto_dilithium::dilithium2::DetachedSignature::from_bytes(&signature_bytes).unwrap();
-
-    let tx = Transaction {
-        sender: wallet.get_address(),
-        recipient: req.to.clone(),
-        amount: req.amount,
-        signature: req.signature.clone(),
-    };
-
-    let mut chain = blockchain.lock().unwrap();
-    let success = chain.add_transaction(tx);
-
-    if success {
-        HttpResponse::Ok().body("✅ Transaction added")
-    } else {
-        HttpResponse::BadRequest().body("❌ RevStop active or invalid tx")
-    }
-}
-
-async fn mine(blockchain: web::Data<Arc<Mutex<Blockchain>>>, wallet: web::Data<Arc<Mutex<Wallet>>>) -> HttpResponse {
-    let wallet = wallet.lock().unwrap();
-    let mut chain = blockchain.lock().unwrap();
-    chain.mine_block(&wallet.get_address());
-    HttpResponse::Ok().body("⛏️ Mined 1 block")
-}
-
-async fn balance(blockchain: web::Data<Arc<Mutex<Blockchain>>>, wallet: web::Data<Arc<Mutex<Wallet>>>) -> HttpResponse {
-    let wallet = wallet.lock().unwrap();
+) -> impl Responder {
     let chain = blockchain.lock().unwrap();
-    let balance = chain.get_balance(&wallet.get_address());
-    HttpResponse::Ok().body(format!("💰 Balance: {} QTC", balance))
+    let wallet = wallet.lock().unwrap();
+    let balance = chain.get_balance(&wallet.public_key);
+    HttpResponse::Ok().json(balance)
 }
 
-async fn rev_status(wallet: web::Data<Arc<Mutex<Wallet>>>) -> HttpResponse {
+#[get("/address")]
+async fn address(wallet: web::Data<Arc<Mutex<Wallet>>>) -> impl Responder {
     let wallet = wallet.lock().unwrap();
-    let status = get_revstop_status(&wallet.get_address());
-    HttpResponse::Ok().body(status)
+    HttpResponse::Ok().json(wallet.public_key.clone())
+}
+
+#[post("/send")]
+async fn send(
+    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
+    req: web::Json<SendRequest>,
+) -> impl Responder {
+    let wallet = wallet.lock().unwrap();
+    let chain = &mut blockchain.lock().unwrap();
+
+    let signature_bytes = general_purpose::STANDARD.decode(&req.signature).unwrap();
+    if !wallet.verify_signature(req.to.as_bytes(), &signature_bytes) {
+        return HttpResponse::BadRequest().body("Invalid signature");
+    }
+
+    let tx = Transaction::new(
+        wallet.public_key.clone(),
+        req.to.clone(),
+        req.amount,
+        Some(req.signature.clone()),
+    );
+
+    chain.add_transaction(tx);
+    chain.mine_pending_transactions(&wallet.public_key);
+
+    HttpResponse::Ok().body("Transaction sent and block mined")
+}
+
+pub fn init(cfg: &mut web::ServiceConfig) {
+    cfg.service(balance)
+        .service(address)
+        .service(send);
 }
