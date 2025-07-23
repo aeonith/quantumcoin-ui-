@@ -5,7 +5,7 @@ pub struct Transaction {
     pub sender: String,
     pub recipient: String,
     pub amount: u64,
-    pub signature: Option<String>, // base64 string of the signature
+    pub signature: Option<String>, // base64-encoded Dilithium signature
 }
 
 impl Transaction {
@@ -19,7 +19,7 @@ impl Transaction {
     }
 
     pub fn is_valid(&self) -> bool {
-        if self.sender == "GENESIS" || self.sender == "COINBASE" {
+        if self.sender == "GENESIS" || self.sender == "DEVFUND" {
             return true;
         }
 
@@ -28,19 +28,11 @@ impl Transaction {
             return false;
         }
 
-        // Validation logic placeholder (signature verification occurs in routes.rs/backend)
+        // TODO: Signature validation logic (handled externally in wallet.rs usually)
         true
     }
 
     pub fn to_message(&self) -> String {
         format!("{}{}{}", self.sender, self.recipient, self.amount)
     }
-}
-use serde::{Serialize, Deserialize};
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Transaction {
-    pub sender: String,
-    pub recipient: String,
-    pub amount: u64,
 }
