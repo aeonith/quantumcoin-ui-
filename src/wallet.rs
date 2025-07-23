@@ -1,80 +1,81 @@
-use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_dilithium::dilithium2::verify_detached_signature;
-use pqcrypto_traits::sign::{PublicKey as PKTrait, SecretKey as SKTrait, DetachedSignature as SigTrait};
+use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey, DetachedSignature};
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{self, File};
 use std::io::{Read, Write};
-use serde::{Serialize, Deserialize};
+use std::path::Path;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Wallet {
     pub public_key: String,
     pub private_key: String,
 }
 
 impl Wallet {
-    pub fn generate() -> Self {
-        let (pk, sk) = keypair();
-        let public_key = general_purpose::STANDARD.encode(pk.as_bytes());
-        let private_key = general_purpose::STANDARD.encode(sk.as_bytes());
-        Self { public_key, private_key }
-    }
-
-    pub fn save_to_files(&self) {
-        fs::write("wallet_public.key", &self.public_key).expect("Unable to save public key");
-        fs::write("wallet_private.key", &self.private_key).expect("Unable to save private key");
+    pub fn load_or_generate() -> Self {
+        if Path::new("wallet_public.key").exists() && Path::new("wallet_private.key").exists() {
+            Self::load_from_files()
+        } else {
+            Self::generate()
+        }
     }
 
     pub fn load_from_files() -> Self {
-        let public_key = fs::read_to_string("wallet_public.key").unwrap_or_default();
-        let private_key = fs::read_to_string("wallet_private.key").unwrap_or_default();
-        Self { public_key, private_key }
+        let mut pub_file = File::open("wallet_public.key").expect("Failed to open public key file");
+        let mut priv_file = File::open("wallet_private.key").expect("Failed to open private key file");
+
+        let mut pub_key = String::new();
+        let mut priv_key = String::new();
+
+        pub_file.read_to_string(&mut pub_key).unwrap();
+        priv_file.read_to_string(&mut priv_key).unwrap();
+
+        Wallet {
+            public_key: pub_key,
+            private_key: priv_key,
+        }
     }
 
-    pub fn sign_message(&self, message: &[u8]) -> Option<Vec<u8>> {
-        let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).ok()?;
-        let sk = SecretKey::from_bytes(&sk_bytes).ok()?;
-        let signature = detached_sign(message, &sk);
-        Some(signature.as_bytes().to_vec())
+    pub fn generate() -> Self {
+        let (pk, sk) = keypair();
+
+        let pk_base64 = general_purpose::STANDARD.encode(pk.as_bytes());
+        let sk_base64 = general_purpose::STANDARD.encode(sk.as_bytes());
+
+        fs::write("wallet_public.key", &pk_base64).expect("Failed to save public key");
+        fs::write("wallet_private.key", &sk_base64).expect("Failed to save private key");
+
+        Wallet {
+            public_key: pk_base64,
+            private_key: sk_base64,
+        }
+    }
+
+    pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
+        let sk_bytes = general_purpose::STANDARD
+            .decode(&self.private_key)
+            .expect("Invalid private key encoding");
+        let sk = SecretKey::from_bytes(&sk_bytes).expect("Failed to parse secret key");
+
+        let signature = sign_detached(message, &sk);
+        signature.as_bytes().to_vec()
     }
 
     pub fn verify_signature(&self, message: &[u8], signature_bytes: &[u8]) -> bool {
-        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).ok()?;
-        let pk = PublicKey::from_bytes(&pk_bytes).ok()?;
-        let signature = DetachedSignature::from_bytes(signature_bytes).ok()?;
-        verify_detached_signature(&signature, message, &pk).is_ok()
+        let pk_bytes = match general_purpose::STANDARD.decode(&self.public_key) {
+            Ok(bytes) => bytes,
+            Err(_) => return false,
+        };
+
+        let pk = match PublicKey::from_bytes(&pk_bytes) {
+            Ok(key) => key,
+            Err(_) => return false,
+        };
+
+        let signature = match DetachedSignature::from_bytes(signature_bytes) {
+            Ok(sig) => sig,
+            Err(_) => return false,
+        };
+
+        verify_detached(&signature, message, &pk).is_ok()
     }
-
-    pub fn get_address(&self) -> String {
-        self.public_key.clone()
-    }
-
-    pub fn export_with_2fa(&self, password: &str) -> Result<(), String> {
-        let combined = format!("{}:{}", self.public_key, self.private_key);
-        let encrypted = xor_encrypt(&combined, password);
-        fs::write("wallet_backup.qtc", encrypted).map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    pub fn import_with_2fa(password: &str) -> Result<Self, String> {
-        let encrypted = fs::read("wallet_backup.qtc").map_err(|e| e.to_string())?;
-        let decrypted = xor_decrypt(&encrypted, password);
-        let parts: Vec<&str> = decrypted.split(':').collect();
-        if parts.len() != 2 {
-            return Err("Invalid backup format".to_string());
-        }
-        Ok(Self {
-            public_key: parts[0].to_string(),
-            private_key: parts[1].to_string(),
-        })
-    }
-}
-
-// Simple XOR encryption for 2FA export
-fn xor_encrypt(data: &str, key: &str) -> Vec<u8> {
-    data.bytes().zip(key.bytes().cycle()).map(|(a, b)| a ^ b).collect()
-}
-
-fn xor_decrypt(data: &[u8], key: &str) -> String {
-    String::from_utf8(data.iter().zip(key.bytes().cycle()).map(|(a, b)| a ^ b).collect()).unwrap_or_default()
 }
