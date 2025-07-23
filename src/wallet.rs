@@ -1,9 +1,12 @@
 use pqcrypto_dilithium::dilithium2::{
-    keypair, sign, PublicKey, SecretKey, DetachedSignature,
+    keypair, sign, PublicKey, SecretKey, DetachedSignature, SignedMessage,
 };
 use pqcrypto_traits::sign::{
-    SecretKey as SecretKeyTrait, PublicKey as PublicKeyTrait,
+    SecretKey as SecretKeyTrait,
+    PublicKey as PublicKeyTrait,
     DetachedSignature as DetachedSigTrait,
+    SignedMessage as SignedMsgTrait,  // ✅ Needed for `.as_bytes()`
+};
 };
 use base64::{encode, decode};
 use std::fs::File;
