@@ -1,50 +1,47 @@
 use pqcrypto_dilithium::dilithium2::{
-    keypair, detached_sign, PublicKey, SecretKey, DetachedSignature,
+    keypair, sign, verify, PublicKey, SecretKey, DetachedSignature,
 };
-use pqcrypto_traits::sign::{Signer, Verifier, SecretKey as SecretKeyTrait, PublicKey as PublicKeyTrait, DetachedSignature as DetachedSignatureTrait};
+use pqcrypto_traits::sign::{
+    SecretKey as SecretKeyTrait,
+    PublicKey as PublicKeyTrait,
+    DetachedSignature as DetachedSignatureTrait,
+};
 use base64::{encode, decode};
-use serde::{Serialize, Deserialize};
-use std::fs;
+use std::fs::{self};
 use std::io::{Read, Write};
+use std::path::Path;
+use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Wallet {
     pub public_key: String,
     pub private_key: String,
 }
 
 impl Wallet {
-    pub fn load_or_generate() -> Self {
-        if let Ok(data) = fs::read_to_string("wallet_key.json") {
-            if let Ok(wallet) = serde_json::from_str(&data) {
-                return wallet;
-            }
-        }
-
+    pub fn generate() -> Self {
         let (pk, sk) = keypair();
-        let wallet = Wallet {
+        Wallet {
             public_key: encode(pk.as_bytes()),
             private_key: encode(sk.as_bytes()),
-        };
-
-        let json = serde_json::to_string_pretty(&wallet).unwrap();
-        fs::write("wallet_key.json", json).unwrap();
-        wallet
+        }
     }
 
-    pub fn load_from_files() -> Option<Self> {
-        let data = fs::read_to_string("wallet_key.json").ok()?;
-        serde_json::from_str(&data).ok()
+    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) {
+        fs::write(pub_path, &self.public_key).expect("Unable to write public key file");
+        fs::write(priv_path, &self.private_key).expect("Unable to write private key file");
     }
 
-    pub fn new() -> Self {
-        Self::load_or_generate()
+    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Self {
+        let public_key = fs::read_to_string(pub_path).expect("Unable to read public key file");
+        let private_key = fs::read_to_string(priv_path).expect("Unable to read private key file");
+        Wallet { public_key, private_key }
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
         let sk_bytes = decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        let sig = detached_sign(message, &sk);
+        let sig = sign(message, &sk);
         sig.as_bytes().to_vec()
     }
 
@@ -52,7 +49,7 @@ impl Wallet {
         let pub_bytes = decode(&self.public_key).unwrap();
         let sig = DetachedSignature::from_bytes(signature).unwrap();
         let pk = PublicKey::from_bytes(&pub_bytes).unwrap();
-        pk.verify_detached(&sig, message).is_ok()
+        verify(message, &sig, &pk).is_ok()
     }
 
     pub fn get_address(&self) -> String {
