@@ -1,5 +1,5 @@
 use pqcrypto_dilithium::dilithium2::{
-    keypair, sign, PublicKey, SecretKey, DetachedSignature, SignedMessage,
+    keypair, sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature, SignedMessage,
 };
 use pqcrypto_traits::sign::{
     SecretKey as SecretKeyTrait,
@@ -58,7 +58,7 @@ impl Wallet {
         let pk = PublicKey::from_bytes(&pk_bytes).unwrap();
 
         match DetachedSignature::from_bytes(signature) {
-            Ok(sig) => pk.verify_detached(&sig, message).is_ok(),
+            Ok(sig) => verify_detached_signature(&sig, message, &pk).is_ok(),
             Err(_) => false,
         }
     }
