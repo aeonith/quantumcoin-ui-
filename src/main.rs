@@ -1,5 +1,3 @@
-#[macro_use] extern crate rocket;
-
 mod wallet;
 mod blockchain;
 mod routes;
@@ -12,8 +10,8 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-#[launch]
-fn rocket() -> _ {
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
     let wallet = Wallet::load_from_files();
 
     let blockchain = Arc::new(Mutex::new(
@@ -53,12 +51,7 @@ fn rocket() -> _ {
     rocket::build()
         .manage(blockchain)
         .manage(peers)
-        .mount("/", routes![
-            routes::balance,
-            routes::address,
-            routes::send,
-            routes::mine,
-            routes::revstop_status,
-            routes::export
-        ])
+        .mount("/", routes::get_routes())
+        .launch()
+        .await
 }
