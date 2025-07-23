@@ -1,5 +1,5 @@
-use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, verify_detached, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, DetachedSignature as TraitDetachedSignature};
+use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_dilithium::dilithium2::verify_detached;
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{self, File};
 use std::io::{Read, Write};
