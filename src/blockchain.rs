@@ -9,13 +9,13 @@ use std::{
 use crate::transaction::Transaction;
 
 const CHAIN_FILE: &str = "blockchain.json";
-const DIFFICULTY_INTERVAL: usize = 10;     // adjust every 10 blocks
-const TARGET_BLOCK_TIME: u64 = 60;         // target 60s per block
+const DIFFICULTY_INTERVAL: usize = 10;    // adjust every 10 blocks
+const TARGET_TIME: u64 = 60;             // target 60s per block
 const INITIAL_DIFFICULTY: usize = 4;
 const INITIAL_REWARD: u64 = 50;
 const GENESIS_REWARD: u64 = 1_250_000;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Block {
     pub index: usize,
     pub timestamp: u64,
@@ -32,20 +32,19 @@ impl Block {
         timestamp: u64,
         transactions: Vec<Transaction>,
         previous_hash: String,
-        nonce: u64,
         reward: u64,
     ) -> Self {
-        let mut block = Block {
+        let mut blk = Block {
             index,
             timestamp,
             transactions,
             previous_hash,
             hash: String::new(),
-            nonce,
+            nonce: 0,
             reward,
         };
-        block.hash = block.calculate_hash();
-        block
+        blk.hash = blk.calculate_hash();
+        blk
     }
 
     fn calculate_hash(&self) -> String {
@@ -68,17 +67,16 @@ impl Block {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
-    pub pending_transactions: Vec<Transaction>,
+    pub pending: Vec<Transaction>,
     pub difficulty: usize,
     pub reward: u64,
 }
 
 impl Blockchain {
     pub fn load_or_create() -> Self {
-        // Try load
         if let Ok(mut f) = File::open(CHAIN_FILE) {
             let mut s = String::new();
             if f.read_to_string(&mut s).is_ok() {
@@ -87,75 +85,51 @@ impl Blockchain {
                 }
             }
         }
-        // Else new
         let mut bc = Blockchain {
             blocks: Vec::new(),
-            pending_transactions: Vec::new(),
+            pending: Vec::new(),
             difficulty: INITIAL_DIFFICULTY,
             reward: INITIAL_REWARD,
         };
-        bc.create_genesis_block();
+        bc.create_genesis();
         bc
     }
 
-    pub fn save_to_file(&self) {
-        if let Ok(json) = serde_json::to_string_pretty(self) {
-            let _ = fs::write(CHAIN_FILE, json);
-        }
-    }
-
-    fn create_genesis_block(&mut self) {
-        let timestamp = current_timestamp();
-        let tx = Transaction::new(
-            "0".into(),
-            "GENESIS_ADDRESS".into(),
-            GENESIS_REWARD,
-            None,
-            timestamp,
-        );
-        let mut genesis = Block::new(0, timestamp, vec![tx], "0".into(), 0, 0);
-        genesis.mine(self.difficulty);
-        self.blocks.push(genesis);
-        self.save_to_file();
+    fn create_genesis(&mut self) {
+        let ts = now();
+        let tx = Transaction::new("0".into(), "GENESIS".into(), GENESIS_REWARD, ts, None);
+        let mut g = Block::new(0, ts, vec![tx], "0".into(), 0);
+        g.mine(self.difficulty);
+        self.blocks.push(g);
+        self.save();
     }
 
     pub fn add_transaction(&mut self, tx: Transaction) {
-        self.pending_transactions.push(tx);
-        self.save_to_file();
+        self.pending.push(tx);
+        self.save();
     }
 
-    pub fn mine_pending_transactions(&mut self, miner_address: &str) {
-        // reward tx
-        let timestamp = current_timestamp();
-        let reward_tx = Transaction::new(
-            "0".into(),
-            miner_address.into(),
-            self.reward,
-            None,
-            timestamp,
-        );
-        self.pending_transactions.push(reward_tx);
+    pub fn mine_pending(&mut self, miner: &str) {
+        let ts = now();
+        let reward_tx = Transaction::new("0".into(), miner.into(), self.reward, ts, None);
+        self.pending.push(reward_tx);
 
-        // create new block
         let last = self.blocks.last().unwrap();
-        let mut block = Block::new(
+        let mut blk = Block::new(
             self.blocks.len(),
-            current_timestamp(),
-            self.pending_transactions.clone(),
+            now(),
+            self.pending.clone(),
             last.hash.clone(),
-            0,
             self.reward,
         );
-        block.mine(self.difficulty);
-        self.blocks.push(block);
-        self.pending_transactions.clear();
+        blk.mine(self.difficulty);
+        self.blocks.push(blk);
+        self.pending.clear();
 
-        // adjust difficulty
         if self.blocks.len() % DIFFICULTY_INTERVAL == 0 {
             self.adjust_difficulty();
         }
-
-        self.save_to_file();
+        self.save();
     }
 
     fn adjust_difficulty(&mut self) {
@@ -163,24 +137,23 @@ impl Blockchain {
         let last = &self.blocks[len - 1];
         let prev = &self.blocks[len - 1 - DIFFICULTY_INTERVAL];
         let actual = last.timestamp - prev.timestamp;
-        let expected = (DIFFICULTY_INTERVAL as u64) * TARGET_BLOCK_TIME;
-
+        let expected = (DIFFICULTY_INTERVAL as u64) * TARGET_TIME;
         if actual < expected / 2 {
             self.difficulty += 1;
         } else if actual > expected * 2 && self.difficulty > 1 {
             self.difficulty -= 1;
         }
-        println!("🔧 Difficulty now {}", self.difficulty);
+        println!("🔧 Difficulty adjusted to {}", self.difficulty);
     }
 
-    pub fn get_balance(&self, address: &str) -> u64 {
-        let mut bal = 0;
-        for block in &self.blocks {
-            for tx in &block.transactions {
-                if tx.recipient == address {
+    pub fn get_balance(&self, addr: &str) -> u64 {
+        let mut bal: u64 = 0;
+        for blk in &self.blocks {
+            for tx in &blk.transactions {
+                if tx.recipient == addr {
                     bal = bal.saturating_add(tx.amount);
                 }
-                if tx.sender == address {
+                if tx.sender == addr {
                     bal = bal.saturating_sub(tx.amount);
                 }
             }
@@ -188,18 +161,24 @@ impl Blockchain {
         bal
     }
 
-    pub fn is_chain_valid(&self) -> bool {
+    pub fn is_valid(&self) -> bool {
         for i in 1..self.blocks.len() {
-            let cur = &self.blocks[i];
-            let prev = &self.blocks[i - 1];
-            if cur.hash != cur.calculate_hash() || cur.previous_hash != prev.hash {
+            let c = &self.blocks[i];
+            let p = &self.blocks[i - 1];
+            if c.hash != c.calculate_hash() || c.previous_hash != p.hash {
                 return false;
             }
         }
         true
     }
+
+    fn save(&self) {
+        if let Ok(json) = serde_json::to_string_pretty(self) {
+            let _ = fs::write(CHAIN_FILE, json);
+        }
+    }
 }
 
-fn current_timestamp() -> u64 {
+fn now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
 }
