@@ -1,9 +1,9 @@
-use rand::{distributions::Alphanumeric, Rng};
+use reqwest;
+use serde_json::Value;
 
-pub fn generate_token(len: usize) -> String {
-    rand::thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(len)
-        .map(char::from)
-        .collect()
+pub async fn get_btc_price_usd() -> Result<f64, reqwest::Error> {
+    let url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
+    let response = reqwest::get(url).await?;
+    let json: Value = response.json().await?;
+    Ok(json["bitcoin"]["usd"].as_f64().unwrap_or(0.0))
 }
