@@ -1,26 +1,29 @@
-mod wallet;
+use actix_web::{web, App, HttpServer};
+use std::sync::{Arc, Mutex};
+
 mod blockchain;
+mod transaction;
+mod wallet;
 mod revstop;
 mod routes;
+mod utils;
 
-use actix_web::{App, HttpServer};
-use std::sync::{Arc, Mutex};
-use wallet::Wallet;
 use blockchain::Blockchain;
+use wallet::Wallet;
 use revstop::RevStop;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let wallet = Arc::new(Mutex::new(Wallet::load_from_files().unwrap_or_else(Wallet::new)));
-    let blockchain = Arc::new(Mutex::new(Blockchain::load_or_create()));
-    let revstop = Arc::new(Mutex::new(RevStop::status()));
+    let blockchain = Arc::new(Mutex::new(Blockchain::new()));
+    let wallet = Arc::new(Mutex::new(Wallet::load_from_files("public.key", "private.key")));
+    let revstop = Arc::new(Mutex::new(RevStop::load_status("revstop_status.json")));
 
     HttpServer::new(move || {
         App::new()
-            .app_data(actix_web::web::Data::new(wallet.clone()))
-            .app_data(actix_web::web::Data::new(blockchain.clone()))
-            .app_data(actix_web::web::Data::new(revstop.clone()))
-            .configure(routes::config)
+            .app_data(web::Data::new(blockchain.clone()))
+            .app_data(web::Data::new(wallet.clone()))
+            .app_data(web::Data::new(revstop.clone()))
+            .configure(routes::init_routes)
     })
     .bind(("0.0.0.0", 8080))?
     .run()
