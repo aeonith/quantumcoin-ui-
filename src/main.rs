@@ -3,9 +3,9 @@ use actix_web::{web, App, HttpServer};
 use std::sync::{Arc, Mutex};
 
 mod blockchain;
-mod wallet;
-mod routes;
 mod p2p;
+mod routes;
+mod wallet;
 
 use blockchain::Blockchain;
 use wallet::Wallet;
@@ -20,11 +20,13 @@ async fn main() -> std::io::Result<()> {
 
     // Start P2P networking in separate thread
     let p2p_peers = peers.clone();
-    std::thread::spawn(move || start_node(6000, p2p_peers));
+    std::thread::spawn(move || {
+        start_node(6000, p2p_peers);
+    });
 
-    println!("✅ QuantumCoin Node running at http://localhost:8080");
+    println!("🚀 QuantumCoin Node running at http://localhost:8080");
 
-    // HTTP Server with CORS for frontend access
+    // Start HTTP server
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
@@ -34,10 +36,10 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .app_data(web::Data::new(blockchain.clone()))
-            .app_data(web::Data::new(wallet.clone()))
-            .app_data(web::Data::new(peers.clone()))
-            .configure(routes::init_routes)
+            .app_data(web::Data::from(blockchain.clone()))
+            .app_data(web::Data::from(wallet.clone()))
+            .app_data(web::Data::from(peers.clone()))
+            .configure(routes::init)
     })
     .bind("0.0.0.0:8080")?
     .run()
