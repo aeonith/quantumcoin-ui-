@@ -1,57 +1,46 @@
+#[macro_use] extern crate rocket;
+
+mod wallet;
 mod blockchain;
-mod cli;
-mod p2p;
+mod transaction;
 mod revstop;
 mod routes;
-mod transaction;
-mod wallet;
+mod p2p;
+mod btc;
+mod coingecko;
 
-use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
-use std::sync::{Arc, Mutex};
-
-use blockchain::Blockchain;
-use cli::run as cli_run;
+use rocket::tokio::sync::Mutex;
+use std::sync::Arc;
 use wallet::Wallet;
-use p2p::start_node;
+use blockchain::Blockchain;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // If a CLI subcommand is passed, execute it and exit
-    if let Some(cmd) = std::env::args().nth(1) {
-        return cli_run(&cmd);
-    }
-
-    // Load or create blockchain + wallet
+#[launch]
+fn rocket() -> _ {
+    let wallet = Arc::new(Mutex::new(Wallet::load_or_create()));
     let blockchain = Arc::new(Mutex::new(Blockchain::load_or_create()));
-    let wallet = Arc::new(Mutex::new(Wallet::load_or_generate()));
+    let revstop = Arc::new(Mutex::new(revstop::RevStop::load_status()));
     let peers = Arc::new(Mutex::new(Vec::new()));
 
-    // Start P2P thread
-    {
-        let bc = blockchain.clone();
-        let ps = peers.clone();
-        std::thread::spawn(move || start_node(6000, bc, ps));
-    }
+    std::thread::spawn({
+        let blockchain = Arc::clone(&blockchain);
+        let peers = Arc::clone(&peers);
+        move || p2p::start_node(3030, blockchain, peers)
+    });
 
-    println!("🚀 QuantumCoin node running at http://localhost:8080");
-
-    // HTTP API server
-    HttpServer::new(move || {
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
-
-        App::new()
-            .wrap(cors)
-            .app_data(web::Data::new(blockchain.clone()))
-            .app_data(web::Data::new(wallet.clone()))
-            .app_data(web::Data::new(peers.clone()))
-            .configure(routes::init)
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    rocket::build()
+        .manage(wallet)
+        .manage(blockchain)
+        .manage(revstop)
+        .manage(peers)
+        .mount("/", routes![
+            routes::health,
+            routes::address,
+            routes::balance,
+            routes::send,
+            routes::mine,
+            routes::btc_payment,
+            routes::revstop_status,
+            routes::enable_revstop,
+            routes::disable_revstop
+        ])
 }
