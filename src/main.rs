@@ -1,46 +1,60 @@
-#[macro_use] extern crate rocket;
+use actix_web::{web, App, HttpServer};
+use std::sync::{Arc, Mutex};
 
 mod wallet;
 mod blockchain;
 mod transaction;
 mod revstop;
 mod routes;
-mod p2p;
-mod btc;
 mod coingecko;
+mod btc;
+mod p2p;
 
-use rocket::tokio::sync::Mutex;
-use std::sync::Arc;
 use wallet::Wallet;
 use blockchain::Blockchain;
+use revstop::RevStop;
+use p2p::start_node;
 
-#[launch]
-fn rocket() -> _ {
-    let wallet = Arc::new(Mutex::new(Wallet::load_or_create()));
-    let blockchain = Arc::new(Mutex::new(Blockchain::load_or_create()));
-    let revstop = Arc::new(Mutex::new(revstop::RevStop::load_status()));
-    let peers = Arc::new(Mutex::new(Vec::new()));
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // Load or generate key-based wallet
+    let wallet = Arc::new(Mutex::new(Wallet::load_or_generate()));
 
-    std::thread::spawn({
-        let blockchain = Arc::clone(&blockchain);
-        let peers = Arc::clone(&peers);
-        move || p2p::start_node(3030, blockchain, peers)
-    });
+    // Load or initialize blockchain
+    let mut blockchain = Blockchain::load_or_create();
 
-    rocket::build()
-        .manage(wallet)
-        .manage(blockchain)
-        .manage(revstop)
-        .manage(peers)
-        .mount("/", routes![
-            routes::health,
-            routes::address,
-            routes::balance,
-            routes::send,
-            routes::mine,
-            routes::btc_payment,
-            routes::revstop_status,
-            routes::enable_revstop,
-            routes::disable_revstop
-        ])
+    // Create RevStop system (cold storage protection)
+    let revstop = Arc::new(Mutex::new(RevStop::load_or_generate()));
+
+    // Add genesis if not present
+    if blockchain.is_empty() {
+        blockchain.initialize_genesis(wallet.lock().unwrap().address());
+        blockchain.save_to_file();
+    }
+
+    let blockchain = Arc::new(Mutex::new(blockchain));
+    let peers = Arc::new(Mutex::new(vec![]));
+
+    // Start P2P network
+    {
+        let blockchain = blockchain.clone();
+        let peers = peers.clone();
+        std::thread::spawn(move || {
+            start_node(6000, blockchain, peers);
+        });
+    }
+
+    println!("✅ QuantumCoin running on http://0.0.0.0:8080");
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(blockchain.clone()))
+            .app_data(web::Data::new(wallet.clone()))
+            .app_data(web::Data::new(revstop.clone()))
+            .app_data(web::Data::new(peers.clone()))
+            .configure(routes::init)
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
 }
