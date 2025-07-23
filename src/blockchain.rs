@@ -1,139 +1,127 @@
 use crate::transaction::Transaction;
-use serde::{Serialize, Deserialize};
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::fs::{File, OpenOptions};
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::fs::{self, File};
 use std::io::{Read, Write};
-use std::collections::VecDeque;
-use crate::wallet::Wallet;
 
-const DIFFICULTY_PREFIX: &str = "0000";
-const MAX_SUPPLY: u64 = 22_000_000;
-const HALVING_INTERVAL_SECS: u64 = 2 * 365 * 24 * 60 * 60; // 2 years
-const INITIAL_REWARD: u64 = 50;
-const CHAIN_FILE: &str = "blockchain.json";
-
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Block {
     pub index: u64,
-    pub timestamp: u64,
+    pub timestamp: i64,
     pub transactions: Vec<Transaction>,
-    pub previous_hash: String,
-    pub nonce: u64,
+    pub prev_hash: String,
     pub hash: String,
+    pub nonce: u64,
+    pub difficulty: u64,
+    pub reward: u64,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Blockchain {
-    pub chain: Vec<Block>,
-    pub mempool: VecDeque<Transaction>,
-    pub total_supply: u64,
-    pub genesis_time: u64,
+    pub blocks: Vec<Block>,
+    pub pending: Vec<Transaction>,
+    pub total_mined: u64,
 }
 
 impl Blockchain {
     pub fn load_or_create() -> Self {
-        if let Ok(mut file) = File::open(CHAIN_FILE) {
+        if let Ok(mut file) = File::open("blockchain.json") {
             let mut data = String::new();
             file.read_to_string(&mut data).unwrap();
             serde_json::from_str(&data).unwrap()
         } else {
-            Blockchain::new()
+            let genesis = Block {
+                index: 0,
+                timestamp: Utc::now().timestamp(),
+                transactions: vec![Transaction {
+                    sender: "GENESIS".to_string(),
+                    recipient: "tNzCy5MT+GQRGlA+JCVIG8juIbmR0MhMSvCP7W0BauzccIB+UKuWBnyOl+nDv91JP2bTkOY30d+tBrlcYZ4wnbELEaNeue4MsLeBATOt0u/z...".to_string(),
+                    amount: 1_250_000,
+                    signature: None,
+                }],
+                prev_hash: String::from("0"),
+                hash: String::new(),
+                nonce: 0,
+                difficulty: 4,
+                reward: 50,
+            };
+
+            let mut bc = Blockchain {
+                blocks: vec![],
+                pending: vec![],
+                total_mined: 1_250_000,
+            };
+
+            bc.add_block(genesis);
+            bc
         }
     }
 
-    fn new() -> Self {
-        let mut chain = Blockchain {
-            chain: vec![],
-            mempool: VecDeque::new(),
-            total_supply: 0,
-            genesis_time: current_time(),
-        };
-
-        let wallet_address = "tNzCy5NT+GORGIA+JCVIGAJUIBM...QNSATLVTHNBWXMZA783YP/ALNCM2GEAO1TZ==".to_string();
-        let dev_fund = "DEVFUNDPUBLICKEYEXAMPLESTRING==".to_string();
-
-        let genesis_tx = Transaction {
-            sender: "GENESIS".into(),
-            recipient: wallet_address.clone(),
-            amount: 1_000_000,
-            signature: None,
-        };
-
-        let dev_tx = Transaction {
-            sender: "GENESIS".into(),
-            recipient: dev_fund,
-            amount: 250_000,
-            signature: None,
-        };
-
-        let genesis_block = Block {
-            index: 0,
-            timestamp: chain.genesis_time,
-            transactions: vec![genesis_tx.clone(), dev_tx.clone()],
-            previous_hash: "0".repeat(64),
-            nonce: 0,
-            hash: "GENESIS_HASH".to_string(),
-        };
-
-        chain.chain.push(genesis_block);
-        chain.total_supply = 1_250_000;
-        chain
+    pub fn add_block(&mut self, mut block: Block) {
+        block.hash = Blockchain::calculate_hash(&block);
+        self.blocks.push(block);
+        self.pending.clear();
+        self.save_to_file();
     }
 
-    pub fn add_transaction(&mut self, tx: Transaction) {
-        self.mempool.push_back(tx);
+    pub fn calculate_hash(block: &Block) -> String {
+        let data = format!(
+            "{}{}{:?}{}{}{}{}",
+            block.index,
+            block.timestamp,
+            block.transactions,
+            block.prev_hash,
+            block.nonce,
+            block.difficulty,
+            block.reward
+        );
+        let mut hasher = Sha256::new();
+        hasher.update(data);
+        format!("{:x}", hasher.finalize())
     }
 
-    pub fn mine_pending_transactions(&mut self, wallet: &Wallet) {
-        if self.total_supply >= MAX_SUPPLY || self.mempool.is_empty() {
+    pub fn mine_pending_transactions(&mut self, wallet_addr: &str) {
+        if self.total_mined >= 22_000_000 {
+            println!("💥 Max supply reached.");
             return;
         }
 
-        let reward = self.calculate_block_reward();
+        let difficulty = self.get_difficulty();
+        let reward = self.get_reward();
+
+        let mut block = Block {
+            index: self.blocks.len() as u64,
+            timestamp: Utc::now().timestamp(),
+            transactions: self.pending.clone(),
+            prev_hash: self.blocks.last().unwrap().hash.clone(),
+            hash: String::new(),
+            nonce: 0,
+            difficulty,
+            reward,
+        };
+
         let reward_tx = Transaction {
-            sender: "COINBASE".to_string(),
-            recipient: wallet.address(),
+            sender: "SYSTEM".to_string(),
+            recipient: wallet_addr.to_string(),
             amount: reward,
             signature: None,
         };
 
-        let mut transactions: Vec<Transaction> = self.mempool.drain(..).collect();
-        transactions.push(reward_tx);
+        block.transactions.push(reward_tx.clone());
 
-        let last_block = self.chain.last().unwrap();
-        let previous_hash = last_block.hash.clone();
-        let timestamp = current_time();
-        let index = last_block.index + 1;
-
-        let mut nonce = 0;
-        let hash;
-        loop {
-            let candidate = format!("{index}{timestamp}{:?}{previous_hash}{nonce}", transactions);
-            let candidate_hash = sha256(&candidate);
-            if candidate_hash.starts_with(DIFFICULTY_PREFIX) {
-                hash = candidate_hash;
-                break;
-            }
-            nonce += 1;
+        while !Blockchain::calculate_hash(&block).starts_with(&"0".repeat(difficulty as usize)) {
+            block.nonce += 1;
         }
 
-        let block = Block {
-            index,
-            timestamp,
-            transactions,
-            previous_hash,
-            nonce,
-            hash,
-        };
-
-        self.total_supply += reward;
-        self.chain.push(block);
-        self.save_to_file().unwrap();
+        self.total_mined += reward;
+        self.add_block(block);
+        println!("⛏️ Block mined successfully. Reward: {} QTC", reward);
     }
 
     pub fn get_balance(&self, address: &str) -> u64 {
         let mut balance = 0;
-        for block in &self.chain {
+        for block in &self.blocks {
             for tx in &block.transactions {
                 if tx.recipient == address {
                     balance += tx.amount;
@@ -146,28 +134,38 @@ impl Blockchain {
         balance
     }
 
-    pub fn save_to_file(&self) -> std::io::Result<()> {
-        let json = serde_json::to_string_pretty(&self)?;
-        let mut file = OpenOptions::new().write(true).create(true).truncate(true).open(CHAIN_FILE)?;
-        file.write_all(json.as_bytes())?;
-        Ok(())
+    pub fn get_difficulty(&self) -> u64 {
+        let blocks = self.blocks.len() as u64;
+        4 + (blocks / 1000) // Increase difficulty every 1000 blocks
     }
 
-    fn calculate_block_reward(&self) -> u64 {
-        let elapsed = current_time() - self.genesis_time;
-        let halvings = elapsed / HALVING_INTERVAL_SECS;
-        let reward = INITIAL_REWARD >> halvings;
-        reward.max(1)
+    pub fn get_reward(&self) -> u64 {
+        let years = self.blocks.len() / (365 * 2); // Halve reward every 2 years
+        let base = 50;
+        base >> years.min(10) // Cap halving after 10 cycles
     }
-}
 
-fn current_time() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
-}
+    pub fn save_to_file(&self) {
+        let data = serde_json::to_string(self).unwrap();
+        fs::write("blockchain.json", data).unwrap();
+    }
 
-fn sha256(input: &str) -> String {
-    use sha2::{Sha256, Digest};
-    let mut hasher = Sha256::new();
-    hasher.update(input.as_bytes());
-    hex::encode(hasher.finalize())
+    pub fn add_transaction(&mut self, tx: Transaction) {
+        self.pending.push(tx);
+    }
+
+    pub fn get_last_n_transactions(&self, address: &str, n: usize) -> Vec<Transaction> {
+        let mut txs = vec![];
+        for block in self.blocks.iter().rev() {
+            for tx in &block.transactions {
+                if tx.recipient == address || tx.sender == address {
+                    txs.push(tx.clone());
+                }
+                if txs.len() >= n {
+                    return txs;
+                }
+            }
+        }
+        txs
+    }
 }
