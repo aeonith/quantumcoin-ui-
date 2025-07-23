@@ -1,27 +1,27 @@
 use std::collections::HashSet;
 use std::sync::Mutex;
-use std::fs::{read_to_string, write};
+use lazy_static::lazy_static;
 
-lazy_static::lazy_static! {
-    static ref REVSTOP_DB: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+lazy_static! {
+    static ref LOCKED: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
 }
 
-pub fn is_revstop_active(address: &str) -> bool {
-    REVSTOP_DB.lock().unwrap().contains(address)
+pub fn is_revstop_active(addr: &str) -> bool {
+    LOCKED.lock().unwrap().contains(addr)
 }
 
-pub fn enable_revstop(address: &str) {
-    REVSTOP_DB.lock().unwrap().insert(address.to_string());
-}
-
-pub fn disable_revstop(address: &str) {
-    REVSTOP_DB.lock().unwrap().remove(address);
-}
-
-pub fn get_revstop_status(address: &str) -> String {
-    if is_revstop_active(address) {
-        "🔒 RevStop is ACTIVE".to_string()
+pub fn get_revstop_status(addr: &str) -> String {
+    if is_revstop_active(addr) {
+        "🔒 ACTIVE".into()
     } else {
-        "🔓 RevStop is INACTIVE".to_string()
+        "🔓 INACTIVE".into()
     }
+}
+
+pub fn lock_address(addr: &str) {
+    LOCKED.lock().unwrap().insert(addr.to_string());
+}
+
+pub fn unlock_address(addr: &str) {
+    LOCKED.lock().unwrap().remove(addr);
 }
