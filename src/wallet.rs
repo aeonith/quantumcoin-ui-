@@ -7,7 +7,6 @@ use pqcrypto_traits::sign::{
     DetachedSignature as DetachedSigTrait,
     SignedMessage as SignedMsgTrait,  // ✅ Needed for `.as_bytes()`
 };
-};
 use base64::{encode, decode};
 use std::fs::File;
 use std::io::{Read, Write};
