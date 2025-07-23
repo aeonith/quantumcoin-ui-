@@ -1,8 +1,8 @@
-use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, detached_verify, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{DetachedSignature as SigTrait, PublicKey as PublicKeyTrait, SecretKey as SecretKeyTrait};
-use base64::{encode, decode};
+use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_traits::sign::{PublicKey as PublicKeyTrait, SecretKey as SecretKeyTrait};
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Serialize, Deserialize};
-use std::fs::{self, File};
+use std::fs::{File};
 use std::io::{Read, Write};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -20,26 +20,18 @@ impl Wallet {
         } else {
             let (pk, sk) = keypair();
             let wallet = Wallet {
-                public_key: encode(pk.as_bytes()),
-                private_key: encode(sk.as_bytes()),
+                public_key: general_purpose::STANDARD.encode(pk.as_bytes()),
+                private_key: general_purpose::STANDARD.encode(sk.as_bytes()),
             };
-            let json = serde_json::to_string_pretty(&wallet).unwrap();
-            let mut file = File::create("wallet_key.json").unwrap();
-            file.write_all(json.as_bytes()).unwrap();
+            wallet.save_to_files();
             wallet
         }
     }
 
     pub fn sign_message(&self, msg: &[u8]) -> DetachedSignature {
-        let sk_bytes = decode(&self.private_key).unwrap();
+        let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
         detached_sign(msg, &sk)
-    }
-
-    pub fn verify_signature(&self, msg: &[u8], sig: &DetachedSignature) -> bool {
-        let pk_bytes = decode(&self.public_key).unwrap();
-        let pk = PublicKey::from_bytes(&pk_bytes).unwrap();
-        detached_verify(msg, sig, &pk).is_ok()
     }
 
     pub fn get_address(&self) -> String {
