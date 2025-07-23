@@ -1,61 +1,97 @@
-use actix_web::{post, get, web, HttpResponse, Responder};
-use std::sync::Mutex;
-use std::fs;
-use uuid::Uuid;
-use std::io::Write;
-
-use crate::wallet::{Wallet};
-use crate::blockchain;
+use rocket::{get, post, serde::json::Json};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
 
-#[derive(Deserialize)]
-pub struct WalletRequest {
-    pub username: String,
-    pub password: String,
-}
+use crate::wallet::Wallet;
+use crate::blockchain::{Blockchain, Transaction};
+use crate::revstop::{is_revstop_active, get_revstop_status};
 
 #[derive(Serialize)]
-pub struct WalletResponse {
-    pub address: String,
+pub struct BalanceResponse {
     pub balance: u64,
 }
 
-#[post("/create_wallet")]
-async fn create_wallet(data: web::Json<WalletRequest>) -> impl Responder {
-    // Load or create a wallet
-    let wallet = Wallet::load_or_generate();
-    wallet.save_to_file();
+#[derive(Deserialize)]
+pub struct SendRequest {
+    pub to: String,
+    pub amount: u64,
+}
 
-    HttpResponse::Ok().json(WalletResponse {
-        address: wallet.get_address(),
+#[derive(Deserialize)]
+pub struct ExportRequest {
+    pub code: String,
+}
+
+#[derive(Serialize)]
+pub struct AddressResponse {
+    pub address: String,
+}
+
+#[get("/balance")]
+pub fn balance() -> Json<BalanceResponse> {
+    let wallet = Wallet::load_from_files();
+    Json(BalanceResponse {
         balance: wallet.get_balance(),
     })
 }
 
-#[get("/wallet_balance")]
-async fn wallet_balance() -> impl Responder {
-    if let Some(wallet) = Wallet::load_from_file() {
-        HttpResponse::Ok().json(WalletResponse {
-            address: wallet.get_address(),
-            balance: wallet.get_balance(),
-        })
+#[get("/address")]
+pub fn address() -> Json<AddressResponse> {
+    let wallet = Wallet::load_from_files();
+    Json(AddressResponse {
+        address: wallet.public_key,
+    })
+}
+
+#[post("/send", format = "application/json", data = "<req>")]
+pub fn send(req: Json<SendRequest>, blockchain: &rocket::State<Arc<Mutex<Blockchain>>>) -> String {
+    let wallet = Wallet::load_from_files();
+
+    if is_revstop_active(&wallet.public_key) {
+        return "❌ RevStop protection is active. Transaction blocked.".to_string();
+    }
+
+    let tx = Transaction {
+        sender: wallet.public_key.clone(),
+        recipient: req.to.clone(),
+        amount: req.amount,
+        signature: None, // Optionally sign this
+    };
+
+    let mut chain = blockchain.lock().unwrap();
+    if chain.add_transaction(tx) {
+        chain.save_to_disk();
+        "✅ Transaction added.".to_string()
     } else {
-        HttpResponse::NotFound().body("Wallet not found")
+        "❌ Transaction failed.".to_string()
     }
 }
 
-#[get("/transactions")]
-async fn last_transactions() -> impl Responder {
-    if let Some(wallet) = Wallet::load_from_file() {
-        let txs = wallet.recent_tx.clone();
-        HttpResponse::Ok().json(txs)
+#[get("/mine")]
+pub fn mine(blockchain: &rocket::State<Arc<Mutex<Blockchain>>>) -> String {
+    let wallet = Wallet::load_from_files();
+    let mut chain = blockchain.lock().unwrap();
+    chain.mine_pending_transactions(&wallet.public_key);
+    chain.save_to_disk();
+    "⛏️ Mining complete.".to_string()
+}
+
+#[get("/revstop")]
+pub fn revstop_status() -> String {
+    let wallet = Wallet::load_from_files();
+    if get_revstop_status(&wallet.public_key) {
+        "🔒 RevStop is ACTIVE".to_string()
     } else {
-        HttpResponse::NotFound().body("Wallet not found")
+        "🔓 RevStop is NOT active".to_string()
     }
 }
 
-pub fn init(cfg: &mut web::ServiceConfig) {
-    cfg.service(create_wallet);
-    cfg.service(wallet_balance);
-    cfg.service(last_transactions);
+#[post("/export", format = "application/json", data = "<req>")]
+pub fn export(req: Json<ExportRequest>) -> String {
+    let wallet = Wallet::load_from_files();
+    if let Some(encoded) = wallet.export_with_2fa(&req.code) {
+        format!("✅ Exported: {}", encoded)
+    } else {
+        "❌ Export failed: invalid code.".to_string()
+    }
 }
