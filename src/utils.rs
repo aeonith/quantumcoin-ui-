@@ -1,10 +1,23 @@
-use reqwest;
-use serde_json::Value;
+use reqwest::get;
+use serde::Deserialize;
 
-pub async fn get_btc_price_usd() -> Result<f64, reqwest::Error> {
-    let url = "https://api.coindesk.com/v1/bpi/currentprice/BTC.json";
-    let response = reqwest::get(url).await?;
-    let data: Value = response.json().await?;
-    let price = data["bpi"]["USD"]["rate_float"].as_f64().unwrap_or(0.0);
-    Ok(price)
+#[derive(Deserialize)]
+struct BtcResponse {
+    bitcoin: BtcPrice,
+}
+
+#[derive(Deserialize)]
+struct BtcPrice {
+    usd: f64,
+}
+
+pub async fn get_btc_price_usd() -> Option<f64> {
+    let url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
+    match get(url).await {
+        Ok(resp) => {
+            let data: BtcResponse = resp.json().await.ok()?;
+            Some(data.bitcoin.usd)
+        }
+        Err(_) => None,
+    }
 }
