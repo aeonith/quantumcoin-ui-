@@ -1,53 +1,84 @@
-use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{PublicKey as PublicKeyTrait, SecretKey as SecretKeyTrait};
+use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_traits::sign::{DetachedSignature as TraitDetachedSignature, PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
 use base64::{engine::general_purpose, Engine as _};
-use serde::{Serialize, Deserialize};
-use std::fs::{File};
+use std::fs::{self, File};
 use std::io::{Read, Write};
+use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+const WALLET_FILE: &str = "wallet_key.json";
+const REVSTOP_LOCK_FILE: &str = "revstop_lock.json";
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Wallet {
     pub public_key: String,
     pub private_key: String,
+    pub balance: u64,
 }
 
 impl Wallet {
-    pub fn load_or_generate() -> Self {
-        if let Ok(mut file) = File::open("wallet_key.json") {
-            let mut data = String::new();
-            file.read_to_string(&mut data).unwrap();
-            serde_json::from_str(&data).unwrap()
-        } else {
-            let (pk, sk) = keypair();
-            let wallet = Wallet {
-                public_key: general_purpose::STANDARD.encode(pk.as_bytes()),
-                private_key: general_purpose::STANDARD.encode(sk.as_bytes()),
-            };
-            wallet.save_to_files();
-            wallet
+    pub fn generate() -> Self {
+        let (pk, sk) = keypair();
+        let public_key = general_purpose::STANDARD.encode(pk.as_bytes());
+        let private_key = general_purpose::STANDARD.encode(sk.as_bytes());
+
+        Wallet {
+            public_key,
+            private_key,
+            balance: 0,
         }
     }
 
-    pub fn sign_message(&self, msg: &[u8]) -> DetachedSignature {
-        let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
-        let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        detached_sign(msg, &sk)
+    pub fn get_balance(&self) -> u64 {
+        self.balance
     }
 
-    pub fn get_address(&self) -> String {
-        self.public_key.clone()
+    pub fn adjust_balance(&mut self, delta: i64) {
+        if delta.is_negative() {
+            let amount = delta.wrapping_abs() as u64;
+            self.balance = self.balance.saturating_sub(amount);
+        } else {
+            self.balance = self.balance.saturating_add(delta as u64);
+        }
     }
 
     pub fn save_to_files(&self) {
-        let json = serde_json::to_string_pretty(self).unwrap();
-        let mut file = File::create("wallet_key.json").unwrap();
-        file.write_all(json.as_bytes()).unwrap();
+        if let Ok(json) = serde_json::to_string_pretty(self) {
+            let _ = fs::write(WALLET_FILE, json);
+        }
     }
 
     pub fn load_from_files() -> Self {
-        let mut file = File::open("wallet_key.json").unwrap();
-        let mut data = String::new();
-        file.read_to_string(&mut data).unwrap();
-        serde_json::from_str(&data).unwrap()
+        if let Ok(mut file) = File::open(WALLET_FILE) {
+            let mut data = String::new();
+            if file.read_to_string(&mut data).is_ok() {
+                if let Ok(wallet) = serde_json::from_str::<Wallet>(&data) {
+                    return wallet;
+                }
+            }
+        }
+        Wallet::generate()
+    }
+
+    pub fn sign_message(&self, message: &[u8]) -> Option<Vec<u8>> {
+        let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).ok()?;
+        let sk = SecretKey::from_bytes(&sk_bytes).ok()?;
+        let signature = sign_detached(message, &sk);
+        Some(signature.as_bytes().to_vec())
+    }
+
+    pub fn verify_signature(&self, message: &[u8], signature_bytes: &[u8]) -> bool {
+        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).ok()?;
+        let pk = PublicKey::from_bytes(&pk_bytes).ok()?;
+        let signature = DetachedSignature::from_bytes(signature_bytes).ok()?;
+        verify_detached(&signature, message, &pk).is_ok()
+    }
+
+    pub fn export_with_2fa(&self, code: &str) -> Option<String> {
+        if code.len() < 6 {
+            return None;
+        }
+        let mut combined = format!("{}:{}:{}", self.public_key, self.private_key, code);
+        let encoded = general_purpose::STANDARD.encode(combined.as_bytes());
+        Some(encoded)
     }
 }
