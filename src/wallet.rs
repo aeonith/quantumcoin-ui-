@@ -1,58 +1,56 @@
-use base64::{engine::general_purpose, Engine};
-use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{PublicKey as _, SecretKey as _, DetachedSignature as _};
-use serde::{Deserialize, Serialize};
-use std::{
-    fs::File,
-    io::{Read, Write},
-};
+use pqcrypto_dilithium::dilithium2::*;
+use pqcrypto_traits::sign::*;
+use base64::{encode, decode};
+use std::fs::{create_dir_all, read_to_string, write};
+use std::path::Path;
+use std::sync::Mutex;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Wallet {
-    pub public_key: String,
-    pub secret_key: String,
+    pub public_key: PublicKey,
+    pub secret_key: SecretKey,
 }
 
 impl Wallet {
-    pub fn load_or_generate() -> Self {
-        if let Ok(mut f) = File::open("wallet.json") {
-            let mut s = String::new();
-            f.read_to_string(&mut s).unwrap();
-            serde_json::from_str(&s).unwrap_or_else(|_| Self::generate())
+    pub fn load_or_create() -> Self {
+        if Path::new("wallet/keys").exists() {
+            Self::load_from_files().expect("Failed to load keys")
         } else {
-            Self::generate()
+            let (pk, sk) = keypair();
+            let wallet = Wallet { public_key: pk, secret_key: sk };
+            wallet.save_to_files().expect("Failed to save keys");
+            wallet
         }
     }
 
-    fn generate() -> Self {
-        let (pk, sk) = keypair();
-        let pub_b64 = general_purpose::STANDARD.encode(pk.as_bytes());
-        let sec_b64 = general_purpose::STANDARD.encode(sk.as_bytes());
-        let w = Wallet {
-            public_key: pub_b64,
-            secret_key: sec_b64,
-        };
-        let mut f = File::create("wallet.json").unwrap();
-        f.write_all(serde_json::to_string_pretty(&w).unwrap().as_bytes())
-            .unwrap();
-        w
-    }
-
-    pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let sk_bytes = general_purpose::STANDARD.decode(&self.secret_key).unwrap();
-        let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        let ds: DetachedSignature = detached_sign(data, &sk);
-        ds.as_bytes().to_vec()
-    }
-
-    pub fn verify(&self, data: &[u8], sig: &[u8]) -> bool {
-        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).unwrap();
-        let pk = PublicKey::from_bytes(&pk_bytes).unwrap();
-        let ds = DetachedSignature::from_bytes(sig).unwrap();
-        verify_detached_signature(&ds, data, &pk).is_ok()
-    }
-
     pub fn address(&self) -> String {
-        self.public_key.clone()
+        encode(self.public_key.as_bytes())
+    }
+
+    pub fn sign_message(&self, msg: &[u8]) -> Vec<u8> {
+        let signed = sign(msg, &self.secret_key);
+        signed.as_bytes().to_vec()
+    }
+
+    pub fn verify_message(&self, msg: &[u8], signature: &[u8]) -> bool {
+        let sig = match SignedMessage::from_bytes(signature) {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+        verify(&sig, &self.public_key).map_or(false, |recovered| recovered.as_bytes() == msg)
+    }
+
+    fn save_to_files(&self) -> std::io::Result<()> {
+        create_dir_all("wallet")?;
+        write("wallet/public.key", encode(self.public_key.as_bytes()))?;
+        write("wallet/secret.key", encode(self.secret_key.as_bytes()))?;
+        Ok(())
+    }
+
+    fn load_from_files() -> Result<Self, Box<dyn std::error::Error>> {
+        let pub_b64 = read_to_string("wallet/public.key")?;
+        let sec_b64 = read_to_string("wallet/secret.key")?;
+        let pk = PublicKey::from_bytes(&decode(pub_b64.trim())?)?;
+        let sk = SecretKey::from_bytes(&decode(sec_b64.trim())?)?;
+        Ok(Wallet { public_key: pk, secret_key: sk })
     }
 }
