@@ -1,80 +1,85 @@
-use pqcrypto_dilithium::dilithium2::*;
-use pqcrypto_traits::sign::{DetachedSignature, PublicKey as TraitPub, SecretKey as TraitSec};
-use base64::{encode, decode};
-use otpauth::TOTP;
-use std::fs::{self, File};
-use std::io::{Read, Write};
+use base64::{engine::general_purpose, Engine as _};
+use pqcrypto_dilithium::dilithium2::{keypair, sign_detached, verify_detached, PublicKey, SecretKey, DetachedSignature};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
 use serde::{Serialize, Deserialize};
+use std::fs;
+use std::io::{Read, Write};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Wallet {
     pub public_key: String,
-    private_key: String,
-    pub password: String,
-    pub otp_secret: Option<String>,
-    pub otp_enabled: bool,
+    pub private_key: String,
+    pub balance: u64,
+    pub recent_tx: Vec<String>,
 }
 
 impl Wallet {
     pub fn load_or_generate() -> Self {
-        if let Ok(data) = fs::read_to_string("wallet_key.json") {
-            serde_json::from_str(&data).unwrap()
-        } else {
-            let (pk, sk) = keypair();
-            let wallet = Wallet {
-                public_key: encode(pk.as_bytes()),
-                private_key: encode(sk.as_bytes()),
-                password: "defaultpassword".to_string(),
-                otp_secret: None,
-                otp_enabled: false,
-            };
-            wallet.save();
-            wallet
+        let path = "wallet_key.json";
+
+        if let Ok(json) = fs::read_to_string(path) {
+            if let Ok(wallet) = serde_json::from_str(&json) {
+                return wallet;
+            }
         }
-    }
 
-    pub fn save(&self) {
-        let json = serde_json::to_string_pretty(self).unwrap();
-        fs::write("wallet_key.json", json).unwrap();
-    }
+        let (pk, sk) = keypair();
+        let wallet = Wallet {
+            public_key: general_purpose::STANDARD.encode(pk.as_bytes()),
+            private_key: general_purpose::STANDARD.encode(sk.as_bytes()),
+            balance: 0,
+            recent_tx: Vec::new(),
+        };
 
-    pub fn verify_password(&self, input: &str) -> bool {
-        self.password == input
+        let json = serde_json::to_string_pretty(&wallet).unwrap();
+        fs::write(path, json).unwrap();
+        wallet
     }
 
     pub fn sign_message(&self, msg: &[u8]) -> DetachedSignature {
-        let sk_bytes = decode(&self.private_key).unwrap();
+        let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
         sign_detached(msg, &sk)
+    }
+
+    pub fn verify_signature(&self, msg: &[u8], sig: &DetachedSignature) -> bool {
+        let pk_bytes = general_purpose::STANDARD.decode(&self.public_key).unwrap();
+        let pk = PublicKey::from_bytes(&pk_bytes).unwrap();
+        verify_detached(msg, sig, &pk).is_ok()
     }
 
     pub fn get_address(&self) -> String {
         self.public_key.clone()
     }
 
-    pub fn enable_2fa(&mut self, secret: String) {
-        self.otp_secret = Some(secret);
-        self.otp_enabled = true;
-        self.save();
+    pub fn get_balance(&self) -> u64 {
+        self.balance
     }
 
-    pub fn verify_2fa(&self, code: &str) -> bool {
-        if let Some(secret) = &self.otp_secret {
-            let totp = TOTP::from_base32(secret).unwrap();
-            totp.verify(code)
-        } else {
-            false
+    pub fn add_transaction(&mut self, tx: String) {
+        self.recent_tx.push(tx);
+        if self.recent_tx.len() > 5 {
+            self.recent_tx.remove(0);
         }
     }
 
-    pub fn is_2fa_enabled(&self) -> bool {
-        self.otp_enabled
+    pub fn show_last_transactions(&self) {
+        println!("Last 5 Transactions:");
+        for tx in &self.recent_tx {
+            println!("- {}", tx);
+        }
     }
 
-    pub fn get_2fa_qr_url(&self) -> Option<String> {
-        self.otp_secret.as_ref().map(|secret| {
-            let totp = TOTP::from_base32(secret).unwrap();
-            totp.get_url("QuantumCoin", "user@quantumcoin.com")
-        })
+    pub fn save_to_file(&self) {
+        let json = serde_json::to_string_pretty(&self).unwrap();
+        fs::write("wallet_key.json", json).unwrap();
+    }
+
+    pub fn load_from_file() -> Option<Self> {
+        if let Ok(json) = fs::read_to_string("wallet_key.json") {
+            serde_json::from_str(&json).ok()
+        } else {
+            None
+        }
     }
 }
