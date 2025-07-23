@@ -1,60 +1,54 @@
-use actix_web::{web, App, HttpServer};
+#![allow(unused)]
+#[macro_use] extern crate rocket;
+
 use std::sync::{Arc, Mutex};
+use rocket::{Rocket, Build};
+use crate::wallet::Wallet;
+use crate::revstop::RevStop;
+use crate::blockchain::Blockchain;
+use crate::p2p::start_node;
 
 mod wallet;
+mod revstop;
 mod blockchain;
 mod transaction;
-mod revstop;
+mod block;
 mod routes;
-mod coingecko;
-mod btc;
 mod p2p;
+mod btc;
+mod coingecko;
 
-use wallet::Wallet;
-use blockchain::Blockchain;
-use revstop::RevStop;
-use p2p::start_node;
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // Load or generate key-based wallet
+#[launch]
+fn rocket() -> Rocket<Build> {
     let wallet = Arc::new(Mutex::new(Wallet::load_or_generate()));
+    let revstop = Arc::new(Mutex::new(RevStop::status()));
+    let blockchain = Arc::new(Mutex::new(Blockchain::new(wallet.clone())));
 
-    // Load or initialize blockchain
-    let mut blockchain = Blockchain::load_or_create();
-
-    // Create RevStop system (cold storage protection)
-    let revstop = Arc::new(Mutex::new(RevStop::load_or_generate()));
-
-    // Add genesis if not present
-    if blockchain.is_empty() {
-        blockchain.initialize_genesis(wallet.lock().unwrap().address());
-        blockchain.save_to_file();
-    }
-
-    let blockchain = Arc::new(Mutex::new(blockchain));
     let peers = Arc::new(Mutex::new(vec![]));
 
-    // Start P2P network
+    // Start the P2P node in a separate thread
     {
-        let blockchain = blockchain.clone();
-        let peers = peers.clone();
+        let blockchain_clone = blockchain.clone();
+        let peers_clone = peers.clone();
         std::thread::spawn(move || {
-            start_node(6000, blockchain, peers);
+            start_node(6000, blockchain_clone, peers_clone);
         });
     }
 
-    println!("✅ QuantumCoin running on http://0.0.0.0:8080");
-
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(blockchain.clone()))
-            .app_data(web::Data::new(wallet.clone()))
-            .app_data(web::Data::new(revstop.clone()))
-            .app_data(web::Data::new(peers.clone()))
-            .configure(routes::init)
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    rocket::build()
+        .manage(wallet)
+        .manage(revstop)
+        .manage(blockchain)
+        .mount("/", routes![
+            routes::get_balance,
+            routes::send_coins,
+            routes::mine,
+            routes::revstop_status,
+            routes::revstop_enable,
+            routes::revstop_disable,
+            routes::last_transactions,
+            routes::export_wallet,
+            routes::get_address,
+            routes::buy_qtc
+        ])
 }
