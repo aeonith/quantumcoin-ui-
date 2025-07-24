@@ -1,67 +1,70 @@
-const API_BASE = "https://quantumcoin-ithu.onrender.com";
+const API_BASE = "https://quantumcoin-ithu.onrender.com"; // Backend URL
 
-// Handle login
-async function loginUser() {
-  const username = document.getElementById("login-username").value;
-  const password = document.getElementById("login-password").value;
-
-  try {
-    const res = await fetch(`${API_BASE}/api/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-
-    if (!res.ok) throw new Error("Login failed.");
-    const data = await res.json();
-    alert(`✅ Login successful! Welcome ${data.username || username}`);
-  } catch (err) {
-    alert("❌ Login error: " + err.message);
-    console.error(err);
-  }
-}
-
-// Handle registration
 async function registerUser() {
-  const username = document.getElementById("register-username").value;
-  const password = document.getElementById("register-password").value;
-  const agreed = document.getElementById("terms-checkbox").checked;
+  const username = document.getElementById("register-username")?.value.trim();
+  const password = document.getElementById("register-password")?.value.trim();
+  const terms = document.getElementById("terms").checked;
 
-  if (!agreed) {
-    alert("⚠️ You must agree to the Terms & Conditions.");
-    return;
+  if (!username || !password) {
+    return alert("Please enter both username and password.");
+  }
+
+  if (!terms) {
+    return alert("You must agree to the Terms & Conditions.");
   }
 
   try {
-    const res = await fetch(`${API_BASE}/api/register`, {
+    const response = await fetch(`${API_BASE}/api/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password })
     });
 
-    if (!res.ok) throw new Error("Registration failed.");
-    const data = await res.json();
-    alert(`✅ Registered as ${data.username || username}`);
-  } catch (err) {
-    alert("❌ Registration error: " + err.message);
-    console.error(err);
+    const result = await response.json();
+    if (response.ok) {
+      alert("✅ Registration successful!");
+      showDashboard(result);
+    } else {
+      alert("❌ " + result.message || "Registration failed");
+    }
+  } catch (error) {
+    alert("❌ Register failed: " + error.message);
   }
 }
 
-// Toggle between login and register view
-function toggleAuthView() {
-  const loginForm = document.getElementById("login-form");
-  const registerForm = document.getElementById("register-form");
-  loginForm.style.display = loginForm.style.display === "none" ? "block" : "none";
-  registerForm.style.display = registerForm.style.display === "none" ? "block" : "none";
-}
+async function loginUser() {
+  const username = document.getElementById("login-username")?.value.trim();
+  const password = document.getElementById("login-password")?.value.trim();
 
-// Background video autoplay fix
-document.addEventListener("DOMContentLoaded", function () {
-  const video = document.getElementById("background-video");
-  if (video) {
-    video.play().catch(err => {
-      console.warn("Background video autoplay failed:", err);
+  if (!username || !password) {
+    return alert("Please enter both username and password.");
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
     });
+
+    const result = await response.json();
+    if (response.ok) {
+      alert("✅ Login successful!");
+      showDashboard(result);
+    } else {
+      alert("❌ " + result.message || "Login failed");
+    }
+  } catch (error) {
+    alert("❌ Login failed: " + error.message);
   }
-});
+}
+
+function showDashboard(data) {
+  const dashboard = document.getElementById("dashboard");
+  dashboard.style.display = "block";
+  dashboard.innerHTML = `
+    <h3>Welcome, ${data.username || "user"}!</h3>
+    <p>Your QuantumCoin Wallet: <strong>${data.wallet || "N/A"}</strong></p>
+    <p>Balance: <strong>${data.balance || 0} QTC</strong></p>
+  `;
+}
