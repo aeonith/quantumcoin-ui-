@@ -1,30 +1,32 @@
-document.getElementById("register-form").addEventListener("submit", async (e) => {
+document.getElementById('register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const username = document.getElementById("username").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const storeKeys = document.getElementById("storeKeysOption").checked;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-confirm').value;
 
-  const response = await fetch("https://quantumcoin-ui-1live.onrender.com/api/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      username,
-      email,
-      password,
-      storeKeys
-    })
-  });
+  if (password !== confirm) {
+    alert('Passwords do not match.');
+    return;
+  }
 
-  const result = await response.json();
+  try {
+    const response = await fetch('https://quantumcoin-ui-1live.onrender.com/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (response.ok) {
-    alert("Registration successful! Now login.");
-    window.location.href = "login.html";
-  } else {
-    alert(`Error: ${result.message}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      alert('Registration successful! Redirecting to login...');
+      window.location.href = 'login.html';
+    } else {
+      alert(`Registration failed: ${data.message || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error('Error during registration:', error);
+    alert('Network error. Please try again later.');
   }
 });
