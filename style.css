@@ -1,15 +1,15 @@
-/* Mobile-optimized body styling */
+/* Mobile-first body style */
 body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #ffffff;
-  background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  background: linear-gradient(to right, #1a2a3a, #223344, #2f3d4e);
   overflow-x: hidden;
   font-size: 14px;
 }
 
-/* QuantumCoin™ auto TM marker */
+/* QuantumCoin™ branding */
 .tm-quantumcoin::after {
   content: "™";
   font-size: 0.6em;
@@ -18,7 +18,7 @@ body {
   color: #aaa;
 }
 
-/* Background video */
+/* Background video settings */
 #bg-video {
   position: fixed;
   top: 0;
@@ -27,10 +27,10 @@ body {
   min-height: 100vh;
   object-fit: cover;
   z-index: -1;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
-/* Container centered layout */
+/* Main layout container */
 .container {
   width: 100%;
   max-width: 100%;
@@ -42,17 +42,16 @@ body {
 h1 {
   font-size: 2em;
   margin-bottom: 0.5em;
-  color: #00ffcc;
-  word-wrap: break-word;
+  color: #4eaaff; /* glowing soft blue */
 }
 
 h2 {
-  font-size: 1.5em;
+  font-size: 1.4em;
   margin-bottom: 1em;
-  color: #00e6b8;
+  color: #ffa366; /* warm glowing orange */
 }
 
-/* Inputs (full width on mobile) */
+/* Input fields (optimized for thumb use) */
 input[type="text"],
 input[type="password"],
 input[type="email"],
@@ -60,69 +59,78 @@ input[type="file"] {
   width: 100%;
   padding: 14px;
   margin: 10px 0;
-  border: none;
+  border: 1px solid #ffffff30;
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   font-size: 16px;
   box-sizing: border-box;
+  color: #fff;
 }
 
-/* Buttons */
+/* Buttons with blue/orange glow */
 button {
   width: 100%;
   padding: 14px;
   font-size: 16px;
   border: none;
   border-radius: 6px;
-  background-color: #00ffcc;
+  background: linear-gradient(to right, #4eaaff, #ffa366);
   color: #000;
   margin-top: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  box-shadow: 0 0 10px rgba(255,255,255,0.1);
 }
 
 button:hover {
-  background-color: #00cc99;
+  transform: scale(1.03);
 }
 
-/* Sections */
+/* Section cards */
 section {
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.45);
+  border-radius: 12px;
   padding: 20px;
   margin-bottom: 20px;
 }
 
-/* Wallet Info */
+/* Wallet box */
 .wallet-info {
   padding: 20px;
   border-radius: 10px;
   background-color: rgba(0, 0, 0, 0.4);
+  font-size: 15px;
 }
 
-/* Anchor Button Links */
+/* Button-style links */
 a.button-link {
   display: block;
   padding: 12px;
-  background-color: #00ffcc;
+  background: linear-gradient(to right, #4eaaff, #ffa366);
   color: #000;
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
   margin: 10px auto;
+  max-width: 100%;
 }
 
 /* Footer */
 footer {
   margin-top: 20px;
-  color: #aaa;
-  font-size: 13px;
+  color: #bbb;
+  font-size: 12px;
   text-align: center;
 }
 
-/* Force layout to always look good on small devices */
-@media (min-width: 768px) {
+/* Slight responsive boost for mid-size phones */
+@media (min-width: 480px) {
   h1 {
     font-size: 2.2em;
+  }
+
+  h2 {
+    font-size: 1.5em;
   }
 
   .container {
