@@ -4,58 +4,234 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™ Wallet</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    video#bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100%;
+      min-height: 100%;
+      z-index: -1;
+      object-fit: cover;
+    }
+
+    .container {
+      padding: 2rem;
+      max-width: 450px;
+      margin: auto;
+      margin-top: 3rem;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 12px;
+      color: #fff;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+      color: #00aaff;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    input {
+      background: #f2f2f2;
+      color: #333;
+    }
+
+    button {
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .link a {
+      color: #00c6ff;
+      text-decoration: none;
+    }
+
+    .section {
+      margin-top: 2rem;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        margin: 2rem 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<!-- Background video -->
-<video autoplay muted loop id="bg-video">
-  <source src="quantum-bg.mp4" type="video/mp4">
-</video>
+  <!-- 🔁 Background video -->
+  <video autoplay muted loop id="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
 
-<!-- Login/Register Section -->
-<div class="container login-container" id="authSection">
-  <h1>QuantumCoin™</h1>
-  <h2 id="authTitle">Login</h2>
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <p>New here? <a href="#" onclick="toggleRegister()">Register</a></p>
-</div>
+  <div class="container">
+    <h1>QuantumCoin™</h1>
 
-<!-- Wallet Section -->
-<div class="container wallet-container" id="walletSection" style="display:none;">
-  <h2>🔐 Your Wallet</h2>
-  <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
-  <p><strong>Balance:</strong> <span id="walletBalance">Loading...</span> QTC</p>
-  <button onclick="refreshBalance()">🔄 Refresh Balance</button>
+    <!-- 🔐 Login -->
+    <div id="login-section">
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <div class="link">New here? <a href="#" onclick="showRegister()">Register</a></div>
+    </div>
 
-  <!-- Send QTC -->
-  <h3>📤 Send QTC</h3>
-  <input type="text" id="recipient" placeholder="Recipient Address">
-  <input type="number" id="amount" placeholder="Amount">
-  <button onclick="sendQTC()">Send Now</button>
+    <!-- 🆕 Register -->
+    <div id="register-section" style="display: none;">
+      <input type="text" id="new-username" placeholder="New Username" />
+      <input type="password" id="new-password" placeholder="New Password" />
+      <button onclick="register()">Create Account</button>
+      <div class="link">Already a user? <a href="#" onclick="showLogin()">Login</a></div>
+    </div>
 
-  <!-- RevStop -->
-  <h3>🛡️ RevStop Status</h3>
-  <p>Status: <span id="revstopStatus">Loading...</span></p>
-  <button onclick="unlockRevStop()">Unlock</button>
-  <button onclick="lockRevStop()">Lock</button>
+    <!-- 💼 Wallet Info -->
+    <div class="section">
+      <h2>🔐 Wallet Info</h2>
+      <p>Address: <span id="walletAddress">Loading...</span></p>
+      <p>Balance: <span id="balance">Loading...</span></p>
+      <button onclick="refreshBalance()">Refresh Balance</button>
+    </div>
 
-  <!-- Export Wallet -->
-  <h3>💾 Export Wallet</h3>
-  <button onclick="exportWallet()">Export Backup</button>
+    <!-- 📤 Send QTC -->
+    <div class="section">
+      <h2>📤 Send QTC</h2>
+      <input type="text" id="recipient" placeholder="Recipient Address"/>
+      <input type="number" id="amount" placeholder="Amount"/>
+      <button onclick="sendQTC()">Send Now</button>
+    </div>
 
-  <!-- Last 5 Transactions -->
-  <h3>📜 Last 5 Transactions</h3>
-  <ul id="lastTransactions"></ul>
-</div>
+    <!-- 📄 RevStop -->
+    <div class="section">
+      <h2>🛡️ RevStop Status</h2>
+      <p>Status: <span id="revstop-status">Checking...</span></p>
+    </div>
 
-<!-- Footer -->
-<footer>
-  <p><a href="/terms.html">Terms & Conditions</a> | <a href="/privacy.html">Privacy Policy</a></p>
-</footer>
+    <!-- 🧾 Last 5 Transactions -->
+    <div class="section">
+      <h2>🧾 Last 5 Transactions</h2>
+      <ul id="transactions">
+        <li>Loading...</li>
+      </ul>
+    </div>
 
-<script src="script.js"></script>
+    <!-- 📄 Footer -->
+    <div class="footer">
+      <a href="/terms.html">Terms & Conditions</a> |
+      <a href="/privacy.html">Privacy Policy</a>
+    </div>
+  </div>
+
+  <!-- 🔧 Backend Integration -->
+  <script>
+    const API = "https://quantumcoin-ithu.onrender.com";
+
+    function showRegister() {
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'block';
+    }
+
+    function showLogin() {
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('login-section').style.display = 'block';
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      // Call your backend login API
+      alert("Login attempt for " + username);
+    }
+
+    async function register() {
+      const username = document.getElementById('new-username').value;
+      const password = document.getElementById('new-password').value;
+      // Call your backend register API
+      alert("Registering new user: " + username);
+    }
+
+    async function refreshBalance() {
+      const res = await fetch(`${API}/wallet/balance`);
+      const data = await res.json();
+      document.getElementById('walletAddress').textContent = data.address || 'N/A';
+      document.getElementById('balance').textContent = data.balance + ' QTC';
+    }
+
+    async function sendQTC() {
+      const recipient = document.getElementById('recipient').value;
+      const amount = document.getElementById('amount').value;
+      await fetch(`${API}/transaction/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient, amount })
+      });
+      alert("Transaction submitted");
+    }
+
+    async function loadTransactions() {
+      const res = await fetch(`${API}/transactions/recent`);
+      const data = await res.json();
+      const list = document.getElementById('transactions');
+      list.innerHTML = '';
+      data.slice(0, 5).forEach(tx => {
+        const li = document.createElement('li');
+        li.textContent = `${tx.amount} QTC ➜ ${tx.to}`;
+        list.appendChild(li);
+      });
+    }
+
+    async function loadRevStopStatus() {
+      const res = await fetch(`${API}/revstop/status`);
+      const data = await res.json();
+      document.getElementById('revstop-status').textContent = data.active ? '🔒 Active' : '🔓 Inactive';
+    }
+
+    // Auto-load on page load
+    window.onload = () => {
+      refreshBalance();
+      loadTransactions();
+      loadRevStopStatus();
+    }
+  </script>
 </body>
 </html>
