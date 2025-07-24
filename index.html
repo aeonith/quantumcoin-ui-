@@ -7,57 +7,63 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <!-- Background Video -->
   <video autoplay muted loop id="bg-video">
-    <source src="quantum-bg.mp4" type="video/mp4" />
+    <source src="quantum-bg.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 
-  <!-- Overlay Content -->
-  <div class="container">
-    <h1>QuantumCoin™</h1>
+  <div class="overlay">
+    <div class="container">
 
-    <!-- Login Form -->
-    <div id="login-section" class="auth-box">
-      <h2>Login</h2>
-      <input type="text" id="login-username" placeholder="Username" />
-      <input type="password" id="login-password" placeholder="Password" />
-      <button onclick="login()">Login</button>
-      <p>New? <a href="#" onclick="showRegister()">Register</a></p>
-    </div>
+      <!-- Login Section -->
+      <div id="login-section">
+        <h1>QuantumCoin™ Login</h1>
+        <input type="text" id="login-username" placeholder="Username" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+        <p>Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+      </div>
 
-    <!-- Register Form -->
-    <div id="register-section" class="auth-box hidden">
-      <h2>Register</h2>
-      <input type="text" id="register-username" placeholder="Username" />
-      <input type="password" id="register-password" placeholder="Password" />
-      <label><input type="checkbox" id="terms-checkbox" /> I agree to the 
-        <a href="#">Terms</a> & <a href="#">Privacy Policy</a>
-      </label>
-      <button onclick="register()">Register</button>
-      <p><a href="#" onclick="showLogin()">Back to Login</a></p>
-    </div>
+      <!-- Register Section -->
+      <div id="register-section" class="hidden">
+        <h1>Create QuantumCoin™ Account</h1>
+        <input type="text" id="register-username" placeholder="Username" />
+        <input type="password" id="register-password" placeholder="Password" />
+        <label class="terms-label">
+          <input type="checkbox" id="terms-checkbox" />
+          I agree to the <a href="#">Terms & Conditions</a> and <a href="#">Privacy Policy</a>
+        </label>
+        <button onclick="register()">Register</button>
+        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+      </div>
 
-    <!-- Main Dashboard -->
-    <div id="dashboard" class="hidden">
-      <h2>Welcome, <span id="user-label"></span></h2>
-      <p><strong>Wallet Balance:</strong> <span id="balance">Loading...</span> QTC</p>
-      
-      <h3>Send Coins</h3>
-      <input type="text" id="send-to" placeholder="Recipient Address" />
-      <input type="number" id="send-amount" placeholder="Amount" />
-      <button onclick="sendCoins()">Send</button>
+      <!-- Dashboard -->
+      <div id="dashboard" class="hidden">
+        <h2>Welcome, <span id="user-label"></span>!</h2>
+        <p><strong>Balance:</strong> <span id="balance">Loading...</span> QTC</p>
+        <p><strong>RevStop™ Status:</strong> <span id="revstop-status">Loading...</span></p>
 
-      <h3>Mine New Coins</h3>
-      <button onclick="mine()">Mine Block</button>
+        <div class="send-section">
+          <h3>Send QuantumCoin™</h3>
+          <input type="text" id="send-to" placeholder="Recipient username" />
+          <input type="number" id="send-amount" placeholder="Amount" />
+          <button onclick="sendCoins()">Send</button>
+        </div>
 
-      <h3>Last 5 Transactions</h3>
-      <ul id="transactions-list"></ul>
+        <div class="mine-section">
+          <h3>Mine a Block</h3>
+          <button onclick="mine()">Mine Now</button>
+        </div>
 
-      <h3>RevStop Status</h3>
-      <p id="revstop-status">Checking...</p>
+        <div class="tx-section">
+          <h3>Last 5 Transactions</h3>
+          <ul id="transactions-list"></ul>
+        </div>
 
-      <button onclick="logout()">Logout</button>
+        <button onclick="logout()">Logout</button>
+      </div>
     </div>
   </div>
 
