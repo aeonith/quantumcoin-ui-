@@ -2,174 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™ Wallet</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    /* Mobile-First, Fullscreen Background Video Styling */
-    #background video {
-      position: fixed;
-      right: 0;
-      bottom: 0;
-      min-width: 100%;
-      min-height: 100%;
-      z-index: -1;
-      object-fit: cover;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      color: #ffffff;
-      background-color: rgba(0, 0, 0, 0.6);
-    }
-
-    .container, .auth-container {
-      max-width: 400px;
-      margin: 0 auto;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 10px;
-      margin-top: 60px;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-    }
-
-    h2, h3 {
-      text-align: center;
-      color: #ffa94d;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    input {
-      background: #1e1e2f;
-      color: #fff;
-    }
-
-    button {
-      background: linear-gradient(to right, #00c6ff, #0072ff);
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    .card {
-      margin-bottom: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 15px;
-      border-radius: 10px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    a {
-      color: #00ffff;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- 🔁 Fullscreen Background Video -->
-  <div id="background">
-    <video autoplay muted loop playsinline>
-      <source src="quantum-bg.mp4" type="video/mp4" />
-    </video>
-  </div>
+<!-- Background video -->
+<video autoplay muted loop id="bg-video">
+  <source src="quantum-bg.mp4" type="video/mp4">
+</video>
 
-  <!-- 🔐 Auth Section -->
-  <div class="auth-container" id="auth">
-    <h1>QuantumCoin™</h1>
-    <div id="login-form">
-      <h2>Login</h2>
-      <input type="text" id="login-username" placeholder="Username" />
-      <input type="password" id="login-password" placeholder="Password" />
-      <button onclick="login()">Login</button>
-      <p>New here? <a href="#" onclick="showRegister()">Register</a></p>
-    </div>
+<!-- Login/Register Section -->
+<div class="container login-container" id="authSection">
+  <h1>QuantumCoin™</h1>
+  <h2 id="authTitle">Login</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p>New here? <a href="#" onclick="toggleRegister()">Register</a></p>
+</div>
 
-    <div id="register-form" class="hidden">
-      <h2>Register</h2>
-      <input type="text" id="register-username" placeholder="Username" />
-      <input type="password" id="register-password" placeholder="Password" />
-      <input type="password" id="register-confirm" placeholder="Confirm Password" />
-      <button onclick="register()">Create Account</button>
-      <p>Already registered? <a href="#" onclick="showLogin()">Login</a></p>
-    </div>
-  </div>
+<!-- Wallet Section -->
+<div class="container wallet-container" id="walletSection" style="display:none;">
+  <h2>🔐 Your Wallet</h2>
+  <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
+  <p><strong>Balance:</strong> <span id="walletBalance">Loading...</span> QTC</p>
+  <button onclick="refreshBalance()">🔄 Refresh Balance</button>
 
-  <!-- 💼 Wallet Interface -->
-  <div class="container hidden" id="wallet-ui">
-    <h2>QuantumCoin™ Wallet</h2>
+  <!-- Send QTC -->
+  <h3>📤 Send QTC</h3>
+  <input type="text" id="recipient" placeholder="Recipient Address">
+  <input type="number" id="amount" placeholder="Amount">
+  <button onclick="sendQTC()">Send Now</button>
 
-    <div class="card">
-      <h3>🔐 Your Wallet</h3>
-      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
-      <button onclick="refreshBalance()">🔁 Refresh Balance</button>
-    </div>
+  <!-- RevStop -->
+  <h3>🛡️ RevStop Status</h3>
+  <p>Status: <span id="revstopStatus">Loading...</span></p>
+  <button onclick="unlockRevStop()">Unlock</button>
+  <button onclick="lockRevStop()">Lock</button>
 
-    <div class="card">
-      <h3>✉️ Send QTC</h3>
-      <input type="text" id="recipient" placeholder="Recipient Address" />
-      <input type="number" id="amount" placeholder="Amount" />
-      <button onclick="sendQTC()">Send Now</button>
-    </div>
+  <!-- Export Wallet -->
+  <h3>💾 Export Wallet</h3>
+  <button onclick="exportWallet()">Export Backup</button>
 
-    <div class="card">
-      <h3>⛏ Mine</h3>
-      <button onclick="mine()">Start Mining</button>
-      <p id="mining-status">Waiting...</p>
-    </div>
+  <!-- Last 5 Transactions -->
+  <h3>📜 Last 5 Transactions</h3>
+  <ul id="lastTransactions"></ul>
+</div>
 
-    <div class="card">
-      <h3>🔐 RevStop™</h3>
-      <input type="password" id="revstop-password" placeholder="Enter RevStop Password" />
-      <button onclick="enableRevStop()">Enable</button>
-      <button onclick="disableRevStop()">Disable</button>
-      <p>Status: <span id="revstop-status">Loading...</span></p>
-    </div>
+<!-- Footer -->
+<footer>
+  <p><a href="/terms.html">Terms & Conditions</a> | <a href="/privacy.html">Privacy Policy</a></p>
+</footer>
 
-    <div class="card">
-      <h3>🛡️ 2FA</h3>
-      <input type="text" id="twofa-code" placeholder="2FA Code (Optional)" />
-      <button onclick="verify2FA()">Verify</button>
-    </div>
-
-    <div class="card">
-      <h3>📜 Last 5 Transactions</h3>
-      <ul id="tx-history"><li>Loading...</li></ul>
-    </div>
-
-    <div class="card">
-      <h3>💾 Wallet Backup</h3>
-      <button onclick="exportWallet()">Export Wallet</button>
-      <button onclick="disableKeyStorage()">Do Not Store Private Key</button>
-    </div>
-
-    <div class="card">
-      <h3>📘 Terms & Conditions</h3>
-      <p>By using QuantumCoin™, you agree to the terms listed <a href="/terms.html" target="_blank">here</a>.</p>
-    </div>
-  </div>
-
-  <!-- 📜 Scripts -->
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
