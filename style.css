@@ -1,63 +1,80 @@
-/* General body styling */
+/* Mobile-optimized body styling */
 body {
   margin: 0;
+  padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #ffffff;
   background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
   overflow-x: hidden;
+  font-size: 14px;
 }
 
-/* TM auto-insertion after QuantumCoin */
+/* QuantumCoin™ auto TM marker */
 .tm-quantumcoin::after {
   content: "™";
-  font-size: 0.5em;
+  font-size: 0.6em;
   vertical-align: super;
   margin-left: 2px;
   color: #aaa;
 }
 
-/* Center content container */
+/* Background video */
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 100vw;
+  min-height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  opacity: 0.8;
+}
+
+/* Container centered layout */
 .container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 40px 20px;
+  width: 100%;
+  max-width: 100%;
+  padding: 30px 15px;
   text-align: center;
 }
 
-/* Logo and header styling */
+/* Headers */
 h1 {
-  font-size: 3em;
-  margin-bottom: 10px;
+  font-size: 2em;
+  margin-bottom: 0.5em;
   color: #00ffcc;
+  word-wrap: break-word;
 }
 
 h2 {
-  font-size: 2em;
-  margin-bottom: 20px;
+  font-size: 1.5em;
+  margin-bottom: 1em;
   color: #00e6b8;
 }
 
-/* Input fields */
+/* Inputs (full width on mobile) */
 input[type="text"],
 input[type="password"],
 input[type="email"],
 input[type="file"] {
-  width: 90%;
-  padding: 12px;
+  width: 100%;
+  padding: 14px;
   margin: 10px 0;
   border: none;
   border-radius: 6px;
   font-size: 16px;
+  box-sizing: border-box;
 }
 
 /* Buttons */
 button {
-  background-color: #00ffcc;
-  color: #000;
-  padding: 12px 24px;
+  width: 100%;
+  padding: 14px;
   font-size: 16px;
   border: none;
   border-radius: 6px;
+  background-color: #00ffcc;
+  color: #000;
   margin-top: 10px;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -69,47 +86,46 @@ button:hover {
 
 /* Sections */
 section {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.4);
   border-radius: 10px;
-  padding: 30px;
-  margin: 20px 0;
+  padding: 20px;
+  margin-bottom: 20px;
 }
 
-/* Wallet section */
+/* Wallet Info */
 .wallet-info {
-  background-color: rgba(0, 0, 0, 0.4);
   padding: 20px;
   border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
-/* Link buttons */
+/* Anchor Button Links */
 a.button-link {
-  display: inline-block;
-  padding: 10px 20px;
+  display: block;
+  padding: 12px;
   background-color: #00ffcc;
   color: #000;
   border-radius: 6px;
   text-decoration: none;
   font-weight: bold;
-  margin: 10px;
+  margin: 10px auto;
 }
 
 /* Footer */
 footer {
-  margin-top: 30px;
+  margin-top: 20px;
   color: #aaa;
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
 }
 
-/* Background video support */
-#bg-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  min-width: 100%;
-  min-height: 100%;
-  object-fit: cover;
-  z-index: -1;
-  opacity: 0.8;
+/* Force layout to always look good on small devices */
+@media (min-width: 768px) {
+  h1 {
+    font-size: 2.2em;
+  }
+
+  .container {
+    padding: 40px 20px;
+  }
 }
