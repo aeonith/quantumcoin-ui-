@@ -2,260 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      color: #fff;
-    }
-
-    #bg-video {
-      position: fixed;
-      right: 0;
-      bottom: 0;
-      min-width: 100%;
-      min-height: 100%;
-      object-fit: cover;
-      z-index: -1;
-    }
-
-    .container {
-      background-color: rgba(0, 0, 0, 0.75);
-      max-width: 480px;
-      margin: 3rem auto;
-      padding: 2rem;
-      border-radius: 12px;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 0.7rem;
-      margin: 0.5rem 0;
-      border-radius: 8px;
-      border: none;
-      font-size: 1rem;
-    }
-
-    button {
-      background-color: #00bfff;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    label {
-      display: block;
-      margin-top: 1rem;
-    }
-
-    .link {
-      color: #00bfff;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    #wallet-section {
-      margin-top: 2rem;
-    }
-
-    ul {
-      list-style: square;
-      margin-left: 1.2rem;
-      padding-left: 0;
-    }
-
-    .hidden {
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- 🔁 Background video -->
-  <video autoplay muted loop id="bg-video" playsinline>
+  <!-- Background Video -->
+  <video autoplay muted loop id="bg-video">
     <source src="quantum-bg.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
   </video>
 
+  <!-- Overlay Content -->
   <div class="container">
     <h1>QuantumCoin™</h1>
 
-    <!-- 🔐 Login -->
-    <div id="login-section">
+    <!-- Login Form -->
+    <div id="login-section" class="auth-box">
+      <h2>Login</h2>
       <input type="text" id="login-username" placeholder="Username" />
       <input type="password" id="login-password" placeholder="Password" />
       <button onclick="login()">Login</button>
-      <p class="link" onclick="toggleRegister(true)">New? Register</p>
+      <p>New? <a href="#" onclick="showRegister()">Register</a></p>
     </div>
 
-    <!-- ✍️ Register -->
-    <div id="register-section" class="hidden">
-      <input type="text" id="reg-username" placeholder="Username" />
-      <input type="password" id="reg-password" placeholder="Password" />
-      <label><input type="checkbox" id="agree" /> I agree to the <span class="link" onclick="showTerms()">Terms</span> & <span class="link" onclick="showPrivacy()">Privacy Policy</span></label>
+    <!-- Register Form -->
+    <div id="register-section" class="auth-box hidden">
+      <h2>Register</h2>
+      <input type="text" id="register-username" placeholder="Username" />
+      <input type="password" id="register-password" placeholder="Password" />
+      <label><input type="checkbox" id="terms-checkbox" /> I agree to the 
+        <a href="#">Terms</a> & <a href="#">Privacy Policy</a>
+      </label>
       <button onclick="register()">Register</button>
-      <p class="link" onclick="toggleRegister(false)">Back to Login</p>
+      <p><a href="#" onclick="showLogin()">Back to Login</a></p>
     </div>
 
-    <!-- 💼 Wallet -->
-    <div id="wallet-section" class="hidden">
-      <p><strong>Address:</strong> <span id="wallet-address">-</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
-      <button onclick="mine()">Mine</button>
-      <button onclick="send()">Send</button>
-      <button onclick="exportWallet()">Export Backup</button>
-      <button onclick="toggleRevStop()">Toggle RevStop</button>
-      <ul id="transactions"></ul>
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden">
+      <h2>Welcome, <span id="user-label"></span></h2>
+      <p><strong>Wallet Balance:</strong> <span id="balance">Loading...</span> QTC</p>
+      
+      <h3>Send Coins</h3>
+      <input type="text" id="send-to" placeholder="Recipient Address" />
+      <input type="number" id="send-amount" placeholder="Amount" />
+      <button onclick="sendCoins()">Send</button>
+
+      <h3>Mine New Coins</h3>
+      <button onclick="mine()">Mine Block</button>
+
+      <h3>Last 5 Transactions</h3>
+      <ul id="transactions-list"></ul>
+
+      <h3>RevStop Status</h3>
+      <p id="revstop-status">Checking...</p>
+
       <button onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <!-- Modals -->
-  <div id="terms-modal" class="hidden" style="background:#000;padding:2rem">
-    <h2>Terms & Conditions</h2>
-    <p>You are responsible for your wallet and actions.</p>
-    <button onclick="hideTerms()">Close</button>
-  </div>
-
-  <div id="privacy-modal" class="hidden" style="background:#000;padding:2rem">
-    <h2>Privacy Policy</h2>
-    <p>No user data is stored. Keys are local.</p>
-    <button onclick="hidePrivacy()">Close</button>
-  </div>
-
-  <script>
-    const API = "https://quantumcoin-ithu.onrender.com";
-
-    function toggleRegister(show) {
-      document.getElementById("login-section").style.display = show ? "none" : "block";
-      document.getElementById("register-section").style.display = show ? "block" : "none";
-    }
-
-    function showTerms() {
-      document.getElementById("terms-modal").classList.remove("hidden");
-    }
-
-    function hideTerms() {
-      document.getElementById("terms-modal").classList.add("hidden");
-    }
-
-    function showPrivacy() {
-      document.getElementById("privacy-modal").classList.remove("hidden");
-    }
-
-    function hidePrivacy() {
-      document.getElementById("privacy-modal").classList.add("hidden");
-    }
-
-    async function register() {
-      const u = document.getElementById("reg-username").value;
-      const p = document.getElementById("reg-password").value;
-      const agree = document.getElementById("agree").checked;
-
-      if (!agree) return alert("You must accept terms.");
-
-      const res = await fetch(`${API}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: u, password: p })
-      });
-
-      if (res.ok) {
-        alert("Registered. Now login.");
-        toggleRegister(false);
-      } else {
-        alert("Registration failed.");
-      }
-    }
-
-    async function login() {
-      const u = document.getElementById("login-username").value;
-      const p = document.getElementById("login-password").value;
-
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: u, password: p })
-      });
-
-      if (res.ok) {
-        const { token } = await res.json();
-        localStorage.setItem("token", token);
-        loadWallet();
-      } else {
-        alert("Login failed.");
-      }
-    }
-
-    async function loadWallet() {
-      document.getElementById("login-section").style.display = "none";
-      document.getElementById("register-section").style.display = "none";
-      document.getElementById("wallet-section").style.display = "block";
-
-      const token = localStorage.getItem("token");
-      const address = await fetch(`${API}/address`, { headers: { Authorization: token } }).then(r => r.text());
-      const balance = await fetch(`${API}/balance`, { headers: { Authorization: token } }).then(r => r.text());
-      const txs = await fetch(`${API}/transactions`, { headers: { Authorization: token } }).then(r => r.json());
-
-      document.getElementById("wallet-address").textContent = address;
-      document.getElementById("wallet-balance").textContent = balance;
-
-      const txList = document.getElementById("transactions");
-      txList.innerHTML = "";
-      txs.slice(-5).reverse().forEach(tx => {
-        const li = document.createElement("li");
-        li.textContent = `${tx.from} → ${tx.to}: ${tx.amount}`;
-        txList.appendChild(li);
-      });
-    }
-
-    async function mine() {
-      const token = localStorage.getItem("token");
-      await fetch(`${API}/mine`, { method: "POST", headers: { Authorization: token } });
-      loadWallet();
-    }
-
-    async function send() {
-      const to = prompt("Send to address:");
-      const amount = prompt("Amount:");
-      const token = localStorage.getItem("token");
-
-      await fetch(`${API}/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: token },
-        body: JSON.stringify({ to, amount })
-      });
-
-      loadWallet();
-    }
-
-    async function exportWallet() {
-      const token = localStorage.getItem("token");
-      const key = await fetch(`${API}/export`, { headers: { Authorization: token } }).then(r => r.text());
-      alert("Wallet Backup:\n" + key);
-    }
-
-    async function toggleRevStop() {
-      const token = localStorage.getItem("token");
-      await fetch(`${API}/revstop`, { method: "POST", headers: { Authorization: token } });
-      alert("RevStop toggled.");
-    }
-
-    function logout() {
-      localStorage.removeItem("token");
-      location.reload();
-    }
-
-    // ✅ Auto-load if token is saved
-    if (localStorage.getItem("token")) loadWallet();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
