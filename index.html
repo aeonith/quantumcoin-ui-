@@ -1,107 +1,153 @@
-<!-- Background Video -->
-<video autoplay muted loop id="bg-video" playsinline>
-  <source src="/quantum-bg.mp4" type="video/mp4" />
-  Your browser does not support the video tag.
-</video>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin</title>
+  <title>QuantumCoin™</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #0d1b2a, #1e3a5f);
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    .logo {
+      font-size: 2em;
+      font-weight: bold;
+      margin-top: 20px;
+      color: #ff7e5f;
+    }
+
+    .section {
+      margin-top: 25px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .wallet-info span {
+      display: block;
+      font-size: 1.1em;
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(to right, #00aaff, #ff7e5f);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px 0;
+      width: 90%;
+      max-width: 300px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    @media (max-width: 600px) {
+      .logo { font-size: 1.5em; }
+    }
+  </style>
 </head>
+
 <body>
-
-  <!-- Background Video -->
-  <video autoplay muted loop playsinline id="bg-video">
-  <source src="https://raw.githubusercontent.com/aeonith/quantumcoin-ui-/main/quantum-bg.mp4" type="video/mp4">
-</video>
-
-  <!-- Column Overlay -->
-  <div class="column-overlay"></div>
-
-  <!-- Page Content -->
   <div class="container">
+    <div class="logo">QuantumCoin™ Wallet</div>
 
-    <section class="glass-section">
-      <h1>🚀 <span class="highlight">QuantumCoin™</span></h1>
-      <p>The most advanced quantum-secure currency on Earth.</p>
-    </section>
+    <div class="section wallet-info">
+      <h2>🔐 Your Wallet</h2>
+      <span id="wallet-address">Address: <em>Loading...</em></span>
+      <span id="wallet-balance">Balance: <em>Loading...</em></span>
+      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
+    </div>
 
-    <section class="glass-section">
-      <h2>📈 <span class="highlight">Current Price</span></h2>
-      <p>$0.25 QTC</p>
-    </section>
-
-    <section class="glass-section">
-      <h2>📦 <span class="highlight">Your Wallet</span></h2>
-      <p><strong>Address:</strong> Loading...</p>
-      <p><strong>Balance:</strong> 1250 QTC</p>
-      <button>🔄 Refresh Balance</button>
-    </section>
-
-    <section class="glass-section">
-      <h2>✉️ <span class="highlight">Send QTC</span></h2>
-      <input type="text" placeholder="Recipient Address" />
-      <input type="number" placeholder="Amount" />
-      <button>Send Now</button>
-    </section>
-
-    <section class="glass-section">
-      <h2>🔑 <span class="highlight">Login</span></h2>
-      <input type="text" placeholder="Wallet Address" />
-      <input type="password" placeholder="Password" />
-      <button>Log In</button>
-    </section>
-
-    <section class="glass-section">
-      <h2>💱 <span class="highlight">Buy / Sell QTC</span></h2>
-      <input type="number" placeholder="Amount in USD" />
-      <select>
-        <option>Buy QTC</option>
-        <option>Sell QTC</option>
-      </select>
-      <button>Submit</button>
-    </section>
-
-    <footer>
-      QuantumCoin™ © 2025 — Built for the quantum era
-    </footer>
-
+    <div class="section">
+      <h2>📤 Send QTC</h2>
+      <input type="text" id="recipient" placeholder="Recipient Address" />
+      <input type="number" id="amount" placeholder="Amount" />
+      <button onclick="sendQTC()">Send Now</button>
+    </div>
   </div>
+
+  <script>
+    let walletAddress = null;
+
+    window.onload = async () => {
+      try {
+        const res = await fetch("/api/wallet");
+        const data = await res.json();
+
+        if (data && data.address) {
+          walletAddress = data.address;
+          document.getElementById("wallet-address").innerHTML = `Address: <strong>${walletAddress}</strong>`;
+          await refreshBalance(); // Load balance now that wallet is ready
+        } else {
+          document.getElementById("wallet-address").innerHTML = "Address: <span style='color:red;'>Unavailable</span>";
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallet:", err);
+        document.getElementById("wallet-address").innerHTML = "Address: <span style='color:red;'>Error</span>";
+      }
+    };
+
+    async function refreshBalance() {
+      if (!walletAddress) return;
+
+      try {
+        const res = await fetch(`/api/balance/${walletAddress}`);
+        const data = await res.json();
+        document.getElementById("wallet-balance").innerHTML = `Balance: <strong>${data.balance} QTC</strong>`;
+      } catch (err) {
+        console.error("Balance load failed", err);
+        document.getElementById("wallet-balance").innerHTML = "Balance: <span style='color:red;'>Error</span>";
+      }
+    }
+
+    async function sendQTC() {
+      const recipient = document.getElementById("recipient").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+
+      if (!recipient || !amount || isNaN(amount)) {
+        alert("Enter a valid address and amount.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ from: walletAddress, to: recipient, amount }),
+        });
+
+        const result = await res.json();
+        if (result.success) {
+          alert("Transaction sent successfully!");
+          await refreshBalance();
+        } else {
+          alert("Transaction failed: " + result.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error sending transaction.");
+      }
+    }
+  </script>
 </body>
 </html>
-<!-- SIGNUP SECTION -->
-<section id="signup" class="section transparent-card">
-  <h2>Create Your QuantumCoin™ Wallet</h2>
-  <form id="signup-form">
-    <input type="text" id="username" placeholder="Username" required>
-    <input type="password" id="password" placeholder="Password" required>
-    
-    <label>
-      <input type="checkbox" id="terms" required>
-      I agree to the <a href="#terms-modal" onclick="document.getElementById('terms-modal').style.display='block'">Terms and Conditions</a>
-    </label>
-
-    <button type="submit">Create Account</button>
-  </form>
-</section>
-
-<!-- TERMS & CONDITIONS MODAL -->
-<div id="terms-modal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="document.getElementById('terms-modal').style.display='none'">&times;</span>
-    <h3>QuantumCoin™ Terms & Conditions</h3>
-    <p>
-      By creating an account or using QuantumCoin™, you agree that:
-      <ul>
-        <li>You are solely responsible for managing your private keys and backup phrases.</li>
-        <li>QuantumCoin™ is decentralized, and the creators are not liable for any financial loss, wallet issues, or bugs.</li>
-        <li>All transactions are final and irreversible.</li>
-        <li>You use this platform at your own risk, and QuantumCoin™ cannot be held legally accountable for misuse or mismanagement.</li>
-      </ul>
-      You agree to these terms by checking the box above. If you do not agree, do not use this platform.
-    </p>
-  </div>
-</div>
