@@ -2,85 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuantumCoin™</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ✅ Background Video -->
-  <video autoplay muted loop id="bg-video">
-    <source src="quantum-bg.mp4" type="video/mp4">
+  <!-- 🔥 BACKGROUND VIDEO -->
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
 
-  <div class="overlay">
-    <div class="container">
-
-      <!-- ✅ Login Section -->
-      <div id="login-section">
-        <h1>QuantumCoin™ Login</h1>
+  <!-- 🔐 LOGIN/REGISTER -->
+  <div class="auth-section">
+    <h1>QuantumCoin™</h1>
+    
+    <div id="auth-forms">
+      <div id="login-form">
+        <h2>Login</h2>
         <input type="text" id="login-username" placeholder="Username" />
         <input type="password" id="login-password" placeholder="Password" />
         <button onclick="login()">Login</button>
-        <p>Don’t have an account? <a href="#" onclick="showRegister()">Register</a></p>
       </div>
 
-      <!-- ✅ Register Section -->
-      <div id="register-section" class="hidden">
-        <h1>Create QuantumCoin™ Account</h1>
+      <div id="register-form">
+        <h2>Register</h2>
         <input type="text" id="register-username" placeholder="Username" />
         <input type="password" id="register-password" placeholder="Password" />
-        <label class="terms-label">
-          <input type="checkbox" id="terms-checkbox" />
-          I agree to the <a href="#terms" style="color: #00ffff;">Terms and Conditions</a> & <a href="#privacy" style="color: #00ffff;">Privacy Policy</a>
-        </label>
-        <button onclick="register()">Register</button>
-        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        <label><input type="checkbox" id="terms-checkbox" /> I agree to the <a href="#terms">Terms & Conditions</a></label>
+        <button onclick="register()">Create Account</button>
       </div>
-
-      <!-- ✅ Dashboard Section -->
-      <div id="dashboard" class="hidden">
-        <h2>Welcome, <span id="user-label"></span>!</h2>
-        <p><strong>Balance:</strong> <span id="balance">Loading...</span> QTC</p>
-        <p><strong>RevStop™:</strong> <span id="revstop-status">Loading...</span></p>
-
-        <!-- Send -->
-        <div class="send-section">
-          <h3>Send QuantumCoin™</h3>
-          <input type="text" id="send-to" placeholder="Recipient username" />
-          <input type="number" id="send-amount" placeholder="Amount" />
-          <button onclick="sendCoins()">Send</button>
-        </div>
-
-        <!-- Mining -->
-        <div class="mine-section">
-          <h3>Mine a Block</h3>
-          <button onclick="mine()">Mine Now</button>
-        </div>
-
-        <!-- Last Transactions -->
-        <div class="tx-section">
-          <h3>Last 5 Transactions</h3>
-          <ul id="transactions-list"></ul>
-        </div>
-
-        <button onclick="logout()">Logout</button>
-      </div>
-
-      <!-- ✅ Terms and Privacy -->
-      <div id="terms" class="legal-text hidden-on-mobile">
-        <h4>Terms and Conditions</h4>
-        <p>By creating a QuantumCoin™ account, you agree to use the platform responsibly. You must not engage in illegal activity, spam, or abuse. QuantumCoin™ is not responsible for user loss of private keys or access credentials.</p>
-      </div>
-
-      <div id="privacy" class="legal-text hidden-on-mobile">
-        <h4>Privacy Policy</h4>
-        <p>QuantumCoin™ does not sell or share your personal data. Your wallet keys are stored securely only if you opt-in. You may export your private key manually or store it on USB.</p>
-      </div>
-
     </div>
   </div>
+
+  <!-- 🧾 USER DASHBOARD -->
+  <div id="dashboard" style="display:none;">
+    <h2>Welcome, <span id="user-name"></span></h2>
+    <p>Public Key: <span id="public-key"></span></p>
+    <p>Private Key (2FA required): <span id="private-key-hidden">Hidden</span></p>
+    <button onclick="showPrivateKey()">Unlock Private Key</button>
+
+    <h3>Balance: <span id="balance">0 QTC</span></h3>
+    <button onclick="refreshBalance()">Refresh Balance</button>
+
+    <h3>Send Coins</h3>
+    <input type="text" id="recipient" placeholder="Recipient Address" />
+    <input type="number" id="amount" placeholder="Amount" />
+    <button onclick="sendCoins()">Send</button>
+
+    <h3>Last 5 Transactions</h3>
+    <ul id="tx-list"></ul>
+
+    <h3>RevStop™ Security</h3>
+    <button onclick="toggleRevStop()">Toggle RevStop</button>
+
+    <h3>Export Wallet</h3>
+    <button onclick="exportWallet()">Export w/ 2FA</button>
+  </div>
+
+  <!-- 📜 TERMS -->
+  <footer id="terms">
+    <h4>Terms & Conditions</h4>
+    <p>By using QuantumCoin™, you agree to store your private key securely. RevStop™ adds security control but does not guarantee recovery of lost assets.</p>
+  </footer>
 
   <script src="script.js"></script>
 </body>
