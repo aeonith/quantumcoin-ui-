@@ -5,101 +5,171 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuantumCoin™ Wallet</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Mobile-First, Fullscreen Background Video Styling */
+    #background video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      z-index: -1;
+      object-fit: cover;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      color: #ffffff;
+      background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .container, .auth-container {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 10px;
+      margin-top: 60px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+
+    h2, h3 {
+      text-align: center;
+      color: #ffa94d;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    input {
+      background: #1e1e2f;
+      color: #fff;
+    }
+
+    button {
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .card {
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    a {
+      color: #00ffff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- 🔁 Background Video -->
+  <!-- 🔁 Fullscreen Background Video -->
   <div id="background">
     <video autoplay muted loop playsinline>
-      <source src="background.mp4" type="video/mp4" />
-      Your browser does not support the video tag.
+      <source src="quantum-bg.mp4" type="video/mp4" />
     </video>
   </div>
 
-  <!-- 🔒 Authentication Pages -->
+  <!-- 🔐 Auth Section -->
   <div class="auth-container" id="auth">
     <h1>QuantumCoin™</h1>
-    <div class="form" id="login-form">
+    <div id="login-form">
       <h2>Login</h2>
       <input type="text" id="login-username" placeholder="Username" />
       <input type="password" id="login-password" placeholder="Password" />
       <button onclick="login()">Login</button>
-      <p>Don't have an account? <a href="#" onclick="showRegister()">Create Account</a></p>
+      <p>New here? <a href="#" onclick="showRegister()">Register</a></p>
     </div>
 
-    <div class="form hidden" id="register-form">
+    <div id="register-form" class="hidden">
       <h2>Register</h2>
       <input type="text" id="register-username" placeholder="Username" />
       <input type="password" id="register-password" placeholder="Password" />
       <input type="password" id="register-confirm" placeholder="Confirm Password" />
-      <button onclick="register()">Register</button>
-      <p>Already have an account? <a href="#" onclick="showLogin()">Back to Login</a></p>
+      <button onclick="register()">Create Account</button>
+      <p>Already registered? <a href="#" onclick="showLogin()">Login</a></p>
     </div>
   </div>
 
-  <!-- 🔐 Main Wallet Interface -->
+  <!-- 💼 Wallet Interface -->
   <div class="container hidden" id="wallet-ui">
     <h2>QuantumCoin™ Wallet</h2>
 
-    <!-- 🔐 Wallet Info -->
     <div class="card">
-      <h3>Your Wallet</h3>
+      <h3>🔐 Your Wallet</h3>
       <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
       <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
-      <button onclick="refreshBalance()">🔁 Refresh</button>
+      <button onclick="refreshBalance()">🔁 Refresh Balance</button>
     </div>
 
-    <!-- ✉️ Send QTC -->
     <div class="card">
-      <h3>Send QTC</h3>
+      <h3>✉️ Send QTC</h3>
       <input type="text" id="recipient" placeholder="Recipient Address" />
       <input type="number" id="amount" placeholder="Amount" />
       <button onclick="sendQTC()">Send Now</button>
     </div>
 
-    <!-- ⛏ Mining -->
     <div class="card">
-      <h3>Mine</h3>
+      <h3>⛏ Mine</h3>
       <button onclick="mine()">Start Mining</button>
-      <p id="mining-status"></p>
+      <p id="mining-status">Waiting...</p>
     </div>
 
-    <!-- 🔐 RevStop -->
     <div class="card">
-      <h3>RevStop™</h3>
-      <p>Status: <span id="revstop-status">Loading...</span></p>
-      <input type="password" id="revstop-password" placeholder="RevStop Password" />
+      <h3>🔐 RevStop™</h3>
+      <input type="password" id="revstop-password" placeholder="Enter RevStop Password" />
       <button onclick="enableRevStop()">Enable</button>
       <button onclick="disableRevStop()">Disable</button>
+      <p>Status: <span id="revstop-status">Loading...</span></p>
     </div>
 
-    <!-- 🔑 2FA -->
     <div class="card">
-      <h3>Two-Factor Auth (Optional)</h3>
-      <input type="text" id="twofa-code" placeholder="Enter 2FA Code" />
+      <h3>🛡️ 2FA</h3>
+      <input type="text" id="twofa-code" placeholder="2FA Code (Optional)" />
       <button onclick="verify2FA()">Verify</button>
     </div>
 
-    <!-- 📜 Transactions -->
     <div class="card">
-      <h3>Last 5 Transactions</h3>
+      <h3>📜 Last 5 Transactions</h3>
       <ul id="tx-history"><li>Loading...</li></ul>
     </div>
 
-    <!-- 💾 Wallet Export -->
     <div class="card">
-      <h3>Export Wallet</h3>
-      <button onclick="exportWallet()">Export to USB</button>
-      <button onclick="disableKeyStorage()">Don't Store Private Key</button>
+      <h3>💾 Wallet Backup</h3>
+      <button onclick="exportWallet()">Export Wallet</button>
+      <button onclick="disableKeyStorage()">Do Not Store Private Key</button>
     </div>
 
-    <!-- 📘 Terms -->
     <div class="card">
-      <h3>Terms & Conditions</h3>
-      <p>By using QuantumCoin™, you agree to the terms listed <a href="/terms.html">here</a>.</p>
+      <h3>📘 Terms & Conditions</h3>
+      <p>By using QuantumCoin™, you agree to the terms listed <a href="/terms.html" target="_blank">here</a>.</p>
     </div>
   </div>
 
+  <!-- 📜 Scripts -->
   <script src="script.js"></script>
 </body>
 </html>
