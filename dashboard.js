@@ -1,105 +1,61 @@
-const api = 'https://quantumcoin-ui-1live.onrender.com'; // Your backend URL
+let walletAddress = null;
 
-window.onload = () => {
-  fetchWalletInfo();
+window.onload = async () => {
+  try {
+    const res = await fetch("/api/wallet");
+    const data = await res.json();
+
+    if (data && data.address) {
+      walletAddress = data.address;
+      document.getElementById("wallet-address").innerHTML = `Address: <span>${walletAddress}</span>`;
+      await refreshBalance(); // Load balance after address
+    } else {
+      document.getElementById("wallet-address").innerHTML = `Address: <span style="color:red;">Unavailable</span>`;
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("wallet-address").innerHTML = `Address: <span style="color:red;">Error</span>`;
+  }
 };
 
-function fetchWalletInfo() {
-  fetch(`${api}/wallet`)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('wallet-address').textContent = data.public_key;
-      document.getElementById('wallet-balance').textContent = `${data.balance} QTC`;
-    })
-    .catch(err => updateStatus('Error fetching wallet: ' + err));
+async function refreshBalance() {
+  if (!walletAddress) return;
+
+  try {
+    const res = await fetch(`/api/balance/${walletAddress}`);
+    const data = await res.json();
+    document.getElementById("wallet-balance").innerHTML = `Balance: <span>${data.balance} QTC</span>`;
+  } catch (err) {
+    console.error("Balance load failed", err);
+    document.getElementById("wallet-balance").innerHTML = `Balance: <span style="color:red;">Error</span>`;
+  }
 }
 
-function refreshBalance() {
-  fetchWalletInfo();
-}
+async function sendQTC() {
+  const recipient = document.getElementById("recipient").value;
+  const amount = parseFloat(document.getElementById("amount").value);
 
-function mineCoins() {
-  fetch(`${api}/mine`, { method: 'POST' })
-    .then(res => res.json())
-    .then(data => {
-      updateStatus(`Mined block: ${data.block_hash}`);
-      refreshBalance();
-    })
-    .catch(err => updateStatus('Mining error: ' + err));
-}
+  if (!recipient || !amount || isNaN(amount)) {
+    alert("Enter valid address and amount.");
+    return;
+  }
 
-function toggleRevStop() {
-  fetch(`${api}/revstop/toggle`, { method: 'POST' })
-    .then(res => res.json())
-    .then(data => updateStatus(`RevStop status: ${data.status}`))
-    .catch(err => updateStatus('RevStop error: ' + err));
-}
+  try {
+    const res = await fetch("/api/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from: walletAddress, to: recipient, amount }),
+    });
 
-function showSend() {
-  const section = document.getElementById('send-section');
-  section.style.display = section.style.display === 'none' ? 'block' : 'none';
-}
-
-function sendCoins() {
-  const recipient = document.getElementById('send-to').value;
-  const amount = parseFloat(document.getElementById('send-amount').value);
-
-  fetch(`${api}/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ to: recipient, amount })
-  })
-    .then(res => res.json())
-    .then(data => {
-      updateStatus(`Sent ${amount} QTC to ${recipient}`);
-      refreshBalance();
-    })
-    .catch(err => updateStatus('Send error: ' + err));
-}
-
-function exportWallet() {
-  fetch(`${api}/wallet/export`)
-    .then(res => res.blob())
-    .then(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'quantumcoin_wallet_backup.json';
-      a.click();
-    })
-    .catch(err => updateStatus('Export failed: ' + err));
-}
-
-function setup2FA() {
-  fetch(`${api}/2fa/setup`)
-    .then(res => res.json())
-    .then(data => {
-      alert(`Your 2FA code: ${data.secret}\nScan it in Google Authenticator.`);
-      updateStatus('2FA initialized.');
-    })
-    .catch(err => updateStatus('2FA setup failed: ' + err));
-}
-
-function lockWallet() {
-  const confirm = prompt("Enter password to lock your wallet:");
-  if (!confirm) return;
-
-  fetch(`${api}/wallet/lock`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: confirm })
-  })
-    .then(res => res.json())
-    .then(data => {
-      updateStatus('Wallet locked.');
-    })
-    .catch(err => updateStatus('Lock failed: ' + err));
-}
-
-function logout() {
-  window.location.href = 'login.html';
-}
-
-function updateStatus(msg) {
-  document.getElementById('status').textContent = msg;
+    const result = await res.json();
+    if (result.success) {
+      alert("Transaction sent!");
+      await refreshBalance();
+    } else {
+      alert("Transaction failed: " + result.error);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error sending transaction.");
+  }
 }
