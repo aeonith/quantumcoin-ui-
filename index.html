@@ -7,38 +7,109 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Background Video -->
-  <video autoplay muted loop id="bgVideo">
-    <source src="background.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
+  <!-- Background video -->
+  <video id="bg-video" autoplay muted loop>
+    <source src="background.mp4" type="video/mp4">
+    <!-- Fallback image if video fails -->
+    <img src="background.jpg" alt="Background" />
   </video>
+  <div id="overlay"></div>
 
-  <!-- Login/Register Container -->
-  <div class="container">
-    <h1>QuantumCoin™</h1>
+  <div id="app">
+    <header>
+      <h1>QuantumCoin™</h1>
+      <nav>
+        <button id="btn-login">Login</button>
+        <button id="btn-register">Register</button>
+      </nav>
+    </header>
 
-    <!-- Login -->
-    <h2>Login</h2>
-    <input type="text" id="login-username" placeholder="Username" />
-    <input type="password" id="login-password" placeholder="Password" />
-    <button onclick="loginUser()">Login</button>
+    <main>
+      <!-- LOGIN FORM -->
+      <section id="login-form" class="card hidden">
+        <h2>Login</h2>
+        <input id="login-user" type="text" placeholder="Username" />
+        <input id="login-pass" type="password" placeholder="Password" />
+        <button id="do-login">Login</button>
+        <p>
+          Don't have an account?
+          <a href="#" id="link-to-register">Register</a>
+        </p>
+        <p>
+          <a href="#" id="link-terms">Terms &amp; Conditions</a> |
+          <a href="#" id="link-privacy">Privacy Policy</a>
+        </p>
+      </section>
 
-    <!-- Register -->
-    <h2>Register</h2>
-    <input type="text" id="register-username" placeholder="Username" />
-    <input type="password" id="register-password" placeholder="Password" />
-    <label style="font-size: 14px;">
-      <input type="checkbox" id="terms" />
-      I agree to the <a href="#terms-section" style="color: #00f;">Terms & Conditions</a>
-    </label>
-    <button onclick="registerUser()">Create Account</button>
+      <!-- REGISTER FORM -->
+      <section id="register-form" class="card hidden">
+        <h2>Register</h2>
+        <input id="reg-user" type="text" placeholder="Username" />
+        <input id="reg-pass" type="password" placeholder="Password" />
+        <input id="reg-2fa" type="text" placeholder="2FA Secret (optional)" />
+        <button id="do-register">Register</button>
+        <p>
+          Already have an account?
+          <a href="#" id="link-to-login">Login</a>
+        </p>
+        <p>
+          <a href="#" id="link-terms-2">Terms &amp; Conditions</a> |
+          <a href="#" id="link-privacy-2">Privacy Policy</a>
+        </p>
+      </section>
 
-    <!-- Terms -->
-    <div id="terms-section" class="terms">
-      <h3>Terms & Conditions</h3>
-      <p>
-        By registering, you agree to store your private key securely and accept all security risks associated with managing digital assets. <strong>RevStop™</strong> is a security feature that adds protection but does not guarantee recovery.
-      </p>
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="hidden">
+        <h2>Welcome, <span id="user-name"></span></h2>
+
+        <!-- Wallet Info -->
+        <div class="card info">
+          <p><strong>Public Key:</strong> <code id="pubkey"></code></p>
+          <p><strong>Balance:</strong> <span id="balance-qtc">0</span> QTC
+            (~$<span id="balance-usd">0.00</span> USD)</p>
+          <p><strong>Send BTC to:</strong> <code id="btc-deposit">bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code></p>
+          <button id="btn-refresh">Refresh</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="card actions">
+          <h3>Actions</h3>
+          <button id="btn-view-priv">View Private Key</button>
+          <div id="twofa-entry" class="hidden">
+            <input id="twofa-code" type="text" placeholder="Enter 2FA code" />
+            <button id="btn-confirm-2fa">Confirm</button>
+          </div>
+          <button id="btn-mine">Mine Pending</button>
+          <button id="btn-revstop">Toggle RevStop</button>
+        </div>
+
+        <!-- Transactions -->
+        <div class="card txs">
+          <h3>Recent Transactions</h3>
+          <ul id="tx-list"></ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 QuantumCoin™</p>
+    </footer>
+  </div>
+
+  <!-- MODALS -->
+  <div id="modal-terms" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" id="close-terms">&times;</span>
+      <h2>Terms &amp; Conditions</h2>
+      <p><!-- your terms here --></p>
+    </div>
+  </div>
+
+  <div id="modal-privacy" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" id="close-privacy">&times;</span>
+      <h2>Privacy Policy</h2>
+      <p><!-- your privacy policy here --></p>
     </div>
   </div>
 
