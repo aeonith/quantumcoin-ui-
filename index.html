@@ -1,49 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- Video Background -->
+  <!-- Background Video -->
   <video autoplay muted loop id="bgVideo">
-    <source src="background.mp4" type="video/mp4">
+    <source src="background.mp4" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
 
+  <!-- Login/Register Container -->
   <div class="container">
     <h1>QuantumCoin™</h1>
 
-    <!-- LOGIN FORM -->
+    <!-- Login -->
     <h2>Login</h2>
     <input type="text" id="login-username" placeholder="Username" />
     <input type="password" id="login-password" placeholder="Password" />
     <button onclick="loginUser()">Login</button>
 
-    <!-- REGISTER FORM -->
+    <!-- Register -->
     <h2>Register</h2>
     <input type="text" id="register-username" placeholder="Username" />
     <input type="password" id="register-password" placeholder="Password" />
-    <div class="terms">
-      <input type="checkbox" id="terms" checked />
-      <label for="terms">I agree to the <a href="#terms-section">Terms & Conditions</a></label>
-    </div>
+    <label style="font-size: 14px;">
+      <input type="checkbox" id="terms" />
+      I agree to the <a href="#terms-section" style="color: #00f;">Terms & Conditions</a>
+    </label>
     <button onclick="registerUser()">Create Account</button>
 
-    <!-- Display Area -->
-    <div id="dashboard" style="display:none;"></div>
-  </div>
-
-  <!-- Terms Section -->
-  <div id="terms-section" class="terms-box">
-    <h3>Terms & Conditions</h3>
-    <p>
-      By registering, you agree to store your private key securely and accept all risks associated with managing digital assets. 
-      RevStop™ is a security feature that adds protection but does not guarantee recovery.
-    </p>
+    <!-- Terms -->
+    <div id="terms-section" class="terms">
+      <h3>Terms & Conditions</h3>
+      <p>
+        By registering, you agree to store your private key securely and accept all security risks associated with managing digital assets. <strong>RevStop™</strong> is a security feature that adds protection but does not guarantee recovery.
+      </p>
+    </div>
   </div>
 
   <script src="script.js"></script>
