@@ -1,13 +1,13 @@
 const API_URL = "https://quantumcoin-ithu.onrender.com";
 
-// REGISTER USER
+// REGISTER
 async function registerUser() {
   const username = document.getElementById("register-username").value.trim();
   const password = document.getElementById("register-password").value.trim();
   const agreed = document.getElementById("terms").checked;
 
   if (!username || !password) {
-    alert("Please enter both a username and password.");
+    alert("Please enter both username and password.");
     return;
   }
 
@@ -19,44 +19,38 @@ async function registerUser() {
   try {
     const res = await fetch(`${API_URL}/api/register`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ username, password })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Register failed.");
-
-    alert("✅ Registered! Now login.");
+    alert("✅ Registered! You can now log in.");
   } catch (err) {
     alert("❌ " + err.message);
   }
 }
 
-// LOGIN USER
+// LOGIN
 async function loginUser() {
   const username = document.getElementById("login-username").value.trim();
   const password = document.getElementById("login-password").value.trim();
 
   if (!username || !password) {
-    alert("Please enter both username and password.");
+    alert("Please enter both fields.");
     return;
   }
 
   try {
     const res = await fetch(`${API_URL}/api/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ username, password })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Login failed.");
-
-    alert(`✅ Welcome ${data.username || username}`);
+    alert(`✅ Welcome, ${data.username || username}`);
   } catch (err) {
     alert("❌ " + err.message);
   }
