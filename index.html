@@ -2,152 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin™ Wallet</title>
   <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #0d1b2a, #1e3a5f);
-      color: #ffffff;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-
-    .container {
-      padding: 20px;
-    }
-
-    .logo {
-      font-size: 2em;
-      font-weight: bold;
-      margin-top: 20px;
-      color: #ff7e5f;
-    }
-
-    .section {
-      margin-top: 25px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 15px;
-      border-radius: 10px;
-    }
-
-    .wallet-info span {
-      display: block;
-      font-size: 1.1em;
-      margin: 10px 0;
-    }
-
-    button {
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(to right, #00aaff, #ff7e5f);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 80%;
-      max-width: 300px;
-    }
-
-    input {
-      padding: 10px;
-      margin: 10px 0;
-      width: 90%;
-      max-width: 300px;
-      border-radius: 5px;
-      border: none;
-    }
-
-    @media (max-width: 600px) {
-      .logo { font-size: 1.5em; }
-    }
-  </style>
 </head>
-
 <body>
-  <div class="container">
-    <div class="logo">QuantumCoin™ Wallet</div>
 
-    <div class="section wallet-info">
+  <!-- 🔁 Background Video -->
+  <video autoplay muted loop id="bgVideo">
+    <source src="background.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- 🧊 Overlay -->
+  <div id="overlay"></div>
+
+  <!-- 🚀 App Container -->
+  <div class="container">
+    <h1 class="title">QuantumCoin™ Wallet</h1>
+    <p class="tagline">The most advanced quantum-secure currency on Earth™.</p>
+
+    <!-- 🔐 Wallet Info -->
+    <div class="section">
       <h2>🔐 Your Wallet</h2>
-      <span id="wallet-address">Address: <em>Loading...</em></span>
-      <span id="wallet-balance">Balance: <em>Loading...</em></span>
-      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
+      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
+      <p><strong>Balance:</strong> <span id="wallet-balance">Loading...</span> QTC</p>
+      <button onclick="refreshBalance()">🔁 Refresh Balance</button>
     </div>
 
+    <!-- 📤 Send QTC -->
     <div class="section">
       <h2>📤 Send QTC</h2>
       <input type="text" id="recipient" placeholder="Recipient Address" />
       <input type="number" id="amount" placeholder="Amount" />
-      <button onclick="sendQTC()">Send Now</button>
+      <button onclick="sendQTC()">🚀 Send Now</button>
     </div>
+
+    <!-- ⛏ Mining -->
+    <div class="section">
+      <h2>⛏ Mine Transactions</h2>
+      <button onclick="mineTransactions()">🛠 Start Mining</button>
+      <p id="mining-status"></p>
+    </div>
+
+    <!-- 🛡 RevStop -->
+    <div class="section">
+      <h2>🛡 RevStop™ Status</h2>
+      <p><strong>Status:</strong> <span id="revstop-status">Loading...</span></p>
+      <input type="password" id="revstop-password" placeholder="Enter Password" />
+      <button onclick="enableRevStop()">🔒 Enable</button>
+      <button onclick="disableRevStop()">🔓 Disable</button>
+    </div>
+
+    <!-- 🔐 2FA -->
+    <div class="section">
+      <h2>🔐 Two-Factor Auth (Optional)</h2>
+      <input type="text" id="twofa-code" placeholder="Enter 2FA Code" />
+      <button onclick="verify2FA()">✅ Verify</button>
+    </div>
+
+    <!-- 🧾 Last Transactions -->
+    <div class="section">
+      <h2>🧾 Last 5 Transactions</h2>
+      <ul id="tx-history">
+        <li>Loading...</li>
+      </ul>
+    </div>
+
+    <!-- 💾 Export Wallet -->
+    <div class="section">
+      <h2>💾 Backup Wallet</h2>
+      <button onclick="exportWallet()">📥 Export to USB / File</button>
+      <button onclick="dontStoreKey()">🚫 Don't Store Private Key</button>
+    </div>
+
+    <!-- ⚖️ Legal Footer -->
+    <footer>
+      <p>QuantumCoin™ is a registered digital currency project.</p>
+    </footer>
   </div>
 
-  <script>
-    let walletAddress = null;
-
-    window.onload = async () => {
-      try {
-        const res = await fetch("/api/wallet");
-        const data = await res.json();
-
-        if (data && data.address) {
-          walletAddress = data.address;
-          document.getElementById("wallet-address").innerHTML = `Address: <strong>${walletAddress}</strong>`;
-          await refreshBalance(); // Load balance now that wallet is ready
-        } else {
-          document.getElementById("wallet-address").innerHTML = "Address: <span style='color:red;'>Unavailable</span>";
-        }
-      } catch (err) {
-        console.error("Failed to fetch wallet:", err);
-        document.getElementById("wallet-address").innerHTML = "Address: <span style='color:red;'>Error</span>";
-      }
-    };
-
-    async function refreshBalance() {
-      if (!walletAddress) return;
-
-      try {
-        const res = await fetch(`/api/balance/${walletAddress}`);
-        const data = await res.json();
-        document.getElementById("wallet-balance").innerHTML = `Balance: <strong>${data.balance} QTC</strong>`;
-      } catch (err) {
-        console.error("Balance load failed", err);
-        document.getElementById("wallet-balance").innerHTML = "Balance: <span style='color:red;'>Error</span>";
-      }
-    }
-
-    async function sendQTC() {
-      const recipient = document.getElementById("recipient").value;
-      const amount = parseFloat(document.getElementById("amount").value);
-
-      if (!recipient || !amount || isNaN(amount)) {
-        alert("Enter a valid address and amount.");
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ from: walletAddress, to: recipient, amount }),
-        });
-
-        const result = await res.json();
-        if (result.success) {
-          alert("Transaction sent successfully!");
-          await refreshBalance();
-        } else {
-          alert("Transaction failed: " + result.error);
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error sending transaction.");
-      }
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
