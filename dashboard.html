@@ -2,38 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuantumCoin Wallet</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h1>🚀 QuantumCoin Dashboard</h1>
+    <h3 class="tagline">The most advanced quantum-secure currency on Earth.</h3>
 
-    <div id="wallet-info">
-      <p><strong>Wallet Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0 QTC</span></p>
+    <div class="panel">
+      <h2>📈 Current Price</h2>
+      <p>$0.25 QTC</p>
     </div>
 
-    <div id="actions">
+    <div class="panel">
+      <h2>📦 Your Wallet</h2>
+      <p id="wallet-address">Address: <span>Loading...</span></p>
+      <p id="wallet-balance">Balance: <span>...</span></p>
       <button onclick="refreshBalance()">🔄 Refresh Balance</button>
-      <button onclick="mineCoins()">⛏️ Mine Coins</button>
-      <button onclick="toggleRevStop()">🔐 Toggle RevStop</button>
-      <button onclick="showSend()">📤 Send Coins</button>
-      <button onclick="exportWallet()">💾 Export Wallet</button>
-      <button onclick="setup2FA()">🔑 Enable 2FA</button>
-      <button onclick="lockWallet()">🔒 Lock Wallet</button>
-      <button onclick="logout()">🚪 Logout</button>
     </div>
 
-    <div id="send-section" style="display:none;">
-      <h3>Send QuantumCoin</h3>
-      <input type="text" id="send-to" placeholder="Recipient address" />
-      <input type="number" id="send-amount" placeholder="Amount" />
-      <button onclick="sendCoins()">Send</button>
+    <div class="panel">
+      <h2>✉️ Send QTC</h2>
+      <input type="text" id="recipient" placeholder="Recipient Address" />
+      <input type="number" id="amount" placeholder="Amount" />
+      <button onclick="sendQTC()">Send Now</button>
     </div>
-
-    <div id="status"></div>
   </div>
 
   <script src="dashboard.js"></script>
