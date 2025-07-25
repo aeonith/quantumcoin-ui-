@@ -15,7 +15,7 @@ async function sendTransaction() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ recipient, amount })
   });
-  alert("Transaction Sent!");
+  alert("✅ Transaction Sent!");
 }
 
 async function register() {
@@ -24,7 +24,7 @@ async function register() {
   const agreed = document.getElementById("agreeTerms").checked;
 
   if (!agreed) {
-    alert("Please agree to the Terms & Conditions before registering.");
+    alert("⚠️ Please agree to the Terms & Conditions.");
     return;
   }
 
@@ -33,7 +33,7 @@ async function register() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   });
-  alert("Account created!");
+  alert("✅ Account Created!");
 }
 
 function showTerms() {
@@ -44,5 +44,5 @@ function closeTerms() {
   document.getElementById("termsModal").style.display = "none";
 }
 
-// Load wallet on first render
+// Auto-load wallet
 refreshWallet();
