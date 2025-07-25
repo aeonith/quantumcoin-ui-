@@ -1,6 +1,6 @@
 const BACKEND_URL = "https://quantumcoin-ui-1rust1.onrender.com";
 
-// Login handler
+// LOGIN FUNCTION
 async function login() {
   const username = document.getElementById("login-username").value;
   const password = document.getElementById("login-password").value;
@@ -21,7 +21,7 @@ async function login() {
 
     if (res.ok) {
       alert("Login successful!");
-      // Optionally redirect or store token
+      // Optional: window.location.href = "/dashboard.html";
     } else {
       alert(`Login failed: ${data.error || "Unknown error"}`);
     }
@@ -31,7 +31,7 @@ async function login() {
   }
 }
 
-// Register handler
+// REGISTER FUNCTION
 async function register() {
   const username = document.getElementById("register-username").value;
   const password = document.getElementById("register-password").value;
@@ -58,6 +58,7 @@ async function register() {
 
     if (res.ok) {
       alert("Registration successful!");
+      // Optional: window.location.href = "/login.html";
     } else {
       alert(`Registration failed: ${data.error || "Unknown error"}`);
     }
@@ -67,7 +68,7 @@ async function register() {
   }
 }
 
-// Terms modal logic
+// TERMS MODAL HANDLERS
 function openTerms() {
   document.getElementById("terms-modal").style.display = "block";
 }
@@ -76,7 +77,6 @@ function closeTerms() {
   document.getElementById("terms-modal").style.display = "none";
 }
 
-// Close modal on outside click
 window.onclick = function (event) {
   const modal = document.getElementById("terms-modal");
   if (event.target == modal) {
