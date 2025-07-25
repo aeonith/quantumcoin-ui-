@@ -7,8 +7,11 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <video autoplay muted loop id="bgVideo">
+
+  <!-- Working Video Background -->
+  <video autoplay muted loop playsinline id="bgVideo">
     <source src="quantum-bg.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
   </video>
 
   <div class="overlay">
@@ -43,23 +46,80 @@
       <br/>
       <label>
         <input type="checkbox" id="agree" />
-        I agree to the <a href="#" onclick="showTerms()">Terms & Conditions</a>
+        I agree to the <a href="#" id="termsLink">Terms & Conditions</a>
       </label>
       <button onclick="register()">📝 Register</button>
     </div>
+  </div>
 
-    <div id="termsPopup" class="popup">
-      <div class="popup-inner">
-        <h3>Terms & Conditions</h3>
-        <p class="fineprint">
-          QuantumCoin is a decentralized quantum-resistant currency. Use at your own risk...<br/><br/>
-          [Insert 20x longer legal text including liability waivers, smart contract disclaimers, blockchain volatility, irreversible transaction risks, wallet ownership, regulatory compliance, etc.]
-        </p>
-        <button onclick="closeTerms()">✔️ Close</button>
-      </div>
+  <!-- Terms & Conditions Popup -->
+  <div id="termsPopup" class="popup">
+    <div class="popup-inner">
+      <h3>Terms & Conditions</h3>
+      <p class="fineprint">
+        QuantumCoin is a decentralized quantum-resistant currency. Use at your own risk...<br/><br/>
+        [Insert long-form legal details: wallet control, irreversible payments, blockchain risk, regulatory compliance, etc...]
+      </p>
+      <button onclick="closeTerms()">✔️ Close</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Scripts MUST be at the bottom -->
+  <script>
+    const API = 'https://quantumcoin-ithu.onrender.com';
+
+    async function loadWallet() {
+      try {
+        const res = await fetch(`${API}/wallet`);
+        const data = await res.json();
+        document.getElementById('walletAddress').textContent = data.address;
+        document.getElementById('walletBalance').textContent = data.balance;
+      } catch {
+        alert('Failed to load wallet.');
+      }
+    }
+
+    async function sendCoins() {
+      const to = document.getElementById('sendTo').value;
+      const amount = document.getElementById('sendAmount').value;
+      const res = await fetch(`${API}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, amount }),
+      });
+      const result = await res.json();
+      alert(result.message);
+      loadWallet();
+    }
+
+    async function register() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      const agree = document.getElementById('agree').checked;
+      if (!agree) return alert("Please agree to the Terms & Conditions.");
+
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, pass }),
+      });
+
+      const result = await res.json();
+      alert(result.message);
+    }
+
+    function closeTerms() {
+      document.getElementById('termsPopup').style.display = 'none';
+    }
+
+    // Ensure terms button always works
+    window.onload = function () {
+      document.getElementById('termsLink').addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('termsPopup').style.display = 'flex';
+      });
+    };
+  </script>
+
 </body>
 </html>
