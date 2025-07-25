@@ -3,77 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin | Secure. Sovereign. Instant.</title>
+  <title>QuantumCoin — Buy Instantly</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ✅ Background video -->
+  <!-- ✅ Fullscreen Cinematic Video -->
   <video autoplay muted loop id="bg-video">
-    <source src="D00E02CF-A089-41C1-9E1D-42A03700AC35.mp4" type="video/mp4">
+    <source src="quantum-bg.mp4" type="video/mp4" />
     Your browser does not support video.
   </video>
 
-  <!-- ✅ Glassy overlay -->
+  <!-- ✅ Overlay Blur and Shade -->
   <div class="overlay"></div>
 
-  <!-- ✅ Main content -->
-  <div class="container">
+  <!-- ✅ Glass UI -->
+  <div class="hero-box">
     <h1>QuantumCoin</h1>
-    <p>The most secure quantum-resistant currency ever created.</p>
+    <p class="subtext">Secure. Quantum-Resistant. Ready for the future.</p>
 
-    <!-- ✅ Login -->
-    <div class="form-box">
-      <h2>Login</h2>
-      <input id="login-username" type="text" placeholder="Username" />
-      <input id="login-password" type="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
-    </div>
-
-    <!-- ✅ Register -->
-    <div class="form-box">
-      <h2>Register</h2>
-      <input id="register-username" type="text" placeholder="New Username" />
-      <input id="register-password" type="password" placeholder="New Password" />
-      <label><input type="checkbox" id="terms-checkbox" /> I agree to the <a href="#terms">Terms</a></label>
-      <button onclick="register()">Create Account</button>
-    </div>
-
-    <!-- ✅ Wallet -->
-    <div class="wallet-section">
-      <h2>Wallet</h2>
-      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
-      <button onclick="refreshBalance()">Refresh Balance</button>
-    </div>
-
-    <!-- ✅ Send QTC -->
-    <div class="send-section">
-      <h2>Send QuantumCoin</h2>
-      <input id="recipient" type="text" placeholder="Recipient Address" />
-      <input id="amount" type="number" placeholder="Amount to Send" />
-      <button onclick="send()">Send Now</button>
-    </div>
-
-    <!-- ✅ Buy QTC with Bitcoin -->
-    <div class="btc-section">
-      <h2>Buy with Bitcoin</h2>
+    <!-- Buy with BTC -->
+    <div class="buy-box">
+      <h2>Buy QTC with Bitcoin</h2>
       <p>Send BTC to:</p>
       <code>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
-      <p>QuantumCoin will auto-deliver to your wallet after 3 confirmations.</p>
+      <p class="confirm-note">QuantumCoin will auto-send after 3 confirmations.</p>
     </div>
 
-    <!-- ✅ Terms -->
-    <div class="terms" id="terms">
-      <h2>Terms & Conditions</h2>
-      <p>
-        By registering, you agree to store your private key securely and accept all risks.
-        RevStop™ is enabled by default. QuantumCoin is a sovereign asset and non-refundable.
-      </p>
+    <!-- Wallet UI -->
+    <div class="wallet-box">
+      <p><strong>Your Wallet:</strong> <span id="wallet-address">Loading...</span></p>
+      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
+      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
     </div>
+
+    <!-- Send Coins -->
+    <div class="send-box">
+      <h3>Send QTC</h3>
+      <input id="recipient" type="text" placeholder="Recipient Address" />
+      <input id="amount" type="number" placeholder="Amount to Send" />
+      <button onclick="send()">🚀 Send Now</button>
+    </div>
+
+    <!-- Terms -->
+    <p class="terms">By using QuantumCoin, you accept all risks. RevStop™ enabled.</p>
   </div>
 
-  <!-- ✅ JavaScript -->
   <script src="script.js"></script>
 </body>
 </html>
