@@ -2,100 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuantumCoin | Secure Crypto of the Future</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin - Login & Register</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <!-- Background video -->
-  <video autoplay muted loop id="bg-video">
-    <source src="quantum.mp4#t=0,3" type="video/mp4" />
+
+  <!-- 🔁 Background Video -->
+  <video autoplay muted playsinline id="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
 
-  <!-- Overlay for glass effect -->
-  <div class="overlay"></div>
-
-  <!-- Main Container -->
   <div class="container">
     <h1 class="title">QuantumCoin</h1>
     <p class="subtitle">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
 
-    <!-- Login Section -->
+    <!-- 🔐 Login Form -->
     <div class="card">
       <h2>Login</h2>
-      <input id="login-username" type="text" placeholder="Username" />
-      <input id="login-password" type="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
+      <input type="text" id="login-username" placeholder="Username"/>
+      <input type="password" id="login-password" placeholder="Password"/>
+      <button onclick="login()" class="btn">Login</button>
     </div>
 
-    <!-- Register Section -->
+    <!-- 🧾 Register Form -->
     <div class="card">
       <h2>Register</h2>
-      <input id="register-username" type="text" placeholder="New Username" />
-      <input id="register-password" type="password" placeholder="New Password" />
-      <label>
-        <input type="checkbox" id="terms-checkbox" /> I agree to the 
-        <a href="#" onclick="showTerms()">Terms & Conditions</a>
+      <input type="text" id="register-username" placeholder="New Username"/>
+      <input type="password" id="register-password" placeholder="New Password"/>
+      <label class="terms">
+        <input type="checkbox" id="terms-checkbox" />
+        I agree to the <a href="#" onclick="document.getElementById('terms-modal').style.display='block'">Terms & Conditions</a>
       </label>
-      <button onclick="register()">Create Account</button>
-    </div>
-
-    <!-- Wallet Info -->
-    <div class="card">
-      <h2>Wallet</h2>
-      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
-      <button onclick="refreshBalance()">Refresh Balance</button>
-    </div>
-
-    <!-- Send QTC -->
-    <div class="card">
-      <h2>Send QTC</h2>
-      <input id="recipient" type="text" placeholder="Recipient Address" />
-      <input id="amount" type="number" placeholder="Amount to Send" />
-      <button onclick="send()">Send Now</button>
-    </div>
-
-    <!-- Buy QTC with Bitcoin -->
-    <div class="card">
-      <h2>Buy QTC with Bitcoin</h2>
-      <p>Send BTC to:</p>
-      <code>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
-      <p>After 3 confirmations, your QTC will be delivered automatically based on real-time BTC price.</p>
-    </div>
-
-    <!-- Price Display -->
-    <div class="card">
-      <h2>Current QTC Price</h2>
-      <p><span id="qtc-price">Fetching...</span> USD / QTC</p>
+      <button onclick="register()" class="btn">Create Account</button>
     </div>
   </div>
 
-  <!-- Terms & Conditions Modal -->
+  <!-- 📜 Terms Modal -->
   <div id="terms-modal" class="modal">
     <div class="modal-content">
-      <h2>Terms & Conditions</h2>
-      <p style="font-size: 12px; max-height: 300px; overflow-y: scroll;">
-        By registering, you confirm that you are the lawful owner of the credentials entered...
-        <br><br>
-        QuantumCoin is a decentralized quantum-secure blockchain protocol...
-        <br><br>
-        • You are responsible for safeguarding your private keys and passphrases.
-        • QuantumCoin is non-refundable once issued.
-        • RevStop™ protection is enabled by default on all wallets.
-        • You acknowledge full understanding of cryptocurrency volatility.
-        • QuantumCoin does not offer recovery or password reset services.
-        • Abuse or exploitation of the protocol will lead to blacklisting.
-        • By proceeding, you agree to abide by local and international regulations on cryptocurrency usage.
-        • All BTC sent must be from wallets you control and will be checked through automatic confirmation.
-        • 3 blockchain confirmations are required before QTC is issued.
-        • Smart contracts and transactions are final and irreversible once validated.
-        • The project and team disclaim liability for third-party losses or mismanagement of funds.
-
-        ... (Add 20x more as needed)
+      <h3>QuantumCoin Terms & Conditions</h3>
+      <p>
+        QuantumCoin is a decentralized, quantum-safe digital currency. By using it, you agree to all risk factors such as volatility, wallet responsibility, and irreversible transactions.
       </p>
-      <button onclick="closeTerms()">Close</button>
+      <label>
+        <input type="checkbox" id="terms-checkbox-modal" />
+        I agree to the full Terms
+      </label>
+      <button onclick="acceptTermsAndRegister()" class="btn">Accept & Register</button>
     </div>
   </div>
 
