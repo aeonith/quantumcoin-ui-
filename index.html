@@ -2,90 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™ | Secure. Quantum-Resistant.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <!-- Background video -->
-  <video id="bg-video" autoplay muted loop playsinline>
-    <source src="quantum-bg.mp4" type="video/mp4">
-    Your browser does not support video.
+  <video autoplay muted loop playsinline class="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
   </video>
-  <div class="overlay"></div>
 
-  <div class="container">
-    <h1 class="logo">QuantumCoin™</h1>
-    <p class="tagline">Secure. Quantum-Resistant. Ready for the future.</p>
+  <div class="overlay">
 
-    <!-- LOGIN CARD -->
-    <div class="card" id="login-card">
-      <h2>Login</h2>
-      <input id="login-username" type="text" placeholder="Username" />
-      <input id="login-password" type="password" placeholder="Password" />
-      <button class="btn" onclick="login()">Login</button>
-      <p class="switch"><a href="#" onclick="showRegister()">New? Register →</a></p>
-    </div>
+    <header>
+      <h1>QuantumCoin</h1>
+      <p>Secure. Quantum-Resistant. Ready for the future.</p>
+    </header>
 
-    <!-- REGISTER CARD -->
-    <div class="card" id="register-card" style="display:none">
+    <section class="card">
+      <h2>Buy QTC with Bitcoin</h2>
+      <p>Send BTC to:</p>
+      <code class="btc-address">bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
+      <p>QuantumCoin will auto-send after 3 confirmations.</p>
+    </section>
+
+    <section class="card">
+      <h2>Your Wallet</h2>
+      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
+      <p><strong>Balance:</strong> <span id="wallet-balance">0 QTC</span></p>
+      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
+    </section>
+
+    <section class="card">
+      <h2>Send QTC</h2>
+      <input type="text" placeholder="Recipient Address" id="send-address" />
+      <input type="number" placeholder="Amount to Send" id="send-amount" />
+      <button onclick="sendQTC()">🚀 Send Now</button>
+    </section>
+
+    <section class="card">
       <h2>Register</h2>
-      <input id="register-username" type="text" placeholder="New Username" />
-      <input id="register-password" type="password" placeholder="New Password" />
-      <p><a href="#" onclick="openTerms()">View Terms & Conditions</a></p>
-      <label class="checkbox-label">
-        <input id="terms-checkbox" type="checkbox" />
-        I agree to the Terms
-      </label>
-      <button class="btn" onclick="register()">Create Account</button>
-      <p class="switch"><a href="#" onclick="showLogin()">Have an account? Login →</a></p>
-    </div>
-
-    <!-- DASHBOARD (shown after login) -->
-    <div id="dashboard" style="display:none">
-      <!-- BUY WITH BTC -->
-      <div class="card">
-        <h2>Buy QTC with Bitcoin</h2>
-        <p>Send BTC to:</p>
-        <code class="btc-address">bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
-        <p>QuantumCoin will auto-deliver after <strong>3 confirmations</strong>.</p>
+      <input type="text" placeholder="New Username" id="new-username" />
+      <input type="password" placeholder="New Password" id="new-password" />
+      <div class="checkbox-container">
+        <input type="checkbox" id="agree-terms" />
+        <label for="agree-terms">I agree to the <span class="link" onclick="showTerms()">Terms & Conditions</span></label>
       </div>
+      <button onclick="createAccount()" id="create-account" disabled>Create Account</button>
+      <p>Have an account? <a href="#">Login</a></p>
+    </section>
 
-      <!-- WALLET -->
-      <div class="card">
-        <h2>Your Wallet</h2>
-        <p><strong>Address:</strong> <span id="wallet-address">Loading…</span></p>
-        <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
-        <button class="btn small" onclick="refreshBalance()">🔄 Refresh Balance</button>
-      </div>
+    <section class="card">
+      <h2>Live Price</h2>
+      <p>1 QTC = <span id="qtc-price">$0.00</span></p>
+    </section>
 
-      <!-- SEND QTC -->
-      <div class="card">
-        <h2>Send QTC</h2>
-        <input id="recipient" type="text" placeholder="Recipient Address" />
-        <input id="amount" type="number" placeholder="Amount to Send" />
-        <button class="btn" onclick="sendQTC()">🚀 Send Now</button>
-      </div>
-    </div>
+    <section class="card">
+      <h2>Why QuantumCoin?</h2>
+      <ul>
+        <li>✅ Post-Quantum Cryptography (Dilithium2)</li>
+        <li>✅ RevStop™ User-Controlled Freeze</li>
+        <li>✅ Lightning-Fast Shielded Transactions</li>
+        <li>✅ Built-in Halving & Cold Storage System</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>RevStop™ Protection Enabled</p>
+    </footer>
   </div>
 
-  <!-- TERMS MODAL -->
+  <!-- Terms Modal -->
   <div id="terms-modal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeTerms()">×</span>
       <h2>Terms & Conditions</h2>
-      <div class="modal-body">
-        <p>By creating an account or using QuantumCoin™, you agree to:</p>
-        <ul>
-          <li>Store your private key securely. We NEVER store it for you.</li>
-          <li>Be fully responsible for any loss of funds if your key is lost.</li>
-          <li>Understand that RevStop™ adds protection but does not guarantee recovery.</li>
-          <li>Accept that all QTC transactions are final and irreversible.</li>
-          <li>Agree to no refunds once QTC has been transferred to your address.</li>
-        </ul>
+      <div class="terms-text" id="terms-text">
+        <!-- Injected from script.js -->
       </div>
-      <button class="btn" onclick="closeTerms()">I Understand</button>
+      <button onclick="acceptTerms()">✅ I Accept</button>
     </div>
   </div>
 
