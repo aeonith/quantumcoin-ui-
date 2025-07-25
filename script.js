@@ -1,64 +1,48 @@
-function login() {
-  const username = document.getElementById("login-username").value;
-  const password = document.getElementById("login-password").value;
+const api = "https://quantumcoin-ithu.onrender.com";
 
-  fetch("https://quantumcoin-ithu.onrender.com/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  })
-    .then(res => res.json())
-    .then(data => alert(data.message || "Logged in"))
-    .catch(err => alert("Login error"));
+async function refreshWallet() {
+  const res = await fetch(`${api}/wallet`);
+  const data = await res.json();
+  document.getElementById("walletAddress").textContent = data.address || "Unavailable";
+  document.getElementById("walletBalance").textContent = data.balance || "0";
 }
 
-function register() {
-  const username = document.getElementById("register-username").value;
-  const password = document.getElementById("register-password").value;
-  const agreed = document.getElementById("terms-agree-box").checked;
+async function sendTransaction() {
+  const recipient = document.getElementById("recipient").value;
+  const amount = document.getElementById("amount").value;
+  await fetch(`${api}/send`, {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ recipient, amount })
+  });
+  alert("Transaction Sent!");
+}
+
+async function register() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const agreed = document.getElementById("agreeTerms").checked;
 
   if (!agreed) {
-    alert("You must agree to the terms and conditions to register.");
+    alert("Please agree to the Terms & Conditions before registering.");
     return;
   }
 
-  fetch("https://quantumcoin-ithu.onrender.com/api/register", {
+  await fetch(`${api}/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  })
-    .then(res => res.json())
-    .then(data => alert(data.message || "Account created"))
-    .catch(err => alert("Registration error"));
-}
-
-function refreshBalance() {
-  fetch("https://quantumcoin-ithu.onrender.com/api/balance")
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("wallet-balance").textContent = data.balance;
-      document.getElementById("wallet-address").textContent = data.address;
-    });
-}
-
-function send() {
-  const recipient = document.getElementById("recipient").value;
-  const amount = document.getElementById("amount").value;
-
-  fetch("https://quantumcoin-ithu.onrender.com/api/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient, amount }),
-  })
-    .then(res => res.json())
-    .then(data => alert(data.message || "Sent"))
-    .catch(err => alert("Send failed"));
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  alert("Account created!");
 }
 
 function showTerms() {
-  document.getElementById("terms-modal").classList.remove("hidden");
+  document.getElementById("termsModal").style.display = "block";
 }
 
 function closeTerms() {
-  document.getElementById("terms-modal").classList.add("hidden");
+  document.getElementById("termsModal").style.display = "none";
 }
+
+// Load wallet on first render
+refreshWallet();
