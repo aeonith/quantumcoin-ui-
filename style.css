@@ -1,7 +1,10 @@
+/* Reset and Background */
 body, html {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', sans-serif;
+  height: 100%;
+  background: black;
   overflow-x: hidden;
 }
 
@@ -9,44 +12,54 @@ body, html {
   position: fixed;
   top: 0;
   left: 0;
-  min-width: 100vw;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
   z-index: -1;
 }
 
-.overlay {
-  padding: 20px;
-  color: white;
+/* Foreground UI */
+.main-content {
+  position: relative;
+  z-index: 2;
   text-align: center;
+  padding: 40px 20px;
+  color: white;
 }
 
-.header-title {
-  font-size: 2.5rem;
-  margin-top: 30px;
+.title {
+  font-size: 3rem;
+  margin-bottom: 10px;
 }
 
 .tagline {
-  margin-bottom: 30px;
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+  color: #ccc;
 }
 
+/* Cards (glass effect) */
 .card {
-  background: rgba(0, 0, 0, 0.7);
-  margin: 20px auto;
-  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
   border-radius: 15px;
+  padding: 25px;
+  margin: 20px auto;
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  max-width: 420px;
+  box-shadow: 0 0 30px rgba(0, 153, 255, 0.2);
+  color: #fff;
 }
 
+/* Inputs and Buttons */
 input {
   width: 90%;
-  padding: 10px;
+  padding: 12px;
   margin: 10px 0;
   border: none;
   border-radius: 10px;
   font-size: 1em;
+  outline: none;
 }
 
 button {
@@ -61,30 +74,37 @@ button {
 }
 
 .checkbox-label {
+  font-size: 0.9em;
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: 10px;
-  justify-content: center;
-  font-size: 0.9em;
 }
 
+/* Modal */
 .modal {
   display: none;
   position: fixed;
-  z-index: 100;
+  z-index: 99;
   left: 0; top: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  overflow-y: scroll;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  overflow-y: auto;
 }
 
 .modal-content {
   background-color: #111;
-  color: white;
   padding: 30px;
-  margin: 50px auto;
+  color: white;
+  margin: 40px auto;
   border-radius: 15px;
   width: 90%;
-  max-width: 700px;
+  max-width: 800px;
   text-align: left;
+}
+
+.terms-text {
+  font-size: 0.75em;
+  line-height: 1.5em;
 }
