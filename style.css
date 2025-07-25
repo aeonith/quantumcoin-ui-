@@ -1,76 +1,138 @@
-/* Reset & base */
-* { margin:0; padding:0; box-sizing:border-box; }
-body, html { height:100%; font-family:Arial,sans-serif; color:#fff; overflow:hidden; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body, html {
+  height: 100%;
+  font-family: 'Segoe UI', sans-serif;
+  color: #fff;
+  overflow: hidden;
+  background: #000;
+}
 
-/* Background video + overlay */
+/* 🔥 Background Video */
 #bg-video {
-  position:fixed; top:50%; left:50%;
-  min-width:100%; min-height:100%;
-  width:auto; height:auto; z-index:-2;
-  transform:translate(-50%,-50%);
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 100vw;
+  min-height: 100vh;
+  z-index: -2;
 }
 .overlay {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(0,0,50,0.5);
-  z-index:-1;
+  position: fixed;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: -1;
 }
 
-/* Container */
+/* ⚡ Main Container */
 .container {
-  position:relative; z-index:1;
-  max-width:400px; margin:auto; padding:20px;
-  backdrop-filter:blur(10px);
+  width: 95%;
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
+  text-align: center;
+  backdrop-filter: blur(16px);
 }
 
-/* Headings */
-h1 { text-align:center; font-size:2rem; margin-bottom:0.2em; }
-.tagline { text-align:center; font-size:1rem; margin-bottom:1.5em; }
+/* 🎨 Branding */
+h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.3em;
+  background: linear-gradient(to right, #ff7f50, #1e90ff);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.tagline {
+  font-size: 1.1rem;
+  margin-bottom: 1.5em;
+}
 
-/* Forms & sections */
+/* 🔳 Form Boxes */
 .form-box, .wallet-section, .send-section, .btc-section {
-  background:rgba(255,255,255,0.1); margin-bottom:1.2em; padding:1em;
-  border-radius:8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 1.2em;
 }
-.form-box.hidden, .dashboard.hidden, .modal.hidden { display:none; }
-
-.input, input {
-  width:100%; padding:0.6em; margin:0.4em 0; border:none;
-  border-radius:4px; background:rgba(255,255,255,0.2); color:#fff;
+input {
+  width: 100%;
+  margin: 0.4em 0;
+  padding: 0.7em;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
 }
-input::placeholder { color:rgba(255,255,255,0.7); }
+input::placeholder {
+  color: rgba(255,255,255,0.6);
+}
+code {
+  background: rgba(0,0,0,0.4);
+  padding: 0.4em;
+  display: block;
+  margin: 0.6em 0;
+  word-break: break-all;
+  border-radius: 6px;
+}
 
-/* Buttons */
+/* 🎯 Buttons */
 .btn {
-  display:block; width:100%; margin-top:0.5em; padding:0.8em;
-  border:none; border-radius:4px; background:linear-gradient(45deg,#1e90ff,#ff7f50);
-  color:#fff; font-size:1rem; cursor:pointer;
+  width: 100%;
+  background: linear-gradient(to right, #1e90ff, #ff7f50);
+  color: #fff;
+  padding: 0.8em;
+  font-size: 1em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
-.btn.small { width:auto; font-size:0.9rem; padding:0.5em 1em; }
-
-/* Toggles */
-.toggle { text-align:center; margin-top:0.5em; }
-.toggle a { color:#ff7f50; text-decoration:underline; }
-
-/* Code block */
-.btc-section code {
-  display:block; background:rgba(0,0,0,0.3); padding:0.5em;
-  border-radius:4px; word-break:break-all;
+.btn.small {
+  width: auto;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  margin-top: 0.4em;
+}
+.toggle {
+  margin-top: 0.6em;
+}
+.toggle a {
+  color: #ff7f50;
+  text-decoration: underline;
 }
 
-/* Terms modal */
+/* 📜 Modal */
 .modal {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.8);
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal.hidden {
+  display: none;
 }
 .modal-content {
-  background:rgba(255,255,255,0.95); color:#000; padding:1.5em;
-  max-width:90%; max-height:80%; overflow-y:auto; border-radius:8px;
+  background: #fff;
+  color: #000;
+  padding: 1.2em;
+  max-width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  border-radius: 8px;
+  text-align: left;
 }
-.terms-text { font-size:0.8rem; line-height:1.4; color:#333; }
+.terms-text {
+  font-size: 0.8em;
+  line-height: 1.5;
+  color: #111;
+}
 
-/* Responsive */
-@media(max-width:480px) {
-  .container { width:90%; padding:10px; }
-  h1 { font-size:1.5rem; }
-  .btn { font-size:0.9rem; }
+/* 💠 Responsive */
+@media(max-width: 500px){
+  h1 { font-size: 1.8rem; }
+  .btn { font-size: 0.9rem; }
 }
