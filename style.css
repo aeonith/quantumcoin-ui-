@@ -1,110 +1,86 @@
-/* Reset and Background */
 body, html {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', sans-serif;
-  height: 100%;
-  background: black;
   overflow-x: hidden;
 }
 
-.bg-video {
+#bgVideo {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
+  right: 0;
+  bottom: 0;
+  min-width: 100vw;
+  min-height: 100vh;
   z-index: -1;
+  object-fit: cover;
 }
 
-/* Foreground UI */
-.main-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 40px 20px;
+.overlay {
+  padding: 2rem;
   color: white;
+  background: rgba(0, 0, 0, 0.5);
+  min-height: 100vh;
 }
 
-.title {
-  font-size: 3rem;
-  margin-bottom: 10px;
+h1 {
+  font-size: 2.5rem;
+  background: linear-gradient(to right, orange, dodgerblue);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.tagline {
-  font-size: 1.2rem;
-  margin-bottom: 40px;
-  color: #ccc;
-}
-
-/* Cards (glass effect) */
 .card {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  padding: 25px;
-  margin: 20px auto;
-  width: 90%;
-  max-width: 420px;
-  box-shadow: 0 0 30px rgba(0, 153, 255, 0.2);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+  backdrop-filter: blur(5px);
 }
 
-/* Inputs and Buttons */
 input {
-  width: 90%;
-  padding: 12px;
-  margin: 10px 0;
+  padding: 0.5rem;
+  margin: 0.3rem;
+  border-radius: 5px;
   border: none;
-  border-radius: 10px;
-  font-size: 1em;
-  outline: none;
+  width: 45%;
 }
 
 button {
-  background: linear-gradient(90deg, #ff8a00, #0077ff);
-  color: white;
+  padding: 0.6rem 1.2rem;
   border: none;
-  padding: 12px 25px;
-  font-size: 1em;
-  border-radius: 10px;
+  background: linear-gradient(to right, orange, dodgerblue);
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 0.5rem;
 }
 
-.checkbox-label {
-  font-size: 0.9em;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Modal */
-.modal {
-  display: none;
+.popup {
   position: fixed;
-  z-index: 99;
-  left: 0; top: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.9);
-  overflow-y: auto;
+  background: rgba(10, 10, 10, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.modal-content {
-  background-color: #111;
-  padding: 30px;
-  color: white;
-  margin: 40px auto;
-  border-radius: 15px;
+.popup-inner {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
   width: 90%;
-  max-width: 800px;
-  text-align: left;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: black;
 }
 
-.terms-text {
-  font-size: 0.75em;
-  line-height: 1.5em;
+.fineprint {
+  font-size: 0.6rem;
+  line-height: 1.2;
 }
