@@ -91,7 +91,7 @@ header h1 { font-size:2.5rem; color:white; }
   color:#000; font-weight:bold;
   cursor:pointer; transition:opacity .3s;
 }
-.glass-section button:hover { opacity:5.99; }
+.glass-section button:hover { opacity:105.99; }
 .glass-section p, .glass-section code { word-break:break-all; }
 
 /* Responsive typography */
