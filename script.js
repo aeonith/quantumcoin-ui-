@@ -1,98 +1,91 @@
 const API = 'https://quantumcoin-ithu.onrender.com';
 
-// helpers
-function $(id){ return document.getElementById(id); }
-function show(id){ $(id).style.display = 'block'; }
-function hide(id){ $(id).style.display = 'none'; }
+// 3s loop for the background video
+const video = document.getElementById('bg-video');
+setInterval(() => {
+  video.currentTime = 0;
+  video.play();
+}, 3000);
 
-/* LOGIN / REGISTER */
-async function login(){
-  const user = $('login-username').value;
-  const pass = $('login-password').value;
-  try {
-    let res = await fetch(`${API}/login`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ username:user, password:pass }),
-    });
-    if(!res.ok) throw new Error(await res.text());
-    // on success
-    hide('login-card');
-    hide('register-card');
-    show('dashboard');
-    loadWallet();
-  } catch(e){
-    alert('Login error: '+e.message);
-  }
-}
-
+// UI helpers
 function showRegister(){
-  hide('login-card');
-  show('register-card');
+  document.getElementById('login-box').classList.add('hidden');
+  document.getElementById('register-box').classList.remove('hidden');
 }
 function showLogin(){
-  hide('register-card');
-  show('login-card');
+  document.getElementById('register-box').classList.add('hidden');
+  document.getElementById('login-box').classList.remove('hidden');
+}
+function showTerms(){
+  document.getElementById('terms-modal').classList.remove('hidden');
+}
+function closeTerms(){
+  document.getElementById('terms-modal').classList.add('hidden');
+}
+function showDashboard(){
+  document.getElementById('login-box').classList.add('hidden');
+  document.getElementById('register-box').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
 }
 
-/* TERMS MODAL */
-function openTerms(){ show('terms-modal'); }
-function closeTerms(){ hide('terms-modal'); }
+// Authentication
+async function login(){
+  let u = document.getElementById('login-username').value,
+      p = document.getElementById('login-password').value;
+  let res = await fetch(`${API}/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:u,password:p})
+  });
+  if(res.ok){
+    window.token = (await res.json()).token;
+    await loadWallet();
+    showDashboard();
+  } else {
+    alert('Login failed');
+  }
+}
 
-/* REGISTER */
 async function register(){
-  if(!$('terms-checkbox').checked){
-    return alert('You must agree to the Terms & Conditions');
+  if(!document.getElementById('terms-checkbox').checked){
+    return alert('You must agree to the terms');
   }
-  const user = $('register-username').value;
-  const pass = $('register-password').value;
-  try {
-    let res = await fetch(`${API}/register`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ username:user, password:pass }),
-    });
-    if(!res.ok) throw new Error(await res.text());
-    alert('Account created! Please log in.');
+  let u = document.getElementById('register-username').value,
+      p = document.getElementById('register-password').value;
+  let res = await fetch(`${API}/register`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:u,password:p})
+  });
+  if(res.ok){
+    alert('Registered! Please login.');
     showLogin();
-  } catch(e){
-    alert('Register error: '+e.message);
-  }
+  } else alert('Registration failed');
 }
 
-/* WALLET */
+// Wallet & transactions
 async function loadWallet(){
-  try {
-    let addr = await fetch(`${API}/address`).then(r=>r.text());
-    $('wallet-address').textContent = addr;
-    refreshBalance();
-  } catch {
-    $('wallet-address').textContent = 'Error';
-  }
-}
-async function refreshBalance(){
-  try {
-    let bal = await fetch(`${API}/balance`).then(r=>r.text());
-    $('wallet-balance').textContent = bal;
-  } catch {
-    $('wallet-balance').textContent = 'Error';
-  }
+  let res = await fetch(`${API}/wallet`, {
+    headers:{ 'Authorization':'Bearer '+window.token }
+  });
+  let data = await res.json();
+  document.getElementById('wallet-address').innerText = data.address;
+  document.getElementById('wallet-balance').innerText = data.balance;
 }
 
-/* SEND QTC */
+async function refreshBalance(){
+  await loadWallet();
+}
+
 async function sendQTC(){
-  const to = $('recipient').value;
-  const amt = parseFloat($('amount').value);
-  if(!to||!amt) return alert('Address & amount required');
-  try {
-    let res = await fetch(`${API}/send`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ to, amount:amt }),
-    });
-    alert(await res.text());
-    refreshBalance();
-  } catch(e){
-    alert('Send error: '+e.message);
-  }
+  let to = document.getElementById('recipient').value,
+      amt = parseFloat(document.getElementById('amount').value);
+  let res = await fetch(`${API}/send`, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+window.token
+    },
+    body:JSON.stringify({to,amount:amt})
+  });
+  alert(res.ok ? 'Sent!' : 'Send failed');
+  refreshBalance();
 }
