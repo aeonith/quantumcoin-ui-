@@ -2,124 +2,103 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin | Secure Crypto of the Future</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- Working Video Background -->
-  <video autoplay muted loop playsinline id="bgVideo">
-    <source src="quantum-bg.mp4" type="video/mp4" />
+  <!-- Background video -->
+  <video autoplay muted loop id="bg-video">
+    <source src="quantum.mp4#t=0,3" type="video/mp4" />
     Your browser does not support the video tag.
   </video>
 
-  <div class="overlay">
-    <h1>QuantumCoin</h1>
-    <p>Quantum-resistant currency of the future</p>
+  <!-- Overlay for glass effect -->
+  <div class="overlay"></div>
 
+  <!-- Main Container -->
+  <div class="container">
+    <h1 class="title">QuantumCoin</h1>
+    <p class="subtitle">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
+
+    <!-- Login Section -->
+    <div class="card">
+      <h2>Login</h2>
+      <input id="login-username" type="text" placeholder="Username" />
+      <input id="login-password" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Register Section -->
+    <div class="card">
+      <h2>Register</h2>
+      <input id="register-username" type="text" placeholder="New Username" />
+      <input id="register-password" type="password" placeholder="New Password" />
+      <label>
+        <input type="checkbox" id="terms-checkbox" /> I agree to the 
+        <a href="#" onclick="showTerms()">Terms & Conditions</a>
+      </label>
+      <button onclick="register()">Create Account</button>
+    </div>
+
+    <!-- Wallet Info -->
+    <div class="card">
+      <h2>Wallet</h2>
+      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
+      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
+      <button onclick="refreshBalance()">Refresh Balance</button>
+    </div>
+
+    <!-- Send QTC -->
+    <div class="card">
+      <h2>Send QTC</h2>
+      <input id="recipient" type="text" placeholder="Recipient Address" />
+      <input id="amount" type="number" placeholder="Amount to Send" />
+      <button onclick="send()">Send Now</button>
+    </div>
+
+    <!-- Buy QTC with Bitcoin -->
     <div class="card">
       <h2>Buy QTC with Bitcoin</h2>
       <p>Send BTC to:</p>
-      <p class="btc">bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</p>
-      <p>Auto-send after 3 confirmations.</p>
+      <code>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
+      <p>After 3 confirmations, your QTC will be delivered automatically based on real-time BTC price.</p>
     </div>
 
+    <!-- Price Display -->
     <div class="card">
-      <h2>Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="walletBalance">Loading...</span> QTC</p>
-      <button onclick="loadWallet()">🔁 Refresh</button>
-    </div>
-
-    <div class="card">
-      <h2>Send QTC</h2>
-      <input type="text" id="sendTo" placeholder="Recipient Address" />
-      <input type="number" id="sendAmount" placeholder="Amount to Send" />
-      <button onclick="sendCoins()">🚀 Send</button>
-    </div>
-
-    <div class="card">
-      <h2>Register</h2>
-      <input type="text" id="username" placeholder="Username" />
-      <input type="password" id="password" placeholder="Password" />
-      <br/>
-      <label>
-        <input type="checkbox" id="agree" />
-        I agree to the <a href="#" id="termsLink">Terms & Conditions</a>
-      </label>
-      <button onclick="register()">📝 Register</button>
+      <h2>Current QTC Price</h2>
+      <p><span id="qtc-price">Fetching...</span> USD / QTC</p>
     </div>
   </div>
 
-  <!-- Terms & Conditions Popup -->
-  <div id="termsPopup" class="popup">
-    <div class="popup-inner">
-      <h3>Terms & Conditions</h3>
-      <p class="fineprint">
-        QuantumCoin is a decentralized quantum-resistant currency. Use at your own risk...<br/><br/>
-        [Insert long-form legal details: wallet control, irreversible payments, blockchain risk, regulatory compliance, etc...]
+  <!-- Terms & Conditions Modal -->
+  <div id="terms-modal" class="modal">
+    <div class="modal-content">
+      <h2>Terms & Conditions</h2>
+      <p style="font-size: 12px; max-height: 300px; overflow-y: scroll;">
+        By registering, you confirm that you are the lawful owner of the credentials entered...
+        <br><br>
+        QuantumCoin is a decentralized quantum-secure blockchain protocol...
+        <br><br>
+        • You are responsible for safeguarding your private keys and passphrases.
+        • QuantumCoin is non-refundable once issued.
+        • RevStop™ protection is enabled by default on all wallets.
+        • You acknowledge full understanding of cryptocurrency volatility.
+        • QuantumCoin does not offer recovery or password reset services.
+        • Abuse or exploitation of the protocol will lead to blacklisting.
+        • By proceeding, you agree to abide by local and international regulations on cryptocurrency usage.
+        • All BTC sent must be from wallets you control and will be checked through automatic confirmation.
+        • 3 blockchain confirmations are required before QTC is issued.
+        • Smart contracts and transactions are final and irreversible once validated.
+        • The project and team disclaim liability for third-party losses or mismanagement of funds.
+
+        ... (Add 20x more as needed)
       </p>
-      <button onclick="closeTerms()">✔️ Close</button>
+      <button onclick="closeTerms()">Close</button>
     </div>
   </div>
 
-  <!-- Scripts MUST be at the bottom -->
-  <script>
-    const API = 'https://quantumcoin-ithu.onrender.com';
-
-    async function loadWallet() {
-      try {
-        const res = await fetch(`${API}/wallet`);
-        const data = await res.json();
-        document.getElementById('walletAddress').textContent = data.address;
-        document.getElementById('walletBalance').textContent = data.balance;
-      } catch {
-        alert('Failed to load wallet.');
-      }
-    }
-
-    async function sendCoins() {
-      const to = document.getElementById('sendTo').value;
-      const amount = document.getElementById('sendAmount').value;
-      const res = await fetch(`${API}/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to, amount }),
-      });
-      const result = await res.json();
-      alert(result.message);
-      loadWallet();
-    }
-
-    async function register() {
-      const user = document.getElementById('username').value;
-      const pass = document.getElementById('password').value;
-      const agree = document.getElementById('agree').checked;
-      if (!agree) return alert("Please agree to the Terms & Conditions.");
-
-      const res = await fetch(`${API}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user, pass }),
-      });
-
-      const result = await res.json();
-      alert(result.message);
-    }
-
-    function closeTerms() {
-      document.getElementById('termsPopup').style.display = 'none';
-    }
-
-    // Ensure terms button always works
-    window.onload = function () {
-      document.getElementById('termsLink').addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('termsPopup').style.display = 'flex';
-      });
-    };
-  </script>
-
+  <script src="script.js"></script>
 </body>
 </html>
