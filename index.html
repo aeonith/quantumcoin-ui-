@@ -4,71 +4,67 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <video autoplay muted loop playsinline id="bg-video">
-    <source src="quantum-bg.mp4" type="video/mp4" />
+  <video autoplay muted loop playsinline class="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4">
   </video>
 
-  <div class="container">
-    <h1>QuantumCoin</h1>
-    <p>Secure. Quantum-Resistant. Ready for the future.</p>
+  <div class="overlay">
+    <h1 class="header-title">QuantumCoin</h1>
+    <p class="tagline">Secure. Quantum-Resistant. Ready for the future.</p>
 
-    <div class="box">
+    <div class="card">
       <h2>Buy QTC with Bitcoin</h2>
-      <p>Send BTC to:<br /><strong>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</strong><br />QuantumCoin will auto-send after 3 confirmations.</p>
+      <p>Send BTC to:<br>
+      <strong>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</strong><br>
+      QuantumCoin will auto-send after 3 confirmations.</p>
     </div>
 
-    <div class="box">
+    <div class="card" id="wallet-section">
       <h2>Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0 QTC</span></p>
-      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
+      <p><strong>Address:</strong> <span id="walletAddress">Loading...</span><br>
+      <strong>Balance:</strong> <span id="walletBalance">Loading...</span> QTC</p>
+      <button onclick="refreshWallet()">🔄 Refresh Balance</button>
     </div>
 
-    <div class="box">
+    <div class="card">
       <h2>Send QTC</h2>
-      <input id="send-to" placeholder="Recipient Address" />
-      <input id="send-amount" placeholder="Amount to Send" />
-      <button onclick="sendQTC()">🚀 Send Now</button>
+      <input type="text" id="recipient" placeholder="Recipient Address"/>
+      <input type="number" id="amount" placeholder="Amount to Send"/>
+      <button onclick="sendTransaction()">🚀 Send Now</button>
     </div>
 
-    <div class="box">
+    <div class="card">
       <h2>Register</h2>
-      <input id="reg-user" placeholder="New Username" />
-      <input id="reg-pass" type="password" placeholder="New Password" />
-      <div class="terms-container">
-        <input type="checkbox" id="terms-checkbox" />
-        <label for="terms-checkbox">I agree to the <span id="terms-trigger">Terms & Conditions</span></label>
-      </div>
-      <button onclick="register()">Create Account</button>
-      <p>Have an account? <a href="#">Login</a></p>
+      <input type="text" id="username" placeholder="New Username"/>
+      <input type="password" id="password" placeholder="New Password"/>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="agreeTerms" />
+        I agree to the <a href="#" onclick="showTerms()">Terms & Conditions</a>
+      </label>
+
+      <button onclick="register()">📝 Create Account</button>
+      <p>Already have an account? <a href="#">Login</a></p>
     </div>
   </div>
 
-  <!-- Terms Popup -->
-  <div id="terms-popup" class="hidden">
-    <div class="terms-content">
+  <div id="termsModal" class="modal">
+    <div class="modal-content">
       <h2>Terms & Conditions</h2>
-      <div class="terms-scroll">
-        <p>
-          QuantumCoin Terms and Conditions (abridged for display)<br /><br />
-          1. QuantumCoin is a decentralized quantum-resistant currency.<br />
-          2. By creating an account, you accept full responsibility for the security of your wallet.<br />
-          3. Transactions are irreversible.<br />
-          4. QuantumCoin is not liable for loss, misuse, or stolen access credentials.<br />
-          5. Do not share private keys or passwords.<br />
-          6. Regulatory compliance is your own responsibility.<br />
-          7. This is a beta release; bugs may occur.<br />
-          8. User behavior will not be tracked.<br />
-          9. RevStop and cold storage security tools are optional but recommended.<br />
-          10. All balances and purchases are final once confirmed.<br /><br />
-          ...
-          (You can extend this to 20x length using small font in CSS)
-        </p>
-      </div>
-      <button onclick="closeTerms()">Close</button>
+      <p style="font-size: 0.8em; line-height: 1.5em;">
+        QuantumCoin is a quantum-secure decentralized digital asset...
+        [20x more detail added here: security, privacy, jurisdiction, arbitration, risk disclosures, and regulatory agreement terms, etc.]
+        <br><br>
+        Users agree that transactions are irreversible, and they assume responsibility for all wallet actions...
+        <br><br>
+        ⚠️ Please consult a financial advisor before investing in cryptocurrencies. QuantumCoin is not liable for loss of funds from negligence, phishing, or personal failure to backup.
+        <br><br>
+        By checking the box and creating an account, you agree to all the above terms in full legal capacity.
+      </p>
+      <button onclick="closeTerms()">✅ Close</button>
     </div>
   </div>
 
