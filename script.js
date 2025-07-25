@@ -1,48 +1,46 @@
-const api = "https://quantumcoin-ithu.onrender.com";
+const API = 'https://quantumcoin-ithu.onrender.com';
 
-async function refreshWallet() {
-  const res = await fetch(`${api}/wallet`);
+async function loadWallet() {
+  const res = await fetch(`${API}/wallet`);
   const data = await res.json();
-  document.getElementById("walletAddress").textContent = data.address || "Unavailable";
-  document.getElementById("walletBalance").textContent = data.balance || "0";
+  document.getElementById('walletAddress').textContent = data.address;
+  document.getElementById('walletBalance').textContent = data.balance;
 }
 
-async function sendTransaction() {
-  const recipient = document.getElementById("recipient").value;
-  const amount = document.getElementById("amount").value;
-  await fetch(`${api}/send`, {
-    method: "POST",
+async function sendCoins() {
+  const to = document.getElementById('sendTo').value;
+  const amount = document.getElementById('sendAmount').value;
+  const res = await fetch(`${API}/send`, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ recipient, amount })
+    body: JSON.stringify({ to, amount }),
   });
-  alert("✅ Transaction Sent!");
-}
-
-async function register() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-  const agreed = document.getElementById("agreeTerms").checked;
-
-  if (!agreed) {
-    alert("⚠️ Please agree to the Terms & Conditions.");
-    return;
-  }
-
-  await fetch(`${api}/register`, {
-    method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  alert("✅ Account Created!");
+  const result = await res.json();
+  alert(result.message);
+  loadWallet();
 }
 
 function showTerms() {
-  document.getElementById("termsModal").style.display = "block";
+  document.getElementById('termsPopup').style.display = 'flex';
 }
 
 function closeTerms() {
-  document.getElementById("termsModal").style.display = "none";
+  document.getElementById('termsPopup').style.display = 'none';
 }
 
-// Auto-load wallet
-refreshWallet();
+async function register() {
+  const user = document.getElementById('username').value;
+  const pass = document.getElementById('password').value;
+  const agree = document.getElementById('agree').checked;
+
+  if (!agree) return alert("Please agree to the Terms & Conditions.");
+
+  const res = await fetch(`${API}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user, pass }),
+  });
+
+  const result = await res.json();
+  alert(result.message);
+}
