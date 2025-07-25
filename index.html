@@ -2,73 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuantumCoin | Buy Instantly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <video autoplay muted loop id="bg-video">
-    <source src="quantum.mp4#t=0,3" type="video/mp4" />
-    Your browser does not support HTML5 video.
+  <video autoplay muted loop playsinline id="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4" />
   </video>
-
-  <div class="overlay"></div>
 
   <div class="container">
     <h1>QuantumCoin</h1>
-    <p class="tagline">The world’s most secure, quantum-resistant currency.</p>
+    <p>Secure. Quantum-Resistant. Ready for the future.</p>
 
-    <!-- Login -->
-    <div class="form-box">
-      <h2>Login</h2>
-      <input id="login-username" type="text" placeholder="Username" />
-      <input id="login-password" type="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
+    <div class="box">
+      <h2>Buy QTC with Bitcoin</h2>
+      <p>Send BTC to:<br /><strong>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</strong><br />QuantumCoin will auto-send after 3 confirmations.</p>
     </div>
 
-    <!-- Register -->
-    <div class="form-box">
-      <h2>Register</h2>
-      <input id="register-username" type="text" placeholder="New Username" />
-      <input id="register-password" type="password" placeholder="New Password" />
-      <label><input type="checkbox" id="terms-checkbox" /> I agree to the <a href="#" onclick="showTerms()">Terms</a></label>
-      <button onclick="register()">Create Account</button>
-    </div>
-
-    <!-- Wallet -->
-    <div class="wallet-section">
-      <h2>Wallet</h2>
+    <div class="box">
+      <h2>Your Wallet</h2>
       <p><strong>Address:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
-      <button onclick="refreshBalance()">Refresh Balance</button>
+      <p><strong>Balance:</strong> <span id="wallet-balance">0 QTC</span></p>
+      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
     </div>
 
-    <!-- Send QTC -->
-    <div class="send-section">
+    <div class="box">
       <h2>Send QTC</h2>
-      <input id="recipient" type="text" placeholder="Recipient Address" />
-      <input id="amount" type="number" placeholder="Amount to Send" />
-      <button onclick="send()">Send Now</button>
+      <input id="send-to" placeholder="Recipient Address" />
+      <input id="send-amount" placeholder="Amount to Send" />
+      <button onclick="sendQTC()">🚀 Send Now</button>
     </div>
 
-    <!-- Buy QTC -->
-    <div class="btc-section">
-      <h2>Buy QuantumCoin</h2>
-      <p>Send BTC to:</p>
-      <code>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
-      <p>Auto-delivery after 3 confirmations.</p>
-    </div>
-
-    <!-- Terms Modal -->
-    <div id="terms-modal" class="modal hidden">
-      <div class="modal-content">
-        <h2>Terms & Conditions</h2>
-        <div class="terms-text">
-          <p>You agree that QuantumCoin is an experimental decentralized quantum-safe currency. Transactions are final. By using this system, you accept full responsibility for your wallet and key security. RevStop™ is enabled. Loss of access to your key means loss of funds. QuantumCoin is non-refundable, and purchases are irreversible. You confirm that you are over 18 and understand all risks involved with crypto investment and usage. Transactions made through this site are cryptographically verified and irreversible once confirmed. QuantumCoin reserves the right to deny fraudulent usage. You are required to securely store your key and agree to all security measures including 2FA and RevStop settings. The team accepts no liability for losses due to negligence, misuse, or market volatility. You agree not to misuse, resell, or clone this platform. You also agree to use QuantumCoin for legal activities only. This document is binding, detailed, and non-negotiable. The protocol is open-source and may be updated for security or compliance. You agree to be automatically bound by all future terms and patches. By checking the box below, you affirm understanding and consent to all of the above in perpetuity.</p>
-        </div>
-        <label><input type="checkbox" id="terms-agree-box" /> I fully agree to these Terms & Conditions.</label>
-        <button onclick="closeTerms()">Close</button>
+    <div class="box">
+      <h2>Register</h2>
+      <input id="reg-user" placeholder="New Username" />
+      <input id="reg-pass" type="password" placeholder="New Password" />
+      <div class="terms-container">
+        <input type="checkbox" id="terms-checkbox" />
+        <label for="terms-checkbox">I agree to the <span id="terms-trigger">Terms & Conditions</span></label>
       </div>
+      <button onclick="register()">Create Account</button>
+      <p>Have an account? <a href="#">Login</a></p>
+    </div>
+  </div>
+
+  <!-- Terms Popup -->
+  <div id="terms-popup" class="hidden">
+    <div class="terms-content">
+      <h2>Terms & Conditions</h2>
+      <div class="terms-scroll">
+        <p>
+          QuantumCoin Terms and Conditions (abridged for display)<br /><br />
+          1. QuantumCoin is a decentralized quantum-resistant currency.<br />
+          2. By creating an account, you accept full responsibility for the security of your wallet.<br />
+          3. Transactions are irreversible.<br />
+          4. QuantumCoin is not liable for loss, misuse, or stolen access credentials.<br />
+          5. Do not share private keys or passwords.<br />
+          6. Regulatory compliance is your own responsibility.<br />
+          7. This is a beta release; bugs may occur.<br />
+          8. User behavior will not be tracked.<br />
+          9. RevStop and cold storage security tools are optional but recommended.<br />
+          10. All balances and purchases are final once confirmed.<br /><br />
+          ...
+          (You can extend this to 20x length using small font in CSS)
+        </p>
+      </div>
+      <button onclick="closeTerms()">Close</button>
     </div>
   </div>
 
