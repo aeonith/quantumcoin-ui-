@@ -2,51 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin — Buy Instantly</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuantumCoin™ | Your Quantum-Secure Wallet</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ✅ Fullscreen Cinematic Video -->
-  <video autoplay muted loop id="bg-video">
+  <!-- Fullscreen Background Video -->
+  <video id="bg-video" autoplay muted loop playsinline>
     <source src="quantum-bg.mp4" type="video/mp4" />
-    Your browser does not support video.
+    Your browser doesn’t support video backgrounds.
   </video>
-
-  <!-- ✅ Overlay Blur and Shade -->
   <div class="overlay"></div>
 
-  <!-- ✅ Glass UI -->
-  <div class="hero-box">
-    <h1>QuantumCoin</h1>
-    <p class="subtext">Secure. Quantum-Resistant. Ready for the future.</p>
+  <!-- Main Container -->
+  <div class="container">
 
-    <!-- Buy with BTC -->
-    <div class="buy-box">
+    <!-- Header -->
+    <header>
+      <h1>QuantumCoin™</h1>
+      <p class="tagline">Secure. Quantum-Resistant. Ready for the future.</p>
+    </header>
+
+    <!-- Authentication -->
+    <section class="auth-section">
+      <div class="auth-box" id="login-box">
+        <h2>Login</h2>
+        <input id="login-username" type="text" placeholder="Username" />
+        <input id="login-password" type="password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+        <p class="switch">
+          New here? <a href="#" onclick="toggleForms()">Register</a>
+        </p>
+      </div>
+      <div class="auth-box hidden" id="register-box">
+        <h2>Register</h2>
+        <input id="register-username" type="text" placeholder="New Username" />
+        <input id="register-password" type="password" placeholder="New Password" />
+        <label class="terms-checkbox">
+          <input id="terms-checkbox" type="checkbox" />
+          I agree to the <a href="#terms">Terms &amp; Conditions</a>
+        </label>
+        <button onclick="register()">Create Account</button>
+        <p class="switch">
+          Have an account? <a href="#" onclick="toggleForms()">Login</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- Purchase with BTC -->
+    <section class="glass-section">
       <h2>Buy QTC with Bitcoin</h2>
       <p>Send BTC to:</p>
       <code>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
-      <p class="confirm-note">QuantumCoin will auto-send after 3 confirmations.</p>
-    </div>
+      <p class="note">QuantumCoin™ will auto-deliver after 3 confirmations.</p>
+    </section>
 
-    <!-- Wallet UI -->
-    <div class="wallet-box">
-      <p><strong>Your Wallet:</strong> <span id="wallet-address">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
+    <!-- Wallet Display -->
+    <section class="glass-section">
+      <h2>Your Wallet</h2>
+      <p><strong>Address:</strong> <span id="wallet-address">—</span></p>
+      <p><strong>Balance:</strong> <span id="wallet-balance">—</span> QTC</p>
       <button onclick="refreshBalance()">🔄 Refresh Balance</button>
-    </div>
+    </section>
 
-    <!-- Send Coins -->
-    <div class="send-box">
-      <h3>Send QTC</h3>
+    <!-- Send QTC -->
+    <section class="glass-section">
+      <h2>Send QTC</h2>
       <input id="recipient" type="text" placeholder="Recipient Address" />
       <input id="amount" type="number" placeholder="Amount to Send" />
       <button onclick="send()">🚀 Send Now</button>
-    </div>
+    </section>
 
-    <!-- Terms -->
-    <p class="terms">By using QuantumCoin, you accept all risks. RevStop™ enabled.</p>
+    <!-- Terms & Conditions -->
+    <section class="glass-section" id="terms">
+      <h2>Terms &amp; Conditions</h2>
+      <p>By registering, you agree to store your private key securely and accept all security risks. RevStop™ is enabled to protect against accidental loss but does not guarantee recovery. QTC is non-refundable once sent.</p>
+    </section>
+
   </div>
 
   <script src="script.js"></script>
