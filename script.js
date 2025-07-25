@@ -1,122 +1,85 @@
-// ⏳ Background Video - Set 3 second loop manually
-const bgVideo = document.getElementById("bg-video");
-bgVideo.addEventListener("loadedmetadata", () => {
-  bgVideo.currentTime = 0;
-  setInterval(() => {
-    bgVideo.currentTime = 0;
-    bgVideo.play();
-  }, 3000);
-});
+const BACKEND_URL = "https://quantumcoin-ui-1rust1.onrender.com";
 
-// 🔐 Login Function
+// Login handler
 async function login() {
-  const username = document.getElementById("login-username").value.trim();
-  const password = document.getElementById("login-password").value.trim();
+  const username = document.getElementById("login-username").value;
+  const password = document.getElementById("login-password").value;
 
   if (!username || !password) {
     alert("Please enter both username and password.");
     return;
   }
 
-  const res = await fetch("/api/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
+  try {
+    const res = await fetch(`${BACKEND_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
-  const data = await res.json();
-  if (data.success) {
-    alert("Login successful!");
-    localStorage.setItem("wallet", data.wallet);
-    loadWallet(data.wallet);
-  } else {
-    alert("Login failed: " + data.message);
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Login successful!");
+      // Optionally redirect or store token
+    } else {
+      alert(`Login failed: ${data.error || "Unknown error"}`);
+    }
+  } catch (err) {
+    alert("Server error during login.");
+    console.error(err);
   }
 }
 
-// 🧾 Register Function (Shows Modal)
-function register() {
-  const modal = document.getElementById("terms-modal");
-  modal.style.display = "block";
-}
-
-// 🧾 Accept Terms and Proceed with Registration
-async function acceptTermsAndRegister() {
-  const checkbox = document.getElementById("terms-checkbox-modal");
-  if (!checkbox.checked) {
-    alert("You must agree to the Terms & Conditions.");
-    return;
-  }
-
-  const username = document.getElementById("register-username").value.trim();
-  const password = document.getElementById("register-password").value.trim();
+// Register handler
+async function register() {
+  const username = document.getElementById("register-username").value;
+  const password = document.getElementById("register-password").value;
+  const agreed = document.getElementById("terms-checkbox").checked;
 
   if (!username || !password) {
-    alert("Enter a username and password.");
+    alert("Please fill out all fields.");
     return;
   }
 
-  const res = await fetch("/api/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    alert("Registration successful!");
-    localStorage.setItem("wallet", data.wallet);
-    loadWallet(data.wallet);
-    document.getElementById("terms-modal").style.display = "none";
-  } else {
-    alert("Registration failed: " + data.message);
-  }
-}
-
-// 👛 Load Wallet Info
-async function loadWallet(address) {
-  document.getElementById("wallet-address").textContent = address;
-
-  const res = await fetch(`/api/balance/${address}`);
-  const data = await res.json();
-  document.getElementById("wallet-balance").textContent = data.balance || 0;
-}
-
-// 🔁 Refresh Wallet
-function refreshBalance() {
-  const wallet = localStorage.getItem("wallet");
-  if (wallet) loadWallet(wallet);
-  else alert("Login required to load balance.");
-}
-
-// 🚀 Send Coins
-async function send() {
-  const from = localStorage.getItem("wallet");
-  const to = document.getElementById("recipient").value.trim();
-  const amount = document.getElementById("amount").value.trim();
-
-  if (!from || !to || !amount) {
-    alert("All fields are required.");
+  if (!agreed) {
+    alert("You must agree to the Terms & Conditions to register.");
     return;
   }
 
-  const res = await fetch("/api/send", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to, amount })
-  });
+  try {
+    const res = await fetch(`${BACKEND_URL}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
 
-  const data = await res.json();
-  if (data.success) {
-    alert("Transaction sent!");
-    refreshBalance();
-  } else {
-    alert("Failed to send: " + data.message);
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Registration successful!");
+    } else {
+      alert(`Registration failed: ${data.error || "Unknown error"}`);
+    }
+  } catch (err) {
+    alert("Server error during registration.");
+    console.error(err);
   }
 }
 
-// ❌ Close Modal
+// Terms modal logic
+function openTerms() {
+  document.getElementById("terms-modal").style.display = "block";
+}
+
+function closeTerms() {
+  document.getElementById("terms-modal").style.display = "none";
+}
+
+// Close modal on outside click
 window.onclick = function (event) {
   const modal = document.getElementById("terms-modal");
-  if (event.target == modal) modal.style.display = "none";
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
 };
