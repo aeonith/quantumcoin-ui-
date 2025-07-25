@@ -1,84 +1,98 @@
-const API = 'https://quantumcoin-ithu.onrender.com'; // your Rust backend
+const API = 'https://quantumcoin-ithu.onrender.com';
 
-async function login() {
-  const user = document.getElementById('login-username').value;
-  const pass = document.getElementById('login-password').value;
-  // call your /login endpoint (implement on backend)
+// helpers
+function $(id){ return document.getElementById(id); }
+function show(id){ $(id).style.display = 'block'; }
+function hide(id){ $(id).style.display = 'none'; }
+
+/* LOGIN / REGISTER */
+async function login(){
+  const user = $('login-username').value;
+  const pass = $('login-password').value;
   try {
     let res = await fetch(`${API}/login`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({user,pass})
+      body: JSON.stringify({ username:user, password:pass }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    await loadWallet();
-    alert('Logged in!');
-  } catch(e) {
-    alert('Login failed: '+e.message);
+    if(!res.ok) throw new Error(await res.text());
+    // on success
+    hide('login-card');
+    hide('register-card');
+    show('dashboard');
+    loadWallet();
+  } catch(e){
+    alert('Login error: '+e.message);
   }
 }
 
-async function register() {
-  const user = document.getElementById('register-username').value;
-  const pass = document.getElementById('register-password').value;
-  const agreed = document.getElementById('terms-checkbox').checked;
-  if (!agreed) return alert('You must agree to Terms & Conditions.');
+function showRegister(){
+  hide('login-card');
+  show('register-card');
+}
+function showLogin(){
+  hide('register-card');
+  show('login-card');
+}
+
+/* TERMS MODAL */
+function openTerms(){ show('terms-modal'); }
+function closeTerms(){ hide('terms-modal'); }
+
+/* REGISTER */
+async function register(){
+  if(!$('terms-checkbox').checked){
+    return alert('You must agree to the Terms & Conditions');
+  }
+  const user = $('register-username').value;
+  const pass = $('register-password').value;
   try {
     let res = await fetch(`${API}/register`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({user,pass})
+      body: JSON.stringify({ username:user, password:pass }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    await loadWallet();
-    alert('Registered & logged in!');
-  } catch(e) {
-    alert('Register failed: '+e.message);
+    if(!res.ok) throw new Error(await res.text());
+    alert('Account created! Please log in.');
+    showLogin();
+  } catch(e){
+    alert('Register error: '+e.message);
   }
 }
 
-function toggleForms(){
-  document.getElementById('login-box').classList.toggle('hidden');
-  document.getElementById('register-box').classList.toggle('hidden');
-}
-
-// fetch wallet address & balance
+/* WALLET */
 async function loadWallet(){
-  document.getElementById('wallet-address').innerText = '…';
-  document.getElementById('wallet-balance').innerText = '…';
   try {
     let addr = await fetch(`${API}/address`).then(r=>r.text());
-    document.getElementById('wallet-address').innerText = addr;
-    let bal  = await fetch(`${API}/balance`).then(r=>r.text());
-    document.getElementById('wallet-balance').innerText = bal;
-  } catch(e){
-    document.getElementById('wallet-address').innerText = 'Error';
-    document.getElementById('wallet-balance').innerText = 'Error';
+    $('wallet-address').textContent = addr;
+    refreshBalance();
+  } catch {
+    $('wallet-address').textContent = 'Error';
+  }
+}
+async function refreshBalance(){
+  try {
+    let bal = await fetch(`${API}/balance`).then(r=>r.text());
+    $('wallet-balance').textContent = bal;
+  } catch {
+    $('wallet-balance').textContent = 'Error';
   }
 }
 
-// manual refresh
-function refreshBalance(){ loadWallet(); }
-
-// send QTC
-async function send(){
-  const to = document.getElementById('recipient').value;
-  const amt= document.getElementById('amount').value;
+/* SEND QTC */
+async function sendQTC(){
+  const to = $('recipient').value;
+  const amt = parseFloat($('amount').value);
+  if(!to||!amt) return alert('Address & amount required');
   try {
     let res = await fetch(`${API}/send`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ recipient:to, amount: Number(amt) })
+      body: JSON.stringify({ to, amount:amt }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    alert('Transaction sent!');
-    loadWallet();
+    alert(await res.text());
+    refreshBalance();
   } catch(e){
-    alert('Send failed: '+e.message);
+    alert('Send error: '+e.message);
   }
 }
-
-// on load
-window.addEventListener('load', ()=>{
-  loadWallet();
-});
