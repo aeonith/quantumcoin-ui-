@@ -1,35 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuantumCoin Wallet</title>
+  <meta charset="UTF-8">
+  <title>QuantumCoin™ Wallet</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h3 class="tagline">The most advanced quantum-secure currency on Earth.</h3>
+  <div class="overlay">
+    <h1>QuantumCoin™ Dashboard</h1>
+    <p>Welcome back! Here's your wallet information.</p>
 
-    <div class="panel">
-      <h2>📈 Current Price</h2>
-      <p>$0.25 QTC</p>
-    </div>
+    <div class="form-section">
+      <h3>Wallet Address</h3>
+      <p id="wallet"></p>
 
-    <div class="panel">
-      <h2>📦 Your Wallet</h2>
-      <p id="wallet-address">Address: <span>Loading...</span></p>
-      <p id="wallet-balance">Balance: <span>...</span></p>
-      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
-    </div>
+      <h3>Send BTC to receive QuantumCoin™</h3>
+      <p><strong>BTC Address:</strong><br>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</p>
 
-    <div class="panel">
-      <h2>✉️ Send QTC</h2>
-      <input type="text" id="recipient" placeholder="Recipient Address" />
-      <input type="number" id="amount" placeholder="Amount" />
-      <button onclick="sendQTC()">Send Now</button>
+      <p id="price-info">Fetching current BTC → QTC rate...</p>
     </div>
   </div>
 
-  <script src="dashboard.js"></script>
+  <script>
+    const wallet = localStorage.getItem("wallet") || "Wallet not found.";
+    document.getElementById("wallet").textContent = wallet;
+
+    async function fetchRate() {
+      try {
+        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+        const data = await res.json();
+        const btc = data.bitcoin.usd;
+        document.getElementById("price-info").textContent = `Current BTC: $${btc} USD`;
+      } catch (e) {
+        document.getElementById("price-info").textContent = "Failed to fetch BTC price.";
+      }
+    }
+
+    fetchRate();
+  </script>
 </body>
 </html>
