@@ -1,179 +1,155 @@
-/* Full Reset */
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
+body, html {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
+  height: 100%;
+  overflow: hidden;
+  background: black;
+  color: #fff;
 }
 
-/* Background Video */
 #bg-video {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
-  z-index: -2;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   object-fit: cover;
+  z-index: -2;
 }
 
-/* Overlay */
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background: rgba(5, 5, 10, 0.75);
-  backdrop-filter: blur(4px);
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6);
   z-index: -1;
 }
 
-/* Main Container */
 .container {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 20px;
-  color: #fff;
-  text-align: center;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  height: 100%;
+  justify-content: center;
 }
 
-/* Title & Subtitle */
 .title {
   font-size: 3rem;
-  font-weight: bold;
-  color: #00eaff;
-  margin-bottom: 10px;
-  text-shadow: 0 0 10px #00eaffaa;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px #0ff;
+}
+
+.tm {
+  font-size: 0.6em;
+  vertical-align: super;
+  margin-left: 4px;
 }
 
 .subtitle {
-  font-size: 1.4rem;
-  color: #ffffffcc;
-  margin-bottom: 30px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 2rem;
 }
 
-/* Card */
-.card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 30px rgba(0, 238, 255, 0.15);
-  border-radius: 15px;
-  padding: 25px;
-  margin: 20px auto;
-  max-width: 500px;
-  backdrop-filter: blur(8px);
-  transition: all 0.3s ease;
+.card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+  max-width: 400px;
 }
 
-.card:hover {
-  transform: scale(1.02);
+.form-card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
 }
 
-/* Inputs */
+.form-card h2 {
+  margin-bottom: 1rem;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
 input[type="text"],
-input[type="password"],
-input[type="number"] {
-  width: 90%;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 8px;
+input[type="password"] {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
   border: none;
-  outline: none;
+  border-radius: 6px;
   font-size: 1rem;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+  font-weight: bold;
 }
 
 input::placeholder {
-  color: #ccc;
+  color: #bbb;
 }
 
-/* Buttons */
 button {
-  padding: 12px 24px;
-  background: linear-gradient(to right, #ff7b00, #00eaff);
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(45deg, #00ffff, #ff9900);
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: bold;
+  color: #000;
   cursor: pointer;
-  color: #fff;
-  margin-top: 10px;
-  box-shadow: 0 0 10px #00eaff77;
-  transition: background 0.3s ease;
+  transition: 0.3s ease;
 }
 
 button:hover {
-  background: linear-gradient(to right, #00eaff, #ff7b00);
+  opacity: 0.9;
 }
 
-/* Code block */
-code {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-family: monospace;
-  color: #00eaff;
+.checkbox-label {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: #ccc;
 }
 
-/* Modal for Terms */
+.checkbox-label a {
+  color: #00ffff;
+  text-decoration: underline;
+}
+
+/* Modal */
 .modal {
   display: none;
   position: fixed;
-  z-index: 100;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.85);
+  z-index: 5;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.8);
 }
 
 .modal-content {
   background-color: #111;
-  margin: 8% auto;
-  padding: 20px;
-  border-radius: 12px;
+  margin: 15% auto;
+  padding: 2rem;
+  border-radius: 8px;
   width: 90%;
-  max-width: 600px;
+  max-width: 500px;
   color: #fff;
-  border: 1px solid #00eaff55;
-  overflow-y: auto;
-  max-height: 70vh;
+  font-size: 1rem;
 }
 
-.modal-content h2 {
-  margin-bottom: 15px;
-  color: #00eaff;
-}
-
-.modal-content button {
-  margin-top: 15px;
-  background: #00eaff;
-  color: #000;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;
-  }
-
-  .card {
-    padding: 15px;
-  }
-
-  .title {
-    font-size: 2.2rem;
-  }
-
-  .subtitle {
-    font-size: 1.1rem;
-  }
+.close {
+  float: right;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #fff;
 }
