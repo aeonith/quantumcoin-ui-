@@ -5,14 +5,13 @@ use crate::wallet::Wallet;
 use crate::revstop::RevStop;
 use crate::transaction::Transaction;
 
-// Optional utility module
-// use crate::utils::get_btc_price_usd;
-
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg
         .service(health_check)
         .service(send_transaction)
-        .service(get_balance); // ✅ Newly added route
+        .service(get_balance)
+        .service(mine_block)         // ✅ new
+        .service(get_transactions);  // ✅ new
 }
 
 #[get("/")]
@@ -41,4 +40,23 @@ async fn get_balance(
     let chain = blockchain.lock().unwrap();
     let balance = chain.get_balance(&address);
     HttpResponse::Ok().body(balance.to_string())
+}
+
+#[post("/mine")]
+async fn mine_block(
+    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
+) -> impl Responder {
+    let mut chain = blockchain.lock().unwrap();
+    let default_miner = "SYSTEM".to_string(); // You can change this to use the logged-in wallet
+    chain.mine_pending_transactions(default_miner);
+    HttpResponse::Ok().body("✅ Mined new block")
+}
+
+#[get("/transactions")]
+async fn get_transactions(
+    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
+) -> impl Responder {
+    let chain = blockchain.lock().unwrap();
+    let txs = chain.get_all_transactions();
+    HttpResponse::Ok().json(txs)
 }
