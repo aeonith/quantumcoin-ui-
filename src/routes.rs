@@ -4,14 +4,16 @@ use crate::blockchain::Blockchain;
 use crate::wallet::Wallet;
 use crate::revstop::RevStop;
 use crate::transaction::Transaction;
+use serde::Serialize;
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg
         .service(health_check)
         .service(send_transaction)
         .service(get_balance)
-        .service(mine_block)         // ✅ new
-        .service(get_transactions);  // ✅ new
+        .service(mine_block)
+        .service(get_transactions)
+        .service(create_wallet_route); // ✅ added wallet API
 }
 
 #[get("/")]
@@ -47,7 +49,7 @@ async fn mine_block(
     blockchain: web::Data<Arc<Mutex<Blockchain>>>,
 ) -> impl Responder {
     let mut chain = blockchain.lock().unwrap();
-    let default_miner = "SYSTEM".to_string(); // You can change this to use the logged-in wallet
+    let default_miner = "SYSTEM".to_string(); // Change if needed
     chain.mine_pending_transactions(default_miner);
     HttpResponse::Ok().body("✅ Mined new block")
 }
@@ -59,4 +61,22 @@ async fn get_transactions(
     let chain = blockchain.lock().unwrap();
     let txs = chain.get_all_transactions();
     HttpResponse::Ok().json(txs)
+}
+
+#[derive(Serialize)]
+struct WalletResponse {
+    publicKey: String,
+    privateKey: String,
+}
+
+#[get("/api/create-wallet")]
+async fn create_wallet_route(
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
+) -> impl Responder {
+    let wallet = wallet.lock().unwrap();
+    let response = WalletResponse {
+        publicKey: wallet.get_public_key(),
+        privateKey: wallet.get_private_key(),
+    };
+    HttpResponse::Ok().json(response)
 }
