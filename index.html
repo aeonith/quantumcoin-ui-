@@ -7,9 +7,19 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <video autoplay muted loop id="bg-video">
+  <video id="bg-video" autoplay muted playsinline>
     <source src="quantum-bg.mp4" type="video/mp4">
   </video>
+
+  <script>
+    const video = document.getElementById('bg-video');
+    video.addEventListener('timeupdate', () => {
+      if (video.currentTime >= 5) {
+        video.currentTime = 0;
+        video.play();
+      }
+    });
+  </script>
 
   <div class="container">
     <div class="logo">🚀 QuantumCoin™</div>
