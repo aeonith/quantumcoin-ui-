@@ -2,39 +2,104 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin™ Login</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    video.bg-video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      z-index: -1;
+      object-fit: cover;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #fff;
+      text-shadow: 0 0 12px #00ffff;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .form-box {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 25px 30px;
+      border-radius: 12px;
+      margin-top: 20px;
+      width: 320px;
+    }
+
+    .form-box input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
+    }
+
+    .form-box button {
+      width: 100%;
+      padding: 10px;
+      background: #00f2ff;
+      color: black;
+      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00ffff;
+    }
+
+    .trademark {
+      font-size: 0.9rem;
+      font-weight: normal;
+      margin-top: -12px;
+      color: #ccc;
+    }
+  </style>
 </head>
 <body>
-  <video autoplay muted loop id="bg-video">
-    <source src="/quantum_bg.mp4" type="video/mp4" />
+  <video autoplay muted loop class="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4" />
+    Your browser does not support HTML5 video.
   </video>
 
   <div class="container">
-    <h1 class="logo">QuantumCoin™</h1>
-    <p class="slogan">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
+    <h1>QuantumCoin™</h1>
+    <p class="trademark">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
 
-    <div class="box">
+    <div class="form-box">
       <h2>Login</h2>
-      <input type="email" id="login-email" placeholder="Email" required />
-      <input type="password" id="login-password" placeholder="Password" required />
+      <input id="loginEmail" type="email" placeholder="Email" />
+      <input id="loginPassword" type="password" placeholder="Password" />
       <button onclick="login()">🚀 Login</button>
     </div>
 
-    <div class="box">
+    <div class="form-box">
       <h2>Register</h2>
-      <input type="email" id="register-email" placeholder="Email" required />
-      <input type="password" id="register-password" placeholder="Password" required />
-      <label><input type="checkbox" id="terms" /> I agree to the <a href="#">Terms & Conditions</a></label>
+      <input id="registerEmail" type="email" placeholder="Email" />
+      <input id="registerPassword" type="password" placeholder="Password" />
       <button onclick="register()">🧠 Create Account</button>
-    </div>
-
-    <div id="btc-info" class="btc-info" style="display: none;">
-      <h2>To Receive QuantumCoin:</h2>
-      <p>Send BTC to this address:</p>
-      <code id="btc-address">bc1qexampleaddress1234567890qwerty</code>
-      <p>Your QuantumCoin will appear after confirmation.</p>
     </div>
   </div>
 
