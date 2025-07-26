@@ -46,17 +46,18 @@ body {
 }
 
 .box {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(0, 0, 0, 0.5); /* TRANSPARENT black */
   padding: 25px 20px;
   border-radius: 15px;
   width: 90%;
   max-width: 400px;
   margin-bottom: 30px;
   box-shadow: 0 0 15px cyan;
-  color: #111;
+  color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
+  backdrop-filter: blur(10px);
 }
 
 .box input {
@@ -66,7 +67,8 @@ body {
   font-size: 1rem;
   border: none;
   border-radius: 10px;
-  background: #f0f0f0;
+  background: #ffffff;
+  color: #000;
 }
 
 .box button {
@@ -91,7 +93,7 @@ body {
 .terms-check {
   margin-top: 12px;
   font-size: 0.85rem;
-  color: #111;
+  color: #ffffff;
   text-align: center;
 }
 
@@ -103,7 +105,7 @@ body {
 .toggle {
   margin-top: 12px;
   font-size: 0.85rem;
-  color: #111;
+  color: #ffffff;
 }
 
 .toggle a {
