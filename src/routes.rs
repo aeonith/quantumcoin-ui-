@@ -4,12 +4,15 @@ use crate::blockchain::Blockchain;
 use crate::wallet::Wallet;
 use crate::revstop::RevStop;
 use crate::transaction::Transaction;
-// Optional:
+
+// Optional utility module
 // use crate::utils::get_btc_price_usd;
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(health_check);
-    cfg.service(send_transaction);
+    cfg
+        .service(health_check)
+        .service(send_transaction)
+        .service(get_balance); // ✅ Newly added route
 }
 
 #[get("/")]
@@ -27,4 +30,15 @@ async fn send_transaction(
     let mut chain = blockchain.lock().unwrap();
     chain.add_transaction(tx);
     HttpResponse::Ok().body("Transaction added")
+}
+
+#[get("/balance/{address}")]
+async fn get_balance(
+    path: web::Path<String>,
+    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
+) -> impl Responder {
+    let address = path.into_inner();
+    let chain = blockchain.lock().unwrap();
+    let balance = chain.get_balance(&address);
+    HttpResponse::Ok().body(balance.to_string())
 }
