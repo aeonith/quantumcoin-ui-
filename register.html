@@ -2,23 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Register - QuantumCoin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="styles.css">
+  <title>QuantumCoin Register</title>
 </head>
-<body class="container">
-  <h1>QuantumCoin</h1>
-  <h2>Create Your Account</h2>
-
+<body>
+  <h2>Register</h2>
   <form id="register-form">
-    <input type="email" id="reg-email" placeholder="Email" required><br>
-    <input type="password" id="reg-password" placeholder="Password" required><br>
-    <input type="password" id="reg-confirm" placeholder="Confirm Password" required><br>
+    <label for="register-username">Username:</label><br>
+    <input type="text" id="register-username" name="username"><br><br>
+
+    <label for="register-password">Password:</label><br>
+    <input type="password" id="register-password" name="password"><br><br>
+
+    <input type="checkbox" id="terms-checkbox"> I agree to the Terms & Conditions<br><br>
+
     <button type="submit">Register</button>
   </form>
 
-  <p>Already have an account? <a href="login.html">Login here</a>.</p>
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-  <script src="register.js"></script>
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
+      const agreed = document.getElementById('terms-checkbox').checked;
+
+      if (!username || !password) {
+        alert('Please fill out all fields.');
+        return;
+      }
+
+      if (!agreed) {
+        alert('You must agree to the Terms & Conditions.');
+        return;
+      }
+
+      try {
+        const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert('Registration successful!');
+        } else {
+          alert(`Registration failed: ${data.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('Network error. Try again later.');
+      }
+    });
+  </script>
 </body>
 </html>
