@@ -1,106 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: black;
+  color: #111; /* switched to high-contrast dark text base */
+  overflow-x: hidden;
+}
 
-  <!-- 🔁 Background video -->
-  <video autoplay loop muted playsinline id="bg-video">
-    <source src="quantum-bg.mp4" type="video/mp4" />
-  </video>
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 100vw;
+  min-height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+}
 
-  <!-- 🔐 Login/Register Box -->
-  <div class="container">
-    <div class="logo">🚀 QuantumCoin™</div>
-    <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
+.container {
+  padding: 40px 20px;
+  text-align: center;
+}
 
-    <div class="box">
-      <form id="auth-form" onsubmit="return validateForm()">
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="password" id="password" placeholder="Password" required />
+.logo {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #00fdfd;
+  text-shadow: 0 0 25px #00fdfd;
+  margin-bottom: 10px;
+}
 
-        <div class="terms-check">
-          <input type="checkbox" id="terms" />
-          <label for="terms">I agree to the <a href="#">Terms & Conditions</a></label>
-        </div>
+.slogan {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  color: #ffffff;
+}
 
-        <button type="submit" id="auth-button">🚀 Login</button>
-      </form>
+.box {
+  background: rgba(255, 255, 255, 0.95); /* lighter background */
+  padding: 25px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  margin: 0 auto 30px auto;
+  box-shadow: 0 0 15px cyan;
+  color: #111;
+}
 
-      <div class="toggle">
-        <span id="toggle-text">New here? <a href="#" onclick="toggleForm()">Register</a></span>
-      </div>
-    </div>
+.box input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  background: #f0f0f0;
+}
 
-    <!-- 🔭 QuantumCoin™ Full Vision Section -->
-    <div class="btc-info">
-      <h2>🌌 The QuantumCoin™ Vision</h2>
-      <p>
-        QuantumCoin™ is not just another cryptocurrency — it’s a revolution in trust, freedom, and user sovereignty.
-        Built from the ground up with quantum-safe cryptography (Dilithium2) and fully decentralized architecture,
-        QuantumCoin™ is designed to last into the next era of computing.
-      </p>
+.box button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  background-color: #00fdfd;
+  color: black;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 0 12px #00fdfd;
+  transition: all 0.3s ease;
+}
 
-      <p>
-        🔒 <strong>Quantum Resistance:</strong><br/>
-        Unlike most chains that will break under quantum computing attacks, QuantumCoin™ uses lattice-based cryptography to ensure long-term safety — even against post-quantum adversaries.
-      </p>
+.box button:hover {
+  transform: scale(1.05);
+}
 
-      <p>
-        🔁 <strong>RevStop Authority:</strong><br/>
-        Our flagship RevStop feature empowers wallet owners with a last-resort shield. If your private key is compromised, you — and only you — can freeze your coins. No government. No bank. No third party.
-      </p>
+.terms-check {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #111;
+}
 
-      <p>
-        ⚡ <strong>Instant Transactions & Real Utility:</strong><br/>
-        With optimized mining algorithms and fast block validation, QuantumCoin™ will power everyday payments, peer-to-peer trades, and even shielded zk-STARK transfers.
-      </p>
+.toggle {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: #111;
+}
 
-      <p>
-        🧱 <strong>Built for Sovereignty:</strong><br/>
-        Every piece of QuantumCoin™ is user-first. From cold storage support to secure backups, transparent tokenomics, and no pre-mine tricks — QuantumCoin™ is the people’s currency.
-      </p>
+.btc-info {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 30px;
+  margin: 40px auto;
+  border-radius: 15px;
+  width: 95%;
+  max-width: 900px;
+  text-align: left;
+  box-shadow: 0 0 25px #00fdfd;
+  color: #111;
+  line-height: 1.7;
+  font-size: 1rem;
+}
 
-      <p>
-        💎 <strong>Next Steps:</strong><br/>
-        This is just the beginning. QuantumCoin™ is preparing for real exchange listings (Crypto.com, TrustWallet), open-source audit releases, and full ecosystem expansion — including QuantumPay™, QuantumVault™, and the QuantumVerse™ metachain.
-      </p>
+.btc-info h2 {
+  color: #00fdfd;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
 
-      <p style="margin-top: 30px;">
-        ✨ Join us. Become sovereign. Hold the future in your wallet with QuantumCoin™.
-      </p>
-    </div>
-  </div>
-
-  <footer>
-    © 2025 QuantumCoin™ — Built for the Quantum Age
-  </footer>
-
-  <!-- ⚙️ Script to toggle login/register -->
-  <script>
-    let isLogin = true;
-
-    function toggleForm() {
-      isLogin = !isLogin;
-      document.getElementById("auth-button").innerText = isLogin ? "🚀 Login" : "🧠 Create Account";
-      document.getElementById("toggle-text").innerHTML = isLogin
-        ? 'New here? <a href="#" onclick="toggleForm()">Register</a>'
-        : 'Already have an account? <a href="#" onclick="toggleForm()">Login</a>';
-    }
-
-    function validateForm() {
-      const checkbox = document.getElementById("terms");
-      if (!checkbox.checked) {
-        alert("You must agree to the Terms & Conditions to continue.");
-        return false;
-      }
-      return true;
-    }
-  </script>
-
-</body>
-</html>
+footer {
+  margin-top: 60px;
+  text-align: center;
+  color: #ccc;
+  font-size: 0.85rem;
+  padding: 20px;
+}
