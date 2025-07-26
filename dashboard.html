@@ -1,93 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™ Wallet</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>QuantumCoin™ Dashboard</title>
   <style>
     body {
       background: black;
       color: white;
       font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-
-    .wallet-container {
-      background: rgba(0,0,0,0.7);
-      border: 1px solid #0ff;
-      border-radius: 10px;
-      padding: 30px;
-      max-width: 600px;
       text-align: center;
+      padding: 40px;
     }
 
-    .wallet-container h1 {
-      color: #00ffff;
-      margin-bottom: 20px;
+    .container {
+      background: #111;
+      padding: 30px;
+      border-radius: 10px;
+      display: inline-block;
     }
 
-    .wallet-address {
-      font-size: 0.9em;
-      background: #222;
-      padding: 10px;
-      border-radius: 5px;
-      word-break: break-all;
-      margin-bottom: 20px;
+    h1 {
+      color: #00ffaa;
     }
 
-    .balance {
-      font-size: 1.5em;
-      margin-bottom: 20px;
+    .info {
+      margin: 20px 0;
     }
 
-    .btc-instruction {
-      font-size: 1em;
-      color: #aaa;
-    }
-
-    .logout-btn {
-      margin-top: 20px;
-      background: #0ff;
-      border: none;
+    button {
       padding: 10px 20px;
+      background: #00ffaa;
       color: black;
+      font-weight: bold;
+      border: none;
       border-radius: 5px;
       cursor: pointer;
+    }
+
+    button:hover {
+      background: #00cc88;
     }
   </style>
 </head>
 <body>
-  <div class="wallet-container">
-    <h1>QuantumCoin™ Wallet</h1>
-    <div class="balance">Balance: <span id="qtc-balance">Loading...</span> QTC</div>
-    <div class="wallet-address" id="wallet-address">[Wallet Address]</div>
-    <div class="btc-instruction">
-      To receive more QTC, send BTC to:<br />
-      <strong>[BTC Address]</strong><br />
-      You’ll receive QuantumCoin at the current rate.
+  <div class="container">
+    <h1>👋 Welcome to QuantumCoin™</h1>
+    <div class="info">
+      <p>Wallet Address: <span id="wallet-address">Loading...</span></p>
+      <p>Balance: <span id="wallet-balance">0 QTC</span></p>
     </div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <button onclick="logout()">🚪 Logout</button>
   </div>
 
   <script>
-    // Simulated call to get wallet data from backend
-    const walletAddress = localStorage.getItem('walletAddress') || 'QTC123...';
-    const balance = localStorage.getItem('balance') || '0.00';
-    const btcAddress = "bc1qexamplebtcaddress";
+    async function fetchWallet() {
+      try {
+        const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/dashboard', {
+          method: 'GET',
+          credentials: 'include' // optional if you're using sessions/cookies
+        });
 
-    document.getElementById('wallet-address').textContent = walletAddress;
-    document.getElementById('qtc-balance').textContent = balance;
-    document.querySelector('.btc-instruction strong').textContent = btcAddress;
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById('wallet-address').textContent = data.address;
+          document.getElementById('wallet-balance').textContent = `${data.balance} QTC`;
+        } else {
+          alert("⚠️ Failed to load wallet info.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("🌐 Network error.");
+      }
+    }
 
     function logout() {
-      localStorage.clear();
-      window.location.href = "login.html";
+      window.location.href = 'login.html';
     }
+
+    fetchWallet();
   </script>
 </body>
 </html>
