@@ -1,42 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™ Wallet</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .wallet-container {
+      background: rgba(0,0,0,0.7);
+      border: 1px solid #0ff;
+      border-radius: 10px;
+      padding: 30px;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .wallet-container h1 {
+      color: #00ffff;
+      margin-bottom: 20px;
+    }
+
+    .wallet-address {
+      font-size: 0.9em;
+      background: #222;
+      padding: 10px;
+      border-radius: 5px;
+      word-break: break-all;
+      margin-bottom: 20px;
+    }
+
+    .balance {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+    }
+
+    .btc-instruction {
+      font-size: 1em;
+      color: #aaa;
+    }
+
+    .logout-btn {
+      margin-top: 20px;
+      background: #0ff;
+      border: none;
+      padding: 10px 20px;
+      color: black;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <div class="overlay">
-    <h1>QuantumCoin™ Dashboard</h1>
-    <p>Welcome back! Here's your wallet information.</p>
-
-    <div class="form-section">
-      <h3>Wallet Address</h3>
-      <p id="wallet"></p>
-
-      <h3>Send BTC to receive QuantumCoin™</h3>
-      <p><strong>BTC Address:</strong><br>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</p>
-
-      <p id="price-info">Fetching current BTC → QTC rate...</p>
+  <div class="wallet-container">
+    <h1>QuantumCoin™ Wallet</h1>
+    <div class="balance">Balance: <span id="qtc-balance">Loading...</span> QTC</div>
+    <div class="wallet-address" id="wallet-address">[Wallet Address]</div>
+    <div class="btc-instruction">
+      To receive more QTC, send BTC to:<br />
+      <strong>[BTC Address]</strong><br />
+      You’ll receive QuantumCoin at the current rate.
     </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <script>
-    const wallet = localStorage.getItem("wallet") || "Wallet not found.";
-    document.getElementById("wallet").textContent = wallet;
+    // Simulated call to get wallet data from backend
+    const walletAddress = localStorage.getItem('walletAddress') || 'QTC123...';
+    const balance = localStorage.getItem('balance') || '0.00';
+    const btcAddress = "bc1qexamplebtcaddress";
 
-    async function fetchRate() {
-      try {
-        const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-        const data = await res.json();
-        const btc = data.bitcoin.usd;
-        document.getElementById("price-info").textContent = `Current BTC: $${btc} USD`;
-      } catch (e) {
-        document.getElementById("price-info").textContent = "Failed to fetch BTC price.";
-      }
+    document.getElementById('wallet-address').textContent = walletAddress;
+    document.getElementById('qtc-balance').textContent = balance;
+    document.querySelector('.btc-instruction strong').textContent = btcAddress;
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "login.html";
     }
-
-    fetchRate();
   </script>
 </body>
 </html>
