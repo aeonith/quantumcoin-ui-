@@ -3,132 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin™</title>
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      font-family: 'Arial', sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      color: #fff;
-    }
-
-    video.bg-video {
-      position: fixed;
-      top: 0;
-      left: 0;
-      min-width: 100vw;
-      min-height: 100vh;
-      object-fit: cover;
-      z-index: -1;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      backdrop-filter: blur(5px);
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 3rem;
-      color: #00ffff;
-      text-shadow: 0 0 15px #00ffff;
-    }
-
-    form {
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 10px;
-      padding: 20px;
-      margin: 15px 0;
-      width: 300px;
-      box-shadow: 0 0 15px #00ffff44;
-    }
-
-    input[type="email"], input[type="password"] {
-      width: 90%;
-      padding: 12px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-    }
-
-    button {
-      background-color: #00ffff;
-      color: #000;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 5px;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      margin-top: 10px;
-      width: 100%;
-    }
-
-    .glow {
-      text-shadow: 0 0 10px #00ffff;
-    }
-  </style>
+  <title>QuantumCoin Login</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
-
 <body>
 
-  <!-- 🔁 Background Video -->
-  <video id="bgVideo" class="bg-video" autoplay muted playsinline loop>
-    <source src="quantum-bg.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
+  <video autoplay loop muted playsinline id="bg-video">
+    <source src="your-background.mp4" type="video/mp4">
   </video>
 
-  <!-- 💠 UI Container -->
   <div class="container">
-    <h1 class="glow">QuantumCoin™</h1>
+    <div class="logo">🚀 QuantumCoin</div>
+    <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
 
-    <!-- 🔐 Login Form -->
-    <form id="loginForm">
-      <h2>Login</h2>
+    <form class="box" onsubmit="return validateTerms()">
       <input type="email" placeholder="Email" required />
       <input type="password" placeholder="Password" required />
-      <button type="submit">🚀 Login</button>
-    </form>
 
-    <!-- 📝 Register Form -->
-    <form id="registerForm">
-      <h2>Register</h2>
-      <input type="email" placeholder="Email" required />
-      <input type="password" placeholder="Password" required />
+      <div class="terms-check">
+        <input type="checkbox" id="terms" />
+        <label for="terms">I agree to the <a href="#">Terms & Conditions</a></label>
+      </div>
+
       <button type="submit">🧠 Create Account</button>
     </form>
+
+    <div class="btc-info">
+      <h2>🚀 QuantumCoin UI & Blockchain Engine</h2>
+      <p>
+        Welcome to the official source code for QuantumCoin — the world’s first quantum-resistant cryptocurrency with user-controlled transaction authority via RevStop.
+      </p>
+      <p>
+        🌌 <strong>What is QuantumCoin?</strong><br/>
+        QuantumCoin is a next-generation blockchain project built to resist quantum attacks, enable lightning-fast private transactions, and give users full sovereignty. It integrates the revolutionary RevStop feature, allowing wallet owners to freeze unauthorized transfers if their keys are compromised — with no middleman or government control.
+      </p>
+    </div>
   </div>
 
-  <!-- 📜 JavaScript -->
+  <footer>© 2025 QuantumCoin. All rights reserved.</footer>
+
   <script>
-    // 💡 Manually reset the video every 3 seconds
-    const video = document.getElementById('bgVideo');
-    video.addEventListener('loadedmetadata', () => {
-      setInterval(() => {
-        video.currentTime = 0;
-        video.play();
-      }, 5000);
-    });
-
-    // 🧠 Optional form logic
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      alert("Login system not connected yet.");
-    });
-
-    document.getElementById('registerForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-      alert("Register system not connected yet.");
-    });
+    function validateTerms() {
+      const checkbox = document.getElementById("terms");
+      if (!checkbox.checked) {
+        alert("Please agree to the Terms & Conditions to continue.");
+        return false;
+      }
+      return true;
+    }
   </script>
 
 </body>
