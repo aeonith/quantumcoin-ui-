@@ -1,187 +1,93 @@
-/* Reset + Base */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Orbitron', sans-serif;
 }
 
 body, html {
   height: 100%;
-  overflow-x: hidden;
-  color: #fff;
-  background-color: #000;
+  overflow: hidden;
 }
 
-/* Background Video */
 #bg-video {
   position: fixed;
+  right: 0;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+  z-index: -1;
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -1;
-  filter: brightness(0.35) blur(1px);
-}
-
-/* Container */
-.container {
-  max-width: 100%;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: start;
-  min-height: 100vh;
-}
-
-/* Title + Tagline */
-.title {
-  font-size: 2.8rem;
-  font-weight: 900;
-  color: #00f0ff;
-  text-shadow: 0 0 12px #00f0ff, 0 0 22px #00f0ff;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-  text-align: center;
-}
-
-.tm {
-  font-size: 1rem;
-  vertical-align: super;
-  margin-left: 3px;
-  color: #ffffffcc;
-  text-shadow: none;
-}
-
-.subtitle {
-  font-size: 1rem;
-  font-weight: 400;
-  color: #ccc;
-  margin-bottom: 30px;
-  text-align: center;
-  line-height: 1.4;
-}
-
-/* Forms */
-.form-box {
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid #00f0ff77;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 25px;
-  width: 100%;
-  max-width: 350px;
-  box-shadow: 0 0 10px #00f0ff88;
-}
-
-.form-box h2 {
-  font-size: 1.4rem;
-  margin-bottom: 15px;
-  color: #ffffff;
-  text-align: center;
-}
-
-/* Inputs */
-input[type="text"],
-input[type="password"],
-input[type="email"] {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: none;
-  border-radius: 6px;
-  background: #1a1a1a;
   color: #fff;
-  font-size: 1rem;
-  outline: none;
+  text-align: center;
+  width: 100%;
+  padding: 50px 20px;
+  background: rgba(0, 0, 0, 0.6);
 }
 
-input::placeholder {
-  color: #888;
+h1 {
+  font-size: 48px;
+  color: #00ffff;
+  text-shadow: 0 0 15px #00ffff;
 }
 
-/* Buttons */
-button {
+.form-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 60px;
+  margin-top: 40px;
+  flex-wrap: wrap;
+}
+
+.form-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 25px;
+  border-radius: 10px;
+  min-width: 280px;
+}
+
+input[type="email"],
+input[type="password"] {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(to right, #00f0ff, #39ff14);
+  margin: 10px 0;
   border: none;
-  color: #000;
+  border-radius: 5px;
+}
+
+button {
+  background: #00ffff;
+  border: none;
+  padding: 12px 20px;
+  color: black;
   font-weight: bold;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: 0.3s ease;
   cursor: pointer;
+  border-radius: 6px;
+  margin-top: 10px;
+  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+  transition: all 0.3s ease;
 }
 
 button:hover {
-  background: linear-gradient(to right, #39ff14, #00f0ff);
-  box-shadow: 0 0 10px #00f0ff99;
+  background: #00bdbd;
+  box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff;
 }
 
-/* QR + 2FA */
-#qr-section {
-  margin-top: 10px;
-  text-align: center;
+a {
+  color: #00ffff;
+  text-decoration: none;
 }
 
-#qr-code {
-  max-width: 100%;
-  height: auto;
-  margin: 10px 0;
-  border: 2px solid #00f0ff;
-  border-radius: 8px;
-}
-
-/* Checkbox + Terms */
-label {
-  display: flex;
-  align-items: center;
-  font-size: 0.85rem;
-  margin-bottom: 12px;
-  color: #ccc;
-}
-
-label a {
-  color: #00f0ff;
-  text-decoration: underline;
-  margin-left: 5px;
-}
-
-/* Modal */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 10;
-  left: 0;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.85);
-}
-
-.modal-content {
-  background-color: #111;
-  margin: 15% auto;
-  padding: 20px;
-  border: 1px solid #00f0ff66;
-  width: 90%;
-  max-width: 350px;
-  color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 0 15px #00f0ff99;
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-}
-
-.close:hover {
-  color: #fff;
+@media (max-width: 700px) {
+  .form-container {
+    flex-direction: column;
+    gap: 30px;
+  }
 }
