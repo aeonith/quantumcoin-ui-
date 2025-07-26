@@ -33,4 +33,4 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     console.error('Error during registration:', error);
     alert('Network error. Please try again later.');
   }
-});
+}); 
