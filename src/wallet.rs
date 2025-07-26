@@ -1,5 +1,5 @@
 use pqcrypto_dilithium::dilithium2::{keypair, sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _, SignedMessage}; // <- added
+use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _};
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{File, read_to_string};
 use std::io::Write;
@@ -32,6 +32,21 @@ impl Wallet {
         Wallet { public_key, private_key }
     }
 
+    pub fn new_and_save() -> Self {
+        let wallet = Self::new();
+        wallet.save_to_files("public.key", "private.key");
+        wallet
+    }
+
+    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
+        let pub_key = std::fs::read_to_string(pub_path).ok()?;
+        let priv_key = std::fs::read_to_string(priv_path).ok()?;
+        Some(Wallet {
+            public_key: pub_key,
+            private_key: priv_key,
+        })
+    }
+
     pub fn save_to_files(&self, pub_path: &str, priv_path: &str) {
         let _ = File::create(pub_path).and_then(|mut f| f.write_all(self.public_key.as_bytes()));
         let _ = File::create(priv_path).and_then(|mut f| f.write_all(self.private_key.as_bytes()));
@@ -40,7 +55,7 @@ impl Wallet {
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
         let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        sign(message, &sk).as_bytes().to_vec() // <- this works now
+        sign(message, &sk).as_bytes().to_vec()
     }
 
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
@@ -53,22 +68,12 @@ impl Wallet {
     pub fn get_address(&self) -> String {
         self.public_key.clone()
     }
-}
-impl Wallet {
-    // Already present methods...
 
-    pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
-        let pub_key = std::fs::read_to_string(pub_path).ok()?;
-        let priv_key = std::fs::read_to_string(priv_path).ok()?;
-        Some(Wallet {
-            public_key: pub_key,
-            private_key: priv_key,
-        })
+    pub fn get_public_key(&self) -> String {
+        self.public_key.clone()
     }
 
-    pub fn new_and_save() -> Self {
-        let wallet = Self::new();
-        wallet.save_to_files("public.key", "private.key");
-        wallet
+    pub fn get_private_key(&self) -> String {
+        self.private_key.clone()
     }
 }
