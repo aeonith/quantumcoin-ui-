@@ -3,7 +3,7 @@ body {
   padding: 0;
   font-family: 'Segoe UI', sans-serif;
   background: black;
-  color: white;
+  color: #111;
   overflow-x: hidden;
 }
 
@@ -15,11 +15,15 @@ body {
   min-height: 100vh;
   object-fit: cover;
   z-index: -1;
+  filter: brightness(0.3);
 }
 
 .container {
   padding: 40px 20px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .logo {
@@ -33,17 +37,21 @@ body {
 .slogan {
   font-size: 1.1rem;
   margin-bottom: 30px;
-  color: #e0fdfd;
+  color: #ffffff;
 }
 
 .box {
-  background: rgba(0, 0, 0, 0.45);
-  padding: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 25px 20px;
   border-radius: 15px;
-  width: 90%;
+  width: 100%;
   max-width: 400px;
-  margin: 0 auto 30px auto;
+  margin-bottom: 30px;
   box-shadow: 0 0 15px cyan;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .box input {
@@ -53,6 +61,7 @@ body {
   font-size: 1rem;
   border: none;
   border-radius: 10px;
+  background: #f0f0f0;
 }
 
 .box button {
@@ -67,6 +76,7 @@ body {
   cursor: pointer;
   box-shadow: 0 0 12px #00fdfd;
   transition: all 0.3s ease;
+  margin-top: 12px;
 }
 
 .box button:hover {
@@ -74,29 +84,46 @@ body {
 }
 
 .terms-check {
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
-  align-items: center;
-  gap: 8px;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  text-align: center;
   font-size: 0.85rem;
+  color: #111;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.terms-check a {
+  color: #00fdfd;
+  text-decoration: none;
 }
 
 .toggle {
   margin-top: 12px;
   font-size: 0.85rem;
+  color: #111;
+  text-align: center;
+  width: 100%;
+}
+
+.toggle a {
+  color: #00fdfd;
+  text-decoration: none;
 }
 
 .btc-info {
-  background-color: rgba(0, 0, 0, 0.35);
-  padding: 30px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 30px 20px;
   margin: 40px auto;
   border-radius: 15px;
   width: 95%;
   max-width: 900px;
   text-align: left;
   box-shadow: 0 0 25px #00fdfd;
-  color: #d0fdfd;
+  color: #111;
   line-height: 1.7;
   font-size: 1rem;
 }
@@ -105,12 +132,13 @@ body {
   color: #00fdfd;
   font-size: 1.8rem;
   margin-bottom: 15px;
+  text-align: center;
 }
 
 footer {
   margin-top: 60px;
   text-align: center;
-  color: #999;
+  color: #ccc;
   font-size: 0.85rem;
   padding: 20px;
 }
