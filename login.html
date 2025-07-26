@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QuantumCoin Login</title>
+  <title>QuantumCoin™ Login</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
       background: black;
       color: white;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       padding: 40px;
     }
@@ -65,9 +65,7 @@
       try {
         const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/login', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
 
