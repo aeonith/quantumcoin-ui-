@@ -1,17 +1,18 @@
-// wallet.js
-
-export function getOrCreateWallet() {
+export async function getOrCreateWallet() {
   let wallet = JSON.parse(localStorage.getItem("wallet"));
   if (!wallet) {
-    const keypair = generateDummyKeypair(); // Replace this with real post-quantum wallet logic
-    wallet = {
-      publicKey: keypair.publicKey,
-      privateKey: keypair.privateKey,
-    };
+    // 🧠 REAL backend call to Rust
+    const res = await fetch('https://quantumcoin-ui-1live.onrender.com/api/create-wallet');
+    if (!res.ok) {
+      alert("❌ Failed to generate secure wallet.");
+      throw new Error("Failed to create wallet");
+    }
+    wallet = await res.json();
     localStorage.setItem("wallet", JSON.stringify(wallet));
   }
   return wallet;
 }
+window.getOrCreateWallet = getOrCreateWallet;
 
 export function showWalletInfo() {
   const wallet = JSON.parse(localStorage.getItem("wallet"));
@@ -24,11 +25,4 @@ export function showWalletInfo() {
     alert("⚠️ No wallet found.");
   }
 }
-
-function generateDummyKeypair() {
-  const random = Math.random().toString(36).substring(2);
-  return {
-    publicKey: btoa("QTC_" + random),
-    privateKey: btoa("PRIV_" + random),
-  };
-}
+window.showWalletInfo = showWalletInfo;
