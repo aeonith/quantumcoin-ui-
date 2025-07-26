@@ -99,3 +99,28 @@
   </script>
 </body>
 </html>
+<script type="module">
+  import { getOrCreateWallet, showWalletInfo } from './wallet.js';
+
+  document.getElementById('form-button').addEventListener('click', () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const confirmPassword = document.getElementById('confirm-password').value.trim();
+
+    if (!email || !password) {
+      alert("Please fill out both fields.");
+      return;
+    }
+
+    const isLogin = confirmPassword.style.display === "none";
+
+    if (!isLogin && password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    // Simulate auth — create or load wallet
+    const wallet = getOrCreateWallet();
+    showWalletInfo();
+  });
+</script>
