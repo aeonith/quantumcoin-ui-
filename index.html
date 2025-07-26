@@ -26,45 +26,76 @@
     <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
 
     <div class="box">
-      <input type="email" placeholder="Email" />
-      <input type="password" placeholder="Password" />
-      <button>🚀 Login</button>
+      <input type="email" placeholder="Email" id="email" />
+      <input type="password" placeholder="Password" id="password" />
+      <input type="password" placeholder="Confirm Password" id="confirm-password" style="display: none;" />
+      <button id="form-button">🚀 Login</button>
       <div class="terms-check">
         <label>
           <input type="checkbox" required />
-          I agree to the <a href="#">Terms & Conditions</a>
+          I agree to the <a href="#" id="open-terms">Terms & Conditions</a>
         </label>
       </div>
       <div class="toggle">
-        New here? <a href="#">Register</a>
+        New here? <a href="#" id="toggle-form">Register</a>
       </div>
     </div>
 
     <div class="btc-info">
       <h2>🚀 The QuantumCoin™ Vision</h2>
-      <p>
-        QuantumCoin™ is a next-generation digital currency engineered from the ground up to be quantum-resistant, lightning-fast, and fully sovereign. It uses advanced post-quantum cryptographic algorithms like Dilithium2 to ensure that no future quantum computer — no matter how powerful — can compromise the security of your wallet or your transactions.
-      </p>
-      <p>
-        With a fixed total supply of 22 million QTC, QuantumCoin™ adopts a Bitcoin-style halving schedule over 66 years. Mining difficulty increases over time to ensure scarcity, while block reward halvings occur every two years for the first 50 years, then every four years. This emission model strikes the perfect balance between accessibility and long-term value.
-      </p>
-      <p>
-        QuantumCoin™ is not just another cryptocurrency. It's a complete ecosystem designed for freedom: it features the RevStop™ security layer, giving users full power to revoke or freeze coins if stolen, using cold storage keys or cryptographic passwords. This feature is optional and designed to protect without compromising decentralization.
-      </p>
-      <p>
-        Unlike centralized systems, QuantumCoin™ gives users full control — with no middlemen, no gatekeepers, and no compromise on sovereignty. It features peer-to-peer networking, a decentralized CLI wallet interface, and trustless mining powered by proof-of-work. It’s fast, modular, and accessible to anyone, anywhere.
-      </p>
-      <p>
-        Whether you're a miner, a holder, or a builder, QuantumCoin™ is for those who demand the highest level of cryptographic strength, future-proof architecture, and absolute freedom. From its modular open-source codebase to its real-time transaction speeds and quantum-secure signatures, QuantumCoin™ is ready to change the future.
-      </p>
-      <p>
-        QuantumCoin™ is more than money — it's a movement. Join the quantum financial revolution and help build a future where currency is fast, fair, and secure from even the most powerful computers on Earth or beyond.
-      </p>
+      <p>QuantumCoin™ is a next-generation digital currency engineered from the ground up to be quantum-resistant, lightning-fast, and fully sovereign. It uses advanced post-quantum cryptographic algorithms like Dilithium2 to ensure that no future quantum computer — no matter how powerful — can compromise the security of your wallet or your transactions.</p>
+      <p>With a fixed total supply of 22 million QTC, QuantumCoin™ adopts a Bitcoin-style halving schedule over 66 years. Mining difficulty increases over time to ensure scarcity, while block reward halvings occur every two years for the first 50 years, then every four years. This emission model strikes the perfect balance between accessibility and long-term value.</p>
+      <p>QuantumCoin™ is not just another cryptocurrency. It's a complete ecosystem designed for freedom: it features the RevStop™ security layer, giving users full power to revoke or freeze coins if stolen, using cold storage keys or cryptographic passwords. This feature is optional and designed to protect without compromising decentralization.</p>
+      <p>Unlike centralized systems, QuantumCoin™ gives users full control — with no middlemen, no gatekeepers, and no compromise on sovereignty. It features peer-to-peer networking, a decentralized CLI wallet interface, and trustless mining powered by proof-of-work. It’s fast, modular, and accessible to anyone, anywhere.</p>
+      <p>Whether you're a miner, a holder, or a builder, QuantumCoin™ is for those who demand the highest level of cryptographic strength, future-proof architecture, and absolute freedom. From its modular open-source codebase to its real-time transaction speeds and quantum-secure signatures, QuantumCoin™ is ready to change the future.</p>
+      <p>QuantumCoin™ is more than money — it's a movement. Join the quantum financial revolution and help build a future where currency is fast, fair, and secure from even the most powerful computers on Earth or beyond.</p>
     </div>
 
     <footer>
       &copy; 2025 QuantumCoin™. All rights reserved.
     </footer>
   </div>
+
+  <!-- Modal for Terms -->
+  <div id="terms-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn" id="close-terms">&times;</span>
+      <h2>QuantumCoin™ Terms & Conditions</h2>
+      <div class="modal-scroll">
+        <p>By using QuantumCoin™, you agree to the following terms:</p>
+        <p>QuantumCoin™ is a decentralized digital asset. Users must take full responsibility for key storage, asset safety, and usage. The creators of QuantumCoin™ are not liable for any loss or damage resulting from the use of the platform. By interacting with the network, users agree to hold harmless its creators and contributors.</p>
+        <p>QuantumCoin™ includes advanced security such as RevStop™, which allows optional freezing or revocation of stolen funds with proper authentication. The use of these features is at the user’s discretion and requires secure password storage and/or hardware key access.</p>
+        <p>All network activity is peer-to-peer and censorship-resistant. QuantumCoin™ provides no central authority or recovery support for lost keys or passwords. The ecosystem is designed to protect individual sovereignty, and users must understand the risks of operating in a decentralized environment.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const toggleForm = document.getElementById('toggle-form');
+    const formButton = document.getElementById('form-button');
+    const confirmPassword = document.getElementById('confirm-password');
+    let isLogin = true;
+
+    toggleForm.addEventListener('click', (e) => {
+      e.preventDefault();
+      isLogin = !isLogin;
+      formButton.textContent = isLogin ? '🚀 Login' : '🚀 Register';
+      toggleForm.textContent = isLogin ? 'Register' : 'Back to Login';
+      confirmPassword.style.display = isLogin ? 'none' : 'block';
+    });
+
+    const termsLink = document.getElementById('open-terms');
+    const modal = document.getElementById('terms-modal');
+    const closeModal = document.getElementById('close-terms');
+
+    termsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      modal.classList.remove('hidden');
+    });
+
+    closeModal.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  </script>
 </body>
 </html>
