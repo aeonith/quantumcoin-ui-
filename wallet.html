@@ -1,81 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin Wallet</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #000;
-      color: #00ffcc;
-      text-align: center;
-      padding: 60px;
-    }
-
-    .wallet-container {
-      max-width: 600px;
-      margin: auto;
-      background-color: rgba(255, 255, 255, 0.05);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 20px #00ffcc77;
-    }
-
-    h1 {
-      font-size: 32px;
-    }
-
-    .info {
-      font-size: 18px;
-      margin-top: 20px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin-top: 20px;
-      background-color: #00ffcc;
-      color: #000;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #00e6b8;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>My QuantumCoin Wallet</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="wallet-container">
-    <h1>💼 Welcome to QuantumCoin</h1>
-    <p class="info">Your wallet is protected and live.</p>
-    <p class="info">Balance: <strong id="balance">Loading...</strong></p>
-    <button onclick="logout()">🔒 Logout</button>
-  </div>
+  <h2>Welcome to Your Wallet</h2>
+  <p><strong>Wallet Address:</strong> <span id="wallet-address"></span></p>
+  <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
+  <p><strong>To receive QTC:</strong></p>
+  <p>Send BTC to the address below:</p>
+  <p><strong>Bitcoin Address:</strong> <span id="btc-address">1BitcoinTestAddressXYZ</span></p>
+  <p>You'll receive 1 QTC per $0.25 of BTC.</p>
 
   <script>
-    window.onload = function () {
-      const verified = localStorage.getItem("kyc_verified");
-      if (verified !== "true") {
-        alert("⚠️ You must pass KYC to access the wallet.");
-        window.location.href = "kyc.html";
-        return;
+    const walletAddress = localStorage.getItem("walletAddress");
+    document.getElementById("wallet-address").innerText = walletAddress || "Not available";
+
+    async function updateBalance() {
+      try {
+        const res = await fetch(`https://quantumcoin-ui-1rust1.onrender.com/balance/${walletAddress}`);
+        const data = await res.json();
+        document.getElementById("wallet-balance").innerText = data.balance;
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching balance.");
       }
-
-      // Simulate wallet loading
-      const balanceEl = document.getElementById("balance");
-      setTimeout(() => {
-        balanceEl.textContent = "1,250,000 QTC"; // placeholder
-      }, 1000);
-    };
-
-    function logout() {
-      localStorage.removeItem("kyc_verified");
-      alert("You’ve been logged out.");
-      window.location.href = "kyc.html";
     }
+
+    updateBalance();
   </script>
 </body>
 </html>
