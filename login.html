@@ -4,16 +4,14 @@
   <meta charset="UTF-8">
   <title>QuantumCoin Login</title>
 </head>
-<body>
-  <h2>Login</h2>
+<body style="background:black; color:white; font-family:Segoe UI;">
+  <h2>QuantumCoin™ Login</h2>
+
   <form id="login-form">
-    <label for="login-username">Username:</label><br>
-    <input type="text" id="login-username" name="username"><br><br>
-
-    <label for="login-password">Password:</label><br>
-    <input type="password" id="login-password" name="password"><br><br>
-
-    <button type="submit">Login</button>
+    <input type="email" id="login-username" placeholder="Email"><br><br>
+    <input type="password" id="login-password" placeholder="Password"><br><br>
+    <input type="checkbox" id="terms-checkbox" checked> I agree to the Terms & Conditions<br><br>
+    <button type="submit">🚀 Login</button>
   </form>
 
   <script>
@@ -22,9 +20,15 @@
 
       const username = document.getElementById('login-username').value;
       const password = document.getElementById('login-password').value;
+      const agreed = document.getElementById('terms-checkbox').checked;
 
       if (!username || !password) {
-        alert('Please enter both username and password.');
+        alert("Please enter both email and password.");
+        return;
+      }
+
+      if (!agreed) {
+        alert("You must agree to the Terms & Conditions.");
         return;
       }
 
@@ -32,7 +36,7 @@
         const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password })
         });
 
         const data = await response.json();
