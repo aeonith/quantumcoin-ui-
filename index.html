@@ -1,120 +1,67 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: black;
-  color: #111; /* switched to high-contrast dark text base */
-  overflow-x: hidden;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin™</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <video autoplay muted loop id="bg-video">
+    <source src="https://cdn.coverr.co/videos/coverr-blockchain-data-flow-5844/1080p.mp4" type="video/mp4">
+  </video>
 
-#bg-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  min-width: 100vw;
-  min-height: 100vh;
-  object-fit: cover;
-  z-index: -1;
-}
+  <div class="container">
+    <div class="logo">🚀 QuantumCoin™</div>
+    <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
 
-.container {
-  padding: 40px 20px;
-  text-align: center;
-}
+    <div class="box">
+      <input type="email" placeholder="Email" />
+      <input type="password" placeholder="Password" />
+      <button>🚀 Login</button>
+      <div class="terms-check">
+        <label>
+          <input type="checkbox" required />
+          I agree to the <a href="#">Terms & Conditions</a>
+        </label>
+      </div>
+      <div class="toggle">
+        New here? <a href="#">Register</a>
+      </div>
+    </div>
 
-.logo {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #00fdfd;
-  text-shadow: 0 0 25px #00fdfd;
-  margin-bottom: 10px;
-}
+    <div class="btc-info">
+      <h2>🚀 The QuantumCoin™ Vision</h2>
+      <p>
+        <strong>QuantumCoin™</strong> is more than a currency — it is a movement. In a world accelerating toward quantum supremacy and digital chaos, QuantumCoin™ rises as the most secure, sovereign, and quantum-resilient cryptocurrency ever created.
+      </p>
+      <p>
+        Traditional blockchains will crumble under the weight of quantum computers. SHA-256, RSA, and ECDSA will soon be obsolete. <strong>QuantumCoin™</strong> is built on lattice-based Dilithium2 cryptography, designed to withstand even the most advanced quantum attacks. This means your wallet, your data, and your wealth remain safe no matter what the future brings.
+      </p>
+      <p>
+        But security alone isn’t enough. We built <strong>RevStop™</strong>, the world’s first user-activated transaction reversal system. If you detect malicious activity, stolen keys, or wallet compromise, you — and only you — can freeze and reverse transactions using cold storage authentication and an offline password. No government. No authority. Just you.
+      </p>
+      <p>
+        <strong>QuantumCoin™</strong> integrates zk-STARK technology to enable private, shielded, high-throughput transactions with near-zero latency. Every transaction is lightning fast, anonymous, and verified across a quantum-safe decentralized ledger.
+      </p>
+      <p>
+        Our Bitcoin-inspired tokenomics ensure scarcity and long-term value: a total cap of 22 million QTC mined over 66 years. Halvings occur every 2 years for the first 50 years, transitioning to 4-year halvings thereafter. No premine for whales. No airdrops. No inflation. Just fair distribution and hard mining.
+      </p>
+      <p>
+        Whether you’re a developer, investor, cypherpunk, or visionary, QuantumCoin™ is built for the new era of digital freedom. We are fully independent — not based on Ethereum or any existing chain. We are a ground-up, native Layer-1 blockchain engineered for performance, privacy, and sovereignty.
+      </p>
+      <p>
+        Our open-source code is written entirely in Rust, with all logic optimized for real-time protection and cryptographic certainty. From wallet generation to node communication, every line of QuantumCoin™ is built with precision and intention.
+      </p>
+      <p>
+        As artificial intelligence evolves and global surveillance expands, only sovereign, decentralized technologies will preserve your freedom. QuantumCoin™ is not just a coin. It’s a shield. It’s a system. It’s the future of financial autonomy — built by pioneers, for pioneers.
+      </p>
+      <p><strong>Join the revolution. Own your future. Run QuantumCoin™.</strong></p>
+    </div>
 
-.slogan {
-  font-size: 1.1rem;
-  margin-bottom: 30px;
-  color: #ffffff;
-}
-
-.box {
-  background: rgba(255, 255, 255, 0.95); /* lighter background */
-  padding: 25px;
-  border-radius: 15px;
-  width: 90%;
-  max-width: 400px;
-  margin: 0 auto 30px auto;
-  box-shadow: 0 0 15px cyan;
-  color: #111;
-}
-
-.box input {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  font-size: 1rem;
-  border: none;
-  border-radius: 10px;
-  background: #f0f0f0;
-}
-
-.box button {
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  background-color: #00fdfd;
-  color: black;
-  font-weight: bold;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  box-shadow: 0 0 12px #00fdfd;
-  transition: all 0.3s ease;
-}
-
-.box button:hover {
-  transform: scale(1.05);
-}
-
-.terms-check {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  font-size: 0.85rem;
-  color: #111;
-}
-
-.toggle {
-  margin-top: 12px;
-  font-size: 0.85rem;
-  color: #111;
-}
-
-.btc-info {
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 30px;
-  margin: 40px auto;
-  border-radius: 15px;
-  width: 95%;
-  max-width: 900px;
-  text-align: left;
-  box-shadow: 0 0 25px #00fdfd;
-  color: #111;
-  line-height: 1.7;
-  font-size: 1rem;
-}
-
-.btc-info h2 {
-  color: #00fdfd;
-  font-size: 1.8rem;
-  margin-bottom: 15px;
-}
-
-footer {
-  margin-top: 60px;
-  text-align: center;
-  color: #ccc;
-  font-size: 0.85rem;
-  padding: 20px;
-}
+    <footer>
+      &copy; 2025 QuantumCoin™. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>
