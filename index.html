@@ -1,56 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin - Login & Register</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF‑8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QuantumCoin | Buy QTC with BTC</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <!-- 🔁 Background Video -->
-  <video autoplay muted playsinline id="bg-video">
+  <video id="bg" autoplay muted loop>
     <source src="quantum-bg.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
+    Your browser doesn't support video.
   </video>
+  <div class="overlay"></div>
 
   <div class="container">
-    <h1 class="title">QuantumCoin</h1>
-    <p class="subtitle">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
+    <h1>QuantumCoin™</h1>
+    <p class="sub">Secure. Quantum-Resistant. Lightning-Fast.</p>
 
-    <!-- 🔐 Login Form -->
-    <div class="card">
-      <h2>Login</h2>
-      <input type="text" id="login-username" placeholder="Username"/>
-      <input type="password" id="login-password" placeholder="Password"/>
-      <button onclick="login()" class="btn">Login</button>
+    <div class="card" id="buy-card">
+      <h2>Buy QTC with Bitcoin</h2>
+      <p>Send BTC to address:</p>
+      <code>bc1qv7tpdxqvgwutfrhf53nhwgp77j5lv7whnk433y</code>
+      <p>We'll auto‑deliver QTC once 3 confirmations are detected.</p>
     </div>
 
-    <!-- 🧾 Register Form -->
-    <div class="card">
+    <div class="card" id="wallet-card">
+      <h2>Your Wallet</h2>
+      <p>Address: <span id="wallet-address">Loading...</span></p>
+      <p>Balance: <span id="wallet-balance">0</span> QTC</p>
+      <button onclick="refreshBalance()">Refresh Balance</button>
+    </div>
+
+    <div class="card" id="send-card">
+      <h2>Send QTC</h2>
+      <input id="send-to" placeholder="Recipient Address" />
+      <input id="send-amount" type="number" placeholder="Amount to Send" />
+      <button onclick="sendQTC()">🚀 Send Now</button>
+    </div>
+
+    <div class="card" id="login-card">
+      <h2>Login</h2>
+      <input id="login-username" placeholder="Username" />
+      <input id="login-password" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <div class="card" id="register-card">
       <h2>Register</h2>
-      <input type="text" id="register-username" placeholder="New Username"/>
-      <input type="password" id="register-password" placeholder="New Password"/>
-      <label class="terms">
-        <input type="checkbox" id="terms-checkbox" />
-        I agree to the <a href="#" onclick="document.getElementById('terms-modal').style.display='block'">Terms & Conditions</a>
-      </label>
-      <button onclick="register()" class="btn">Create Account</button>
+      <input id="register-username" placeholder="New Username" />
+      <input id="register-password" type="password" placeholder="New Password" />
+      <div>
+        <button onclick="showTerms()">📜 View Terms & Conditions</button>
+      </div>
+      <label><input type="checkbox" id="terms-checkbox" /> I agree</label>
+      <button onclick="register()">Create Account</button>
     </div>
   </div>
 
-  <!-- 📜 Terms Modal -->
-  <div id="terms-modal" class="modal">
+  <!-- Terms modal -->
+  <div id="terms-modal">
     <div class="modal-content">
-      <h3>QuantumCoin Terms & Conditions</h3>
-      <p>
-        QuantumCoin is a decentralized, quantum-safe digital currency. By using it, you agree to all risk factors such as volatility, wallet responsibility, and irreversible transactions.
+      <h3>Terms & Conditions</h3>
+      <p class="fine">
+        <!-- Very long detailed fine print legal, risk disclosures, procedures... -->
+        QuantumCoin is a decentralized digital currency resistant to known quantum threats...
+        <!-- 20× longer version in small font -->
       </p>
-      <label>
-        <input type="checkbox" id="terms-checkbox-modal" />
-        I agree to the full Terms
-      </label>
-      <button onclick="acceptTermsAndRegister()" class="btn">Accept & Register</button>
+      <button onclick="closeTerms()">✅ I Agree</button>
     </div>
   </div>
 
