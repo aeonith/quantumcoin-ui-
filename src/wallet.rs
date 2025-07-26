@@ -1,5 +1,5 @@
 use pqcrypto_dilithium::dilithium2::{
-    keypair, sign_detached, verify_detached_signature, PublicKey, SecretKey, DetachedSignature,
+    keypair, detached_sign, verify_detached_signature, PublicKey, SecretKey, DetachedSignature,
 };
 use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as _, SecretKey as _};
 use base64::{engine::general_purpose, Engine as _};
@@ -57,7 +57,7 @@ impl Wallet {
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
         let sk_bytes = general_purpose::STANDARD.decode(&self.private_key).unwrap();
         let sk = SecretKey::from_bytes(&sk_bytes).unwrap();
-        let sig = sign_detached(message, &sk);
+        let sig = detached_sign(message, &sk);
         sig.as_bytes().to_vec()
     }
 
