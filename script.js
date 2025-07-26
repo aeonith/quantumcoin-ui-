@@ -3,10 +3,10 @@ const API_URL = "https://quantumcoin-ui-1rust1.onrender.com";
 async function register() {
   const email = document.getElementById("register-email").value;
   const password = document.getElementById("register-password").value;
-  const terms = document.getElementById("terms").checked;
+  const agreed = document.getElementById("terms").checked;
 
-  if (!email || !password || !terms) {
-    alert("Please complete all fields and accept the terms.");
+  if (!email || !password || !agreed) {
+    alert("Please fill in all fields and agree to the Terms.");
     return;
   }
 
@@ -18,9 +18,7 @@ async function register() {
 
   const data = await res.json();
   if (res.ok) {
-    alert("Registered successfully!");
-    localStorage.setItem("email", email);
-    window.location.href = "dashboard.html";
+    alert("Account created. Now login.");
   } else {
     alert(data.error || "Registration failed.");
   }
@@ -31,7 +29,7 @@ async function login() {
   const password = document.getElementById("login-password").value;
 
   if (!email || !password) {
-    alert("Enter email and password.");
+    alert("Please enter email and password.");
     return;
   }
 
@@ -42,11 +40,11 @@ async function login() {
   });
 
   const data = await res.json();
-  if (res.ok) {
+
+  if (res.ok && data.wallet_address) {
+    document.getElementById("btc-address").textContent = data.wallet_address;
+    document.getElementById("btc-info").style.display = "block";
     alert("Login successful.");
-    localStorage.setItem("email", email);
-    localStorage.setItem("wallet", data.wallet_address);
-    window.location.href = "dashboard.html";
   } else {
     alert(data.error || "Login failed.");
   }
