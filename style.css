@@ -1,93 +1,88 @@
-* {
+body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: 'Orbitron', sans-serif;
-}
-
-body, html {
-  height: 100%;
-  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
+  background: #000;
+  overflow-x: hidden;
 }
 
 #bg-video {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
+  top: 0;
+  left: 0;
+  min-width: 100vw;
+  min-height: 100vh;
   z-index: -1;
   object-fit: cover;
 }
 
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: #fff;
+.container {
   text-align: center;
+  padding-top: 5vh;
+}
+
+.logo {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #00fdfd;
+  text-shadow: 0 0 20px #00fdfd;
+}
+
+.slogan {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  color: #eee;
+}
+
+.box {
+  background: rgba(0,0,0,0.7);
+  padding: 20px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  margin: 20px auto;
+  box-shadow: 0 0 10px cyan;
+}
+
+.box input[type="email"],
+.box input[type="password"] {
   width: 100%;
-  padding: 50px 20px;
-  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
-h1 {
-  font-size: 48px;
-  color: #00ffff;
-  text-shadow: 0 0 15px #00ffff;
-}
-
-.form-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: 60px;
-  margin-top: 40px;
-  flex-wrap: wrap;
-}
-
-.form-section {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 25px;
+.box button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  margin-top: 10px;
+  border: none;
+  background-color: #00fdfd;
   border-radius: 10px;
-  min-width: 280px;
-}
-
-input[type="email"],
-input[type="password"] {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 5px;
-}
-
-button {
-  background: #00ffff;
-  border: none;
-  padding: 12px 20px;
+  box-shadow: 0 0 10px #00fdfd;
   color: black;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 6px;
-  margin-top: 10px;
-  box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
-  transition: all 0.3s ease;
+  transition: 0.3s;
 }
 
-button:hover {
-  background: #00bdbd;
-  box-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff;
+.box button:hover {
+  transform: scale(1.05);
 }
 
-a {
-  color: #00ffff;
-  text-decoration: none;
+label {
+  font-size: 0.9rem;
 }
 
-@media (max-width: 700px) {
-  .form-container {
-    flex-direction: column;
-    gap: 30px;
-  }
+.btc-info {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  margin: 30px auto;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  border: 2px solid #00fdfd;
 }
