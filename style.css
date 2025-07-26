@@ -36,7 +36,7 @@ body {
 }
 
 .box {
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3); /* Lighter opacity for clearer background */
   padding: 20px;
   border-radius: 15px;
   width: 90%;
@@ -77,12 +77,39 @@ label {
   font-size: 0.9rem;
 }
 
+.terms-check {
+  margin-top: 15px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .btc-info {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.25); /* More transparent */
   padding: 20px;
-  margin: 30px auto;
+  margin: 40px auto;
   border-radius: 10px;
   width: 90%;
-  max-width: 500px;
+  max-width: 700px;
   border: 2px solid #00fdfd;
+  text-align: left;
+  color: #d0fdfd;
+  line-height: 1.6;
+  font-size: 1rem;
+  box-shadow: 0 0 20px #00fdfd;
+}
+
+.btc-info h2 {
+  color: #00fdfd;
+  font-size: 1.6rem;
+}
+
+footer {
+  margin-top: 60px;
+  padding: 30px 20px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #aaa;
 }
