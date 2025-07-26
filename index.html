@@ -3,50 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin Login</title>
+  <title>QuantumCoin</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
+  <!-- 🔁 Background video -->
   <video autoplay loop muted playsinline id="bg-video">
-    <source src="your-background.mp4" type="video/mp4">
+    <source src="quantum-bg.mp4" type="video/mp4" />
   </video>
 
+  <!-- 🔐 Login/Register Box -->
   <div class="container">
-    <div class="logo">🚀 QuantumCoin</div>
+    <div class="logo">🚀 QuantumCoin™</div>
     <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
 
-    <form class="box" onsubmit="return validateTerms()">
-      <input type="email" placeholder="Email" required />
-      <input type="password" placeholder="Password" required />
+    <div class="box">
+      <form id="auth-form" onsubmit="return validateForm()">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
 
-      <div class="terms-check">
-        <input type="checkbox" id="terms" />
-        <label for="terms">I agree to the <a href="#">Terms & Conditions</a></label>
+        <div class="terms-check">
+          <input type="checkbox" id="terms" />
+          <label for="terms">I agree to the <a href="#">Terms & Conditions</a></label>
+        </div>
+
+        <button type="submit" id="auth-button">🚀 Login</button>
+      </form>
+
+      <div class="toggle">
+        <span id="toggle-text">New here? <a href="#" onclick="toggleForm()">Register</a></span>
       </div>
+    </div>
 
-      <button type="submit">🧠 Create Account</button>
-    </form>
-
+    <!-- 🔭 QuantumCoin Full Vision Section -->
     <div class="btc-info">
-      <h2>🚀 QuantumCoin UI & Blockchain Engine</h2>
+      <h2>🌌 The QuantumCoin Vision</h2>
       <p>
-        Welcome to the official source code for QuantumCoin — the world’s first quantum-resistant cryptocurrency with user-controlled transaction authority via RevStop.
+        QuantumCoin is not just another cryptocurrency — it’s a revolution in trust, freedom, and user sovereignty.
+        Built from the ground up with quantum-safe cryptography (Dilithium2) and fully decentralized architecture,
+        QuantumCoin is designed to last into the next era of computing.
       </p>
+
       <p>
-        🌌 <strong>What is QuantumCoin?</strong><br/>
-        QuantumCoin is a next-generation blockchain project built to resist quantum attacks, enable lightning-fast private transactions, and give users full sovereignty. It integrates the revolutionary RevStop feature, allowing wallet owners to freeze unauthorized transfers if their keys are compromised — with no middleman or government control.
+        🔒 <strong>Quantum Resistance:</strong><br/>
+        Unlike most chains that will break under quantum computing attacks, QuantumCoin uses lattice-based cryptography to ensure long-term safety — even against post-quantum adversaries.
+      </p>
+
+      <p>
+        🔁 <strong>RevStop Authority:</strong><br/>
+        Our flagship RevStop feature empowers wallet owners with a last-resort shield. If your private key is compromised, you — and only you — can freeze your coins. No government. No bank. No third party.
+      </p>
+
+      <p>
+        ⚡ <strong>Instant Transactions & Real Utility:</strong><br/>
+        With optimized mining algorithms and fast block validation, QuantumCoin will power everyday payments, peer-to-peer trades, and even shielded zk-STARK transfers.
+      </p>
+
+      <p>
+        🧱 <strong>Built for Sovereignty:</strong><br/>
+        Every piece of QuantumCoin is user-first. From cold storage support to secure backups, transparent tokenomics, and no pre-mine tricks — QuantumCoin is the people’s currency.
+      </p>
+
+      <p>
+        💎 <strong>Next Steps:</strong><br/>
+        This is just the beginning. QuantumCoin is preparing for real exchange listings (Crypto.com, TrustWallet), open-source audit releases, and full ecosystem expansion — including QuantumPay, QuantumVault, and the QuantumVerse metachain.
+      </p>
+
+      <p style="margin-top: 30px;">
+        ✨ Join us. Become sovereign. Hold the future in your wallet.
       </p>
     </div>
   </div>
 
-  <footer>© 2025 QuantumCoin. All rights reserved.</footer>
+  <footer>
+    © 2025 QuantumCoin™ — Built for the Quantum Age
+  </footer>
 
+  <!-- ⚙️ Script to toggle login/register -->
   <script>
-    function validateTerms() {
+    let isLogin = true;
+
+    function toggleForm() {
+      isLogin = !isLogin;
+      document.getElementById("auth-button").innerText = isLogin ? "🚀 Login" : "🧠 Create Account";
+      document.getElementById("toggle-text").innerHTML = isLogin
+        ? 'New here? <a href="#" onclick="toggleForm()">Register</a>'
+        : 'Already have an account? <a href="#" onclick="toggleForm()">Login</a>';
+    }
+
+    function validateForm() {
       const checkbox = document.getElementById("terms");
       if (!checkbox.checked) {
-        alert("Please agree to the Terms & Conditions to continue.");
+        alert("You must agree to the Terms & Conditions to continue.");
         return false;
       }
       return true;
