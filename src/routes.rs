@@ -13,7 +13,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
         .service(get_balance)
         .service(mine_block)
         .service(get_transactions)
-        .service(create_wallet_route); // ✅ added wallet API
+        .service(create_wallet_route); // ✅ wallet route
 }
 
 #[get("/")]
@@ -49,7 +49,7 @@ async fn mine_block(
     blockchain: web::Data<Arc<Mutex<Blockchain>>>,
 ) -> impl Responder {
     let mut chain = blockchain.lock().unwrap();
-    let default_miner = "SYSTEM".to_string(); // Change if needed
+    let default_miner = "SYSTEM".to_string(); // You can change this later
     chain.mine_pending_transactions(default_miner);
     HttpResponse::Ok().body("✅ Mined new block")
 }
@@ -70,13 +70,15 @@ struct WalletResponse {
 }
 
 #[get("/api/create-wallet")]
-async fn create_wallet_route(
-    wallet: web::Data<Arc<Mutex<Wallet>>>,
-) -> impl Responder {
-    let wallet = wallet.lock().unwrap();
-    let response = WalletResponse {
-        publicKey: wallet.get_public_key(),
-        privateKey: wallet.get_private_key(),
-    };
-    HttpResponse::Ok().json(response)
+async fn create_wallet_route() -> impl Responder {
+    match Wallet::generate_new() {
+        Ok(wallet) => {
+            let response = WalletResponse {
+                publicKey: wallet.get_public_key(),
+                privateKey: wallet.get_private_key(),
+            };
+            HttpResponse::Ok().json(response)
+        },
+        Err(_) => HttpResponse::InternalServerError().body("❌ Failed to generate secure wallet"),
+    }
 }
