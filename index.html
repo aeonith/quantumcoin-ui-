@@ -4,53 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <video autoplay muted loop playsinline id="bgVideo">
-    <source src="assets/bg.mp4" type="video/mp4" />
+
+  <!-- Background Video -->
+  <video autoplay loop muted playsinline id="bg-video">
+    <source src="background.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 
   <div class="container">
-    <header>
-      <h1><span class="glow">QuantumCoin<sup>™</sup></span></h1>
-      <p class="subtitle">Quantum-Safe. Lightning-Fast.<br>Unbreakable Future.</p>
-    </header>
+    <h1 class="title">QuantumCoin<span class="tm">™</span></h1>
+    <p class="subtitle">Quantum-Safe. Lightning-Fast.<br>Unbreakable Future.</p>
 
-    <section class="form-section">
+    <!-- Login -->
+    <div class="form-box">
       <h2>Login</h2>
-      <input type="text" id="loginUsername" placeholder="Username" />
-      <input type="password" id="loginPassword" placeholder="Password" />
-      <button onclick="login()">🔐 Login</button>
-    </section>
+      <input type="text" id="login-username" placeholder="Email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button onclick="login()">🚀 Login</button>
+    </div>
 
-    <section class="form-section">
+    <!-- Register -->
+    <div class="form-box">
       <h2>Register</h2>
-      <input type="text" id="regUsername" placeholder="Username" />
-      <input type="password" id="regPassword" placeholder="Password" />
-      <label>
-        <input type="checkbox" id="termsCheckbox" />
-        I agree to the <a href="#">Terms & Conditions</a>
-      </label>
-      <button onclick="register()">📝 Create Account</button>
-    </section>
+      <form id="register-form">
+        <input type="email" id="reg-email" placeholder="Email" required />
+        <input type="password" id="reg-password" placeholder="Password" required />
+        <input type="text" id="reg-wallet" placeholder="Wallet Address" required />
+        <div id="qr-section" style="display:none;">
+          <p>Scan this QR with Google Authenticator:</p>
+          <img id="qr-code" src="" alt="2FA QR Code" />
+          <input type="text" id="reg-2fa-token" placeholder="Enter 2FA token from app" />
+        </div>
+        <label><input type="checkbox" id="terms-checkbox" /> I agree to the <a href="#" onclick="openTerms()">Terms & Conditions</a></label>
+        <button type="submit">🧠 Create Account</button>
+      </form>
+    </div>
 
-    <section class="form-section wallet">
-      <h2>Your Wallet</h2>
-      <p><strong>Address:</strong> <span id="walletAddress">Loading...</span></p>
-      <p><strong>Balance:</strong> <span id="walletBalance">0 QTC</span></p>
-      <button onclick="refreshBalance()">🔄 Refresh Balance</button>
-    </section>
-
-    <section class="form-section send">
-      <h2>Send QTC</h2>
-      <input type="text" id="recipient" placeholder="Recipient Address" />
-      <input type="number" id="amount" placeholder="Amount to Send" />
-      <button onclick="sendCoins()">🚀 Send Now</button>
-    </section>
+    <!-- Terms Modal -->
+    <div id="terms-modal" class="modal">
+      <div class="modal-content">
+        <span onclick="closeTerms()" class="close">&times;</span>
+        <h3>Terms & Conditions</h3>
+        <p>By registering for QuantumCoin™, you agree to the use of quantum-safe cryptography and user responsibility for private keys, passwords, and wallet security. Your account will be secured with TOTP-based 2FA.</p>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
+  <script src="registration.js"></script>
 </body>
 </html>
