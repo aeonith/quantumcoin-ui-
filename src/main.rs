@@ -1,6 +1,11 @@
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex};
 
+// ✅ CORS additions
+use actix_cors::Cors;
+use actix_web::http;
+
+// Your modules
 mod blockchain;
 mod revstop;
 mod routes;
@@ -31,9 +36,16 @@ async fn main() -> std::io::Result<()> {
         RevStop::load_status("revstop_status.json")
     ));
 
-    // Start Actix Web server
+    // Start Actix Web server with CORS enabled
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("https://quantumcoincrypto.com")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![http::header::CONTENT_TYPE])
+            .supports_credentials();
+
         App::new()
+            .wrap(cors) // ✅ Add CORS middleware
             .app_data(Data::new(wallet.clone()))
             .app_data(Data::new(blockchain.clone()))
             .app_data(Data::new(revstop.clone()))
