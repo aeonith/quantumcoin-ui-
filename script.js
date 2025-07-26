@@ -1,47 +1,53 @@
-const BACKEND_URL = "https://quantumcoin-ui-1rust1.onrender.com";
+const API_URL = "https://quantumcoin-ui-1rust1.onrender.com";
 
-// Login Handler
-async function login() {
-  const email = document.getElementById("login-username").value;
-  const password = document.getElementById("login-password").value;
+async function register() {
+  const email = document.getElementById("register-email").value;
+  const password = document.getElementById("register-password").value;
+  const terms = document.getElementById("terms").checked;
 
-  if (!email || !password) {
-    alert("Please enter both email and password.");
+  if (!email || !password || !terms) {
+    alert("Please complete all fields and accept the terms.");
     return;
   }
 
-  try {
-    const res = await fetch(`${BACKEND_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  const res = await fetch(`${API_URL}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
 
-    const data = await res.json();
-
-    if (res.ok) {
-      alert("Login successful!");
-    } else {
-      alert(`Login failed: ${data.error || "Unknown error"}`);
-    }
-  } catch (err) {
-    alert("Server error during login.");
-    console.error(err);
+  const data = await res.json();
+  if (res.ok) {
+    alert("Registered successfully!");
+    localStorage.setItem("email", email);
+    window.location.href = "dashboard.html";
+  } else {
+    alert(data.error || "Registration failed.");
   }
 }
 
-// Terms modal logic
-function openTerms() {
-  document.getElementById("terms-modal").style.display = "block";
-}
+async function login() {
+  const email = document.getElementById("login-email").value;
+  const password = document.getElementById("login-password").value;
 
-function closeTerms() {
-  document.getElementById("terms-modal").style.display = "none";
-}
-
-window.onclick = function (event) {
-  const modal = document.getElementById("terms-modal");
-  if (event.target == modal) {
-    modal.style.display = "none";
+  if (!email || !password) {
+    alert("Enter email and password.");
+    return;
   }
-};
+
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    alert("Login successful.");
+    localStorage.setItem("email", email);
+    localStorage.setItem("wallet", data.wallet_address);
+    window.location.href = "dashboard.html";
+  } else {
+    alert(data.error || "Login failed.");
+  }
+}
