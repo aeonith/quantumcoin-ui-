@@ -7,7 +7,6 @@
     body { font-family: Arial; background: #0b0f1a; color: white; text-align: center; }
     input, button { padding: 8px; margin: 5px; border-radius: 5px; border: none; }
     .box { margin: 20px auto; padding: 20px; width: 300px; background: #1b1f2a; border-radius: 10px; }
-    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -42,9 +41,11 @@
   </div>
 
   <script>
+    const API_BASE = 'https://quantumcoin-ui-1rust1.onrender.com';
+
     async function checkBalance() {
       const key = document.getElementById('balanceKey').value;
-      const res = await fetch(`http://localhost:8080/balance/${key}`);
+      const res = await fetch(`${API_BASE}/balance/${key}`);
       const data = await res.text();
       document.getElementById('balanceResult').innerText = `Balance: ${data} QTC`;
     }
@@ -54,7 +55,7 @@
       const recipient = document.getElementById('recipient').value;
       const amount = parseFloat(document.getElementById('amount').value);
 
-      const res = await fetch('http://localhost:8080/send', {
+      const res = await fetch(`${API_BASE}/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sender, recipient, amount })
@@ -64,15 +65,13 @@
     }
 
     async function mineBlock() {
-      const res = await fetch('http://localhost:8080/mine', {
-        method: 'POST'
-      });
+      const res = await fetch(`${API_BASE}/mine`, { method: 'POST' });
       const data = await res.text();
       document.getElementById('mineResult').innerText = data;
     }
 
     async function loadTransactions() {
-      const res = await fetch('http://localhost:8080/transactions`);
+      const res = await fetch(`${API_BASE}/transactions`);
       const txs = await res.json();
       const list = document.getElementById('txList');
       list.innerHTML = "";
