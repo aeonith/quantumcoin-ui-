@@ -40,13 +40,13 @@
   </style>
 </head>
 <body>
-  <h2>QuantumCoin™ Register</h2>
+  <h2>Create QuantumCoin™ Account</h2>
 
   <form id="register-form">
     <input type="email" id="register-username" placeholder="Email" required><br>
     <input type="password" id="register-password" placeholder="Password" required><br>
     <input type="checkbox" id="terms-checkbox" checked> I agree to the Terms & Conditions<br><br>
-    <button type="submit">🚀 Register</button>
+    <button type="submit">🧬 Register</button>
   </form>
 
   <script>
@@ -58,7 +58,7 @@
       const agreed = document.getElementById('terms-checkbox').checked;
 
       if (!agreed) {
-        alert('You must agree to the Terms & Conditions.');
+        alert("You must agree to the Terms & Conditions.");
         return;
       }
 
@@ -66,19 +66,20 @@
         const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-          alert('✅ Registration successful!');
+          alert("✅ Registration successful!");
+          window.location.href = "login.html";  // Redirect to login page
         } else {
           alert(`❌ Registration failed: ${data.error || 'Unknown error'}`);
         }
-      } catch (error) {
-        console.error('Registration error:', error);
-        alert('🌐 Network error. Try again later.');
+      } catch (err) {
+        alert("🌐 Network error. Try again later.");
+        console.error(err);
       }
     });
   </script>
