@@ -3,45 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QuantumCoin</title>
+  <title>QuantumCoin™ | Lightning-Fast Quantum-Safe Wallet</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Background Video -->
-  <video autoplay muted loop playsinline id="bg-video">
-    <source src="quantum-bg.mp4#t=0,3" type="video/mp4">
-    Your browser does not support the video tag.
+  <video autoplay muted loop id="bg-video">
+    <source src="quantum-bg.mp4" type="video/mp4" />
+    Your browser does not support HTML5 video.
   </video>
 
+  <div class="overlay"></div>
+
   <div class="container">
-    <h1 class="title">QuantumCoin</h1>
-    <p class="subtitle">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
+    <header>
+      <h1 class="title">QuantumCoin<span class="tm">™</span></h1>
+      <p class="subtitle">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
+    </header>
 
-    <div class="form-card">
-      <h2>Login</h2>
-      <input type="text" id="login-username" placeholder="Username" />
-      <input type="password" id="login-password" placeholder="Password" />
-      <button onclick="login()" class="btn">Login</button>
-    </div>
+    <section class="card-section">
+      <div class="form-card">
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Username" />
+        <input type="password" id="login-password" placeholder="Password" />
+        <button onclick="login()">🔐 Login</button>
+      </div>
 
-    <div class="form-card">
-      <h2>Register</h2>
-      <input type="text" id="register-username" placeholder="Username" />
-      <input type="password" id="register-password" placeholder="Password" />
-      <label class="checkbox-label">
-        <input type="checkbox" id="terms-checkbox" />
-        I agree to the <a href="#" onclick="openTerms()">Terms & Conditions</a>
-      </label>
-      <button onclick="register()" class="btn">Create Account</button>
-    </div>
+      <div class="form-card">
+        <h2>Register</h2>
+        <input type="text" id="register-username" placeholder="Username" />
+        <input type="password" id="register-password" placeholder="Password" />
+        <label class="checkbox-label">
+          <input type="checkbox" id="terms-checkbox" />
+          I agree to the <a href="#" onclick="openTerms()">Terms & Conditions</a>
+        </label>
+        <button onclick="register()">📝 Create Account</button>
+      </div>
+    </section>
   </div>
 
-  <!-- Terms Modal -->
   <div id="terms-modal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeTerms()">&times;</span>
-      <h3>Terms & Conditions</h3>
-      <p>Your use of QuantumCoin is subject to strict confidentiality, decentralized use, and no liability guarantees...</p>
+      <h3>QuantumCoin™ Terms & Conditions</h3>
+      <p>By using QuantumCoin, you agree to the absolute decentralization, security, and privacy of the network. QuantumCoin is not liable for any misuse of wallets or lost keys. Always store your credentials securely.</p>
     </div>
   </div>
 
