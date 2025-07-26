@@ -2,20 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QuantumCoin Register</title>
+  <title>QuantumCoin™ Register</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: black;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+
+    form {
+      background: #111;
+      padding: 30px;
+      display: inline-block;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #0ff;
+    }
+
+    input {
+      display: block;
+      width: 250px;
+      margin: 10px auto;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      background: #00ffaa;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00cc88;
+    }
+  </style>
 </head>
 <body>
-  <h2>Register</h2>
+  <h2>Register for QuantumCoin</h2>
   <form id="register-form">
-    <label for="register-username">Username:</label><br>
-    <input type="text" id="register-username" name="username"><br><br>
-
-    <label for="register-password">Password:</label><br>
-    <input type="password" id="register-password" name="password"><br><br>
-
-    <input type="checkbox" id="terms-checkbox"> I agree to the Terms & Conditions<br><br>
-
-    <button type="submit">Register</button>
+    <input type="email" id="register-username" placeholder="Email" required>
+    <input type="password" id="register-password" placeholder="Password" required>
+    <input type="checkbox" id="terms-checkbox" checked> I agree to the Terms & Conditions
+    <br><br>
+    <button type="submit">🚀 Register</button>
   </form>
 
   <script>
