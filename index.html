@@ -4,33 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QuantumCoin™</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <!-- Video Background -->
   <video autoplay muted loop id="bg-video">
-    <source src="quantum_bg.mp4" type="video/mp4">
+    <source src="/quantum_bg.mp4" type="video/mp4" />
   </video>
 
-  <div class="overlay">
-    <h1>QuantumCoin™</h1>
-    <p>Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
+  <div class="container">
+    <h1 class="logo">QuantumCoin™</h1>
+    <p class="slogan">Quantum-Safe. Lightning-Fast. Unbreakable Future.</p>
 
-    <div class="form-container">
-      <div class="form-section">
-        <h2>Login</h2>
-        <input type="email" id="login-email" placeholder="Email">
-        <input type="password" id="login-password" placeholder="Password">
-        <button onclick="login()">🚀 Login</button>
-      </div>
+    <div class="box">
+      <h2>Login</h2>
+      <input type="email" id="login-email" placeholder="Email" required />
+      <input type="password" id="login-password" placeholder="Password" required />
+      <button onclick="login()">🚀 Login</button>
+    </div>
 
-      <div class="form-section">
-        <h2>Register</h2>
-        <input type="email" id="register-email" placeholder="Email">
-        <input type="password" id="register-password" placeholder="Password">
-        <label><input type="checkbox" id="terms"> I agree to the <a href="#">Terms & Conditions</a></label>
-        <button onclick="register()">🧠 Create Account</button>
-      </div>
+    <div class="box">
+      <h2>Register</h2>
+      <input type="email" id="register-email" placeholder="Email" required />
+      <input type="password" id="register-password" placeholder="Password" required />
+      <label><input type="checkbox" id="terms" /> I agree to the <a href="#">Terms & Conditions</a></label>
+      <button onclick="register()">🧠 Create Account</button>
+    </div>
+
+    <div id="btc-info" class="btc-info" style="display: none;">
+      <h2>To Receive QuantumCoin:</h2>
+      <p>Send BTC to this address:</p>
+      <code id="btc-address">bc1qexampleaddress1234567890qwerty</code>
+      <p>Your QuantumCoin will appear after confirmation.</p>
     </div>
   </div>
 
