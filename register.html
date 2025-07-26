@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>QuantumCoin Register</title>
+  <title>QuantumCoin™ Register</title>
   <style>
     body {
       background: black;
@@ -65,10 +65,8 @@
       try {
         const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/register', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, password })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
         });
 
         const data = await response.json();
@@ -76,11 +74,11 @@
         if (response.ok) {
           alert('✅ Registration successful!');
         } else {
-          alert(`❌ Failed: ${data.error || 'Unknown error'}`);
+          alert(`❌ Registration failed: ${data.error || 'Unknown error'}`);
         }
-      } catch (err) {
-        console.error('Network error:', err);
-        alert('🌐 Network error. Please try again.');
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert('🌐 Network error. Try again later.');
       }
     });
   </script>
