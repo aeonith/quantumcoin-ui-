@@ -42,9 +42,38 @@ impl Blockchain {
         }
         balance
     }
-}
-impl Blockchain {
-    // Already present methods...
+
+    pub fn mine_pending_transactions(&mut self, miner_address: String) {
+        let reward_tx = Transaction::new(
+            "SYSTEM".to_string(),
+            miner_address.clone(),
+            50, // Set your mining reward here
+            None,
+        );
+
+        self.pending_transactions.push(reward_tx);
+
+        let new_block = Block {
+            index: self.blocks.len(),
+            transactions: self.pending_transactions.clone(),
+            previous_hash: self.blocks.last().map_or("0".to_string(), |b| b.hash.clone()),
+            hash: "placeholder".to_string(), // Replace with real hash logic
+            nonce: 0,
+        };
+
+        self.blocks.push(new_block);
+        self.pending_transactions.clear();
+    }
+
+    pub fn get_all_transactions(&self) -> Vec<Transaction> {
+        let mut all = Vec::new();
+        for block in &self.blocks {
+            for tx in &block.transactions {
+                all.push(tx.clone());
+            }
+        }
+        all
+    }
 
     pub fn load_from_file(filename: &str) -> Option<Self> {
         let data = std::fs::read_to_string(filename).ok()?;
