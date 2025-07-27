@@ -1,8 +1,10 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{DetachedSignature as _, PublicKey as PublicKeyTrait, SecretKey as SecretKeyTrait};
-use std::fs::{self, File};
+use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, DetachedSignature, SignedMessage};
+use pqcrypto_traits::sign::{
+    DetachedSignature as _, SignedMessage as SignedMessageTrait, PublicKey as PublicKeyTrait,
+    SecretKey as SecretKeyTrait,
+};
+use std::fs;
 use std::io::{Read, Write};
-use std::path::Path;
 use base64::{encode, decode};
 
 pub struct Wallet {
@@ -20,13 +22,8 @@ impl Wallet {
     }
 
     pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
-        let mut pub_file = File::open(pub_path).ok()?;
-        let mut priv_file = File::open(priv_path).ok()?;
-
-        let mut pub_buf = String::new();
-        let mut priv_buf = String::new();
-        pub_file.read_to_string(&mut pub_buf).ok()?;
-        priv_file.read_to_string(&mut priv_buf).ok()?;
+        let pub_buf = fs::read_to_string(pub_path).ok()?;
+        let priv_buf = fs::read_to_string(priv_path).ok()?;
 
         let pub_bytes = decode(pub_buf).ok()?;
         let priv_bytes = decode(priv_buf).ok()?;
@@ -51,7 +48,7 @@ impl Wallet {
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        let signature = sign(message, &self.secret_key);
+        let signature: SignedMessage = sign(message, &self.secret_key);
         signature.as_bytes().to_vec()
     }
 
@@ -61,5 +58,13 @@ impl Wallet {
         } else {
             false
         }
+    }
+
+    pub fn get_public_key(&self) -> String {
+        encode(self.public_key.as_bytes())
+    }
+
+    pub fn get_private_key(&self) -> String {
+        encode(self.secret_key.as_bytes())
     }
 }
