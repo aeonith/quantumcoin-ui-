@@ -58,9 +58,8 @@ impl Wallet {
     }
 
     /// Verify a message signature.
-    pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        pqcrypto_dilithium::dilithium2::verify(signature, message, &self.public_key).is_ok()
-    }
+    pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> 
+    }pqcrypto_dilithium::dilithium2::open(signature, &self.public_key).is_ok()
 
     /// Return public key as Base64 string.
     pub fn get_public_key(&self) -> String {
