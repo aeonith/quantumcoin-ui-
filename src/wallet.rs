@@ -1,18 +1,17 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, DetachedSignature, SignedMessage};
-use pqcrypto_traits::sign::{
-    DetachedSignature as _, SignedMessage as SignedMessageTrait, PublicKey as PublicKeyTrait,
-    SecretKey as SecretKeyTrait,
-};
+use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, SignedMessage};
+use pqcrypto_traits::sign::{PublicKey as _, SecretKey as _, SignedMessage as _};
+use base64::{engine::general_purpose, Engine as _};
 use std::fs;
 use std::io::{Read, Write};
-use base64::{encode, decode};
 
+#[derive(Clone)]
 pub struct Wallet {
     pub public_key: PublicKey,
     pub secret_key: SecretKey,
 }
 
 impl Wallet {
+    /// Creates a new wallet (new keypair).
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let (pk, sk) = keypair();
         Ok(Self {
@@ -21,50 +20,55 @@ impl Wallet {
         })
     }
 
+    /// Load an existing wallet from files (base64 encoded).
     pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
-        let pub_buf = fs::read_to_string(pub_path).ok()?;
-        let priv_buf = fs::read_to_string(priv_path).ok()?;
+        let mut pub_buf = String::new();
+        let mut priv_buf = String::new();
 
-        let pub_bytes = decode(pub_buf).ok()?;
-        let priv_bytes = decode(priv_buf).ok()?;
+        let _ = fs::File::open(pub_path).and_then(|mut f| f.read_to_string(&mut pub_buf));
+        let _ = fs::File::open(priv_path).and_then(|mut f| f.read_to_string(&mut priv_buf));
 
-        let pub_key = PublicKey::from_bytes(&pub_bytes).ok()?;
-        let priv_key = SecretKey::from_bytes(&priv_bytes).ok()?;
+        if pub_buf.is_empty() || priv_buf.is_empty() {
+            return None;
+        }
+
+        let pub_bytes = general_purpose::STANDARD.decode(pub_buf).ok()?;
+        let priv_bytes = general_purpose::STANDARD.decode(priv_buf).ok()?;
+
+        let pk = PublicKey::from_bytes(&pub_bytes).ok()?;
+        let sk = SecretKey::from_bytes(&priv_bytes).ok()?;
 
         Some(Self {
-            public_key: pub_key,
-            secret_key: priv_key,
+            public_key: pk,
+            secret_key: sk,
         })
     }
 
-    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) -> std::io::Result<()> {
-        fs::write(pub_path, encode(self.public_key.as_bytes()))?;
-        fs::write(priv_path, encode(self.secret_key.as_bytes()))?;
+    /// Save wallet keys to files (base64 encoded).
+    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        fs::write(pub_path, general_purpose::STANDARD.encode(self.public_key.as_bytes()))?;
+        fs::write(priv_path, general_purpose::STANDARD.encode(self.secret_key.as_bytes()))?;
         Ok(())
     }
 
-    pub fn get_address(&self) -> String {
-        encode(self.public_key.as_bytes())
-    }
-
+    /// Sign a message.
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
         let signature: SignedMessage = sign(message, &self.secret_key);
         signature.as_bytes().to_vec()
     }
 
+    /// Verify a message signature.
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        if let Ok(sig) = DetachedSignature::from_bytes(signature) {
-            sig.verify_detached(message, &self.public_key).is_ok()
-        } else {
-            false
-        }
+        pqcrypto_dilithium::dilithium2::verify(signature, message, &self.public_key).is_ok()
     }
 
+    /// Return public key as Base64 string.
     pub fn get_public_key(&self) -> String {
-        encode(self.public_key.as_bytes())
+        general_purpose::STANDARD.encode(self.public_key.as_bytes())
     }
 
+    /// Return private key as Base64 string.
     pub fn get_private_key(&self) -> String {
-        encode(self.secret_key.as_bytes())
+        general_purpose::STANDARD.encode(self.secret_key.as_bytes())
     }
 }
