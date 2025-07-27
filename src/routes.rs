@@ -70,12 +70,14 @@ struct WalletResponse {
 
 #[get("/api/create-wallet")]
 async fn create_wallet_route() -> impl Responder {
-    let wallet = Wallet::generate();
-
-    let response = WalletResponse {
-        publicKey: wallet.get_public_key(),
-        privateKey: wallet.get_private_key(),
-    };
-
-    HttpResponse::Ok().json(response)
+    match Wallet::new() {
+        Ok(wallet) => {
+            let response = WalletResponse {
+                publicKey: wallet.get_public_key(),
+                privateKey: wallet.get_private_key(),
+            };
+            HttpResponse::Ok().json(response)
+        }
+        Err(_) => HttpResponse::InternalServerError().body("❌ Failed to generate secure wallet"),
+    }
 }
