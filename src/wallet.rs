@@ -1,5 +1,11 @@
-use pqcrypto_dilithium::dilithium2::{keypair, detached_sign, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::DetachedSignature as _;
+use pqcrypto_dilithium::dilithium2::{
+    keypair, sign_detached, verify_detached, PublicKey, SecretKey, DetachedSignature,
+};
+use pqcrypto_traits::sign::{
+    PublicKey as PublicKeyTrait,
+    SecretKey as SecretKeyTrait,
+    Signature as SignatureTrait,
+};
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{write, read};
 use std::path::Path;
@@ -44,13 +50,22 @@ impl Wallet {
         })
     }
 
+    pub fn new_and_save() -> Self {
+        let wallet = Wallet::generate();
+        let _ = wallet.save_to_files("public.key", "private.key");
+        wallet
+    }
+
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        detached_sign(message, &self.private_key).as_bytes().to_vec()
+        sign_detached(message, &self.private_key).as_bytes().to_vec()
     }
 
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        let signature = DetachedSignature::from_bytes(signature).ok()?;
-        signature.verify(&self.public_key, message).is_ok()
+        if let Ok(sig) = DetachedSignature::from_bytes(signature) {
+            verify_detached(&sig, message, &self.public_key).is_ok()
+        } else {
+            false
+        }
     }
 
     pub fn get_public_key(&self) -> String {
