@@ -1,73 +1,79 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, SignedMessage};
-use pqcrypto_traits::sign::{PublicKey as _, SecretKey as _, SignedMessage as _};
+use pqcrypto_dilithium::dilithium2::{
+    keypair, open, DetachedSignature, PublicKey, SecretKey, SignedMessage,
+};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, Signer};
 use base64::{engine::general_purpose, Engine as _};
-use std::fs;
+use std::fs::{self, File};
 use std::io::{Read, Write};
+use std::path::Path;
 
-#[derive(Clone)]
 pub struct Wallet {
     pub public_key: PublicKey,
     pub secret_key: SecretKey,
 }
 
 impl Wallet {
-    /// Creates a new wallet (new keypair).
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let (pk, sk) = keypair();
-        Ok(Self {
+        Ok(Wallet {
             public_key: pk,
             secret_key: sk,
         })
     }
 
-    /// Load an existing wallet from files (base64 encoded).
     pub fn load_from_files(pub_path: &str, priv_path: &str) -> Option<Self> {
-        let mut pub_buf = String::new();
-        let mut priv_buf = String::new();
+        let mut pub_buf = Vec::new();
+        let mut priv_buf = Vec::new();
 
-        let _ = fs::File::open(pub_path).and_then(|mut f| f.read_to_string(&mut pub_buf));
-        let _ = fs::File::open(priv_path).and_then(|mut f| f.read_to_string(&mut priv_buf));
-
-        if pub_buf.is_empty() || priv_buf.is_empty() {
+        if File::open(pub_path).ok()?.read_to_end(&mut pub_buf).is_err()
+            || File::open(priv_path).ok()?.read_to_end(&mut priv_buf).is_err()
+        {
             return None;
         }
 
         let pub_bytes = general_purpose::STANDARD.decode(pub_buf).ok()?;
         let priv_bytes = general_purpose::STANDARD.decode(priv_buf).ok()?;
 
-        let pk = PublicKey::from_bytes(&pub_bytes).ok()?;
-        let sk = SecretKey::from_bytes(&priv_bytes).ok()?;
+        let pub_key = PublicKey::from_bytes(&pub_bytes).ok()?;
+        let priv_key = SecretKey::from_bytes(&priv_bytes).ok()?;
 
-        Some(Self {
-            public_key: pk,
-            secret_key: sk,
+        Some(Wallet {
+            public_key: pub_key,
+            secret_key: priv_key,
         })
     }
 
-    /// Save wallet keys to files (base64 encoded).
-    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn save_to_files(&self, pub_path: &str, priv_path: &str) -> std::io::Result<()> {
         fs::write(pub_path, general_purpose::STANDARD.encode(self.public_key.as_bytes()))?;
         fs::write(priv_path, general_purpose::STANDARD.encode(self.secret_key.as_bytes()))?;
         Ok(())
     }
 
-    /// Sign a message.
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        let signature: SignedMessage = sign(message, &self.secret_key);
-        signature.as_bytes().to_vec()
+        let signed = self.secret_key.sign(message);
+        signed.as_bytes().to_vec()
     }
 
-    /// Verify a message signature.
-    pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> 
-    }pqcrypto_dilithium::dilithium2::open(signature, &self.public_key).is_ok()
+    pub fn verify_message(&self, message: &[u8], signature: &[u8]) -> bool {
+        match open(signature, &self.public_key) {
+            Ok(recovered) => recovered == message,
+            Err(_) => false,
+        }
+    }
 
-    /// Return public key as Base64 string.
-    pub fn get_public_key(&self) -> String {
+    pub fn export_public_base64(&self) -> String {
         general_purpose::STANDARD.encode(self.public_key.as_bytes())
     }
 
-    /// Return private key as Base64 string.
-    pub fn get_private_key(&self) -> String {
+    pub fn export_private_base64(&self) -> String {
         general_purpose::STANDARD.encode(self.secret_key.as_bytes())
+    }
+
+    pub fn export_with_2fa(&self, password: &str) -> Option<String> {
+        // Extremely basic 2FA-like mechanism (you should replace with real encryption)
+        let pub_encoded = self.export_public_base64();
+        let priv_encoded = self.export_private_base64();
+        let combined = format!("{}::{}::{}", password, pub_encoded, priv_encoded);
+        Some(general_purpose::STANDARD.encode(combined))
     }
 }
