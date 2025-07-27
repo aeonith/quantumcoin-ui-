@@ -79,4 +79,4 @@ impl Wallet {
     pub fn get_private_key(&self) -> String {
         self.private_key.clone()
     }
-}
+} 
