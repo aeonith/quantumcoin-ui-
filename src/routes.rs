@@ -71,7 +71,7 @@ struct WalletResponse {
 
 #[get("/api/create-wallet")]
 async fn create_wallet_route() -> impl Responder {
-    match Wallet::generate_new() {
+    match Wallet::new() {
         Ok(wallet) => {
             let response = WalletResponse {
                 publicKey: wallet.get_public_key(),
