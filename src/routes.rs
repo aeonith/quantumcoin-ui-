@@ -13,7 +13,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
         .service(get_balance)
         .service(mine_block)
         .service(get_transactions)
-        .service(create_wallet_route);
+        .service(get_wallet_info);
 }
 
 #[get("/")]
@@ -69,16 +69,15 @@ struct WalletResponse {
     privateKey: String,
 }
 
-#[get("/api/create-wallet")]
-async fn create_wallet_route() -> impl Responder {
-    let wallet = match Wallet::new() {
-        Ok(w) => w,
-        Err(_) => return HttpResponse::InternalServerError().body("❌ Failed to generate secure wallet"),
-    };
+#[get("/api/wallet-info")]
+async fn get_wallet_info(
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
+) -> impl Responder {
+    let wallet = wallet.lock().unwrap();
 
     let response = WalletResponse {
-        publicKey: wallet.get_public_key(),
-        privateKey: wallet.get_private_key(),
+        publicKey: wallet.get_public_key_string(),
+        privateKey: wallet.get_private_key_string(),
     };
 
     HttpResponse::Ok().json(response)
