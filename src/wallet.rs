@@ -1,11 +1,8 @@
-use pqcrypto_dilithium::dilithium2::{
-    keypair, open, DetachedSignature, PublicKey, SecretKey, SignedMessage,
-};
-use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey, Signer};
+use pqcrypto_dilithium::dilithium2::{keypair, DetachedSignature, PublicKey, SecretKey};
+use pqcrypto_traits::sign::{PublicKey as TraitPublicKey, SecretKey as TraitSecretKey};
 use base64::{engine::general_purpose, Engine as _};
-use std::fs::{self, File};
+use std::fs;
 use std::io::{Read, Write};
-use std::path::Path;
 
 pub struct Wallet {
     pub public_key: PublicKey,
@@ -25,8 +22,8 @@ impl Wallet {
         let mut pub_buf = Vec::new();
         let mut priv_buf = Vec::new();
 
-        if File::open(pub_path).ok()?.read_to_end(&mut pub_buf).is_err()
-            || File::open(priv_path).ok()?.read_to_end(&mut priv_buf).is_err()
+        if std::fs::File::open(pub_path).ok()?.read_to_end(&mut pub_buf).is_err()
+            || std::fs::File::open(priv_path).ok()?.read_to_end(&mut priv_buf).is_err()
         {
             return None;
         }
@@ -50,14 +47,15 @@ impl Wallet {
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        let signed = self.secret_key.sign(message);
-        signed.as_bytes().to_vec()
+        let signature = DetachedSignature::detached_sign(message, &self.secret_key);
+        signature.as_bytes().to_vec()
     }
 
     pub fn verify_message(&self, message: &[u8], signature: &[u8]) -> bool {
-        match open(signature, &self.public_key) {
-            Ok(recovered) => recovered == message,
-            Err(_) => false,
+        if let Ok(sig) = DetachedSignature::from_bytes(signature) {
+            sig.verify(message, &self.public_key).is_ok()
+        } else {
+            false
         }
     }
 
@@ -70,10 +68,18 @@ impl Wallet {
     }
 
     pub fn export_with_2fa(&self, password: &str) -> Option<String> {
-        // Extremely basic 2FA-like mechanism (you should replace with real encryption)
         let pub_encoded = self.export_public_base64();
         let priv_encoded = self.export_private_base64();
         let combined = format!("{}::{}::{}", password, pub_encoded, priv_encoded);
         Some(general_purpose::STANDARD.encode(combined))
+    }
+
+    // ✅ Add these to resolve routes.rs errors
+    pub fn get_public_key(&self) -> String {
+        self.export_public_base64()
+    }
+
+    pub fn get_private_key(&self) -> String {
+        self.export_private_base64()
     }
 }
