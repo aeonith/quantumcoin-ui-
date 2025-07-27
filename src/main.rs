@@ -19,24 +19,30 @@ use wallet::Wallet;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Load wallet or generate new one if missing
+    println!("🚀 QuantumCoin API is launching...");
+
+    // ✅ Load wallet or generate/save new one
     let wallet = Arc::new(Mutex::new(
         Wallet::load_from_files("public.key", "private.key")
-            .unwrap_or_else(Wallet::new_and_save),
+            .unwrap_or_else(|| {
+                let wallet = Wallet::new().expect("❌ Failed to generate wallet");
+                wallet.save_to_files("public.key", "private.key").expect("❌ Failed to save wallet");
+                wallet
+            }),
     ));
 
-    // Load blockchain or initialize new one
+    // ✅ Load blockchain from file or initialize
     let blockchain = Arc::new(Mutex::new(
         Blockchain::load_from_file("blockchain.json")
             .unwrap_or_else(Blockchain::new),
     ));
 
-    // Load RevStop status
+    // ✅ Load RevStop status
     let revstop = Arc::new(Mutex::new(
         RevStop::load_status("revstop_status.json")
     ));
 
-    // Start Actix Web server with CORS enabled
+    // ✅ Actix Web Server with CORS enabled
     HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("https://quantumcoincrypto.com")
@@ -45,7 +51,7 @@ async fn main() -> std::io::Result<()> {
             .supports_credentials();
 
         App::new()
-            .wrap(cors) // ✅ Add CORS middleware
+            .wrap(cors)
             .app_data(Data::new(wallet.clone()))
             .app_data(Data::new(blockchain.clone()))
             .app_data(Data::new(revstop.clone()))
