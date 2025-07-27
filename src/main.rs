@@ -14,20 +14,22 @@ use wallet::Wallet;
 async fn main() -> std::io::Result<()> {
     println!("🚀 QuantumCoin Engine Initialized");
 
-    // Load blockchain
+    // Load blockchain from disk or initialize
     let blockchain = Arc::new(Mutex::new(Blockchain::new()));
 
     // Load or generate wallet
     let wallet = Wallet::load_from_files("wallet_public.key", "wallet_private.key")
         .unwrap_or_else(|| {
-            let w = Wallet::new().expect("Failed to generate wallet");
-            w.save_to_files("wallet_public.key", "wallet_private.key").unwrap();
+            let w = Wallet::new().expect("❌ Failed to generate wallet");
+            w.save_to_files("wallet_public.key", "wallet_private.key")
+                .expect("❌ Failed to save wallet");
+            println!("✅ New wallet generated and saved.");
             w
         });
 
     let wallet_data = Arc::new(Mutex::new(wallet));
 
-    // Start HTTP server
+    // Launch HTTP server
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(blockchain.clone()))
