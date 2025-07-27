@@ -2,7 +2,6 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use std::sync::{Arc, Mutex};
 use crate::blockchain::Blockchain;
 use crate::wallet::Wallet;
-use crate::revstop::RevStop;
 use crate::transaction::Transaction;
 use serde::Serialize;
 
@@ -13,7 +12,7 @@ pub fn init_routes(cfg: &mut web::ServiceConfig) {
         .service(get_balance)
         .service(mine_block)
         .service(get_transactions)
-        .service(get_wallet_info);
+        .service(create_wallet_route);
 }
 
 #[get("/")]
@@ -25,7 +24,7 @@ async fn health_check() -> impl Responder {
 async fn send_transaction(
     data: web::Json<Transaction>,
     blockchain: web::Data<Arc<Mutex<Blockchain>>>,
-    wallet: web::Data<Arc<Mutex<Wallet>>>,
+    _wallet: web::Data<Arc<Mutex<Wallet>>>,
 ) -> impl Responder {
     let tx = data.into_inner();
     let mut chain = blockchain.lock().unwrap();
@@ -69,15 +68,13 @@ struct WalletResponse {
     privateKey: String,
 }
 
-#[get("/api/wallet-info")]
-async fn get_wallet_info(
-    wallet: web::Data<Arc<Mutex<Wallet>>>,
-) -> impl Responder {
-    let wallet = wallet.lock().unwrap();
+#[get("/api/create-wallet")]
+async fn create_wallet_route() -> impl Responder {
+    let wallet = Wallet::generate();
 
     let response = WalletResponse {
-        publicKey: wallet.get_public_key_string(),
-        privateKey: wallet.get_private_key_string(),
+        publicKey: wallet.get_public_key(),
+        privateKey: wallet.get_private_key(),
     };
 
     HttpResponse::Ok().json(response)
