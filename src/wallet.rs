@@ -1,8 +1,7 @@
-use pqcrypto_dilithium::dilithium2::{keypair, sign, verify, PublicKey, SecretKey, DetachedSignature};
-use pqcrypto_traits::sign::{PublicKey as PublicKeyTrait, SecretKey as SecretKeyTrait, Signature as SignatureTrait};
+use pqcrypto_dilithium::dilithium2::{keypair, sign, PublicKey, SecretKey, DetachedSignature, SignedMessage};
+use pqcrypto_traits::sign::{PublicKey as _, SecretKey as _, DetachedSignature as _, SignedMessage as _};
 use base64::{engine::general_purpose, Engine as _};
 use std::fs::{read_to_string, write};
-use std::path::Path;
 
 pub struct Wallet {
     pub public_key: PublicKey,
@@ -41,14 +40,13 @@ impl Wallet {
     }
 
     pub fn sign_message(&self, message: &[u8]) -> Vec<u8> {
-        let signature = sign(message, &self.private_key);
+        let signature: SignedMessage = sign(message, &self.private_key);
         signature.as_bytes().to_vec()
     }
 
     pub fn verify_signature(&self, message: &[u8], signature: &[u8]) -> bool {
-        let sig = DetachedSignature::from_bytes(signature);
-        if let Ok(sig) = sig {
-            verify(message, &sig, &self.public_key).is_ok()
+        if let Ok(sig) = DetachedSignature::from_bytes(signature) {
+            pqcrypto_dilithium::dilithium2::verify_detached(&sig, message, &self.public_key).is_ok()
         } else {
             false
         }
