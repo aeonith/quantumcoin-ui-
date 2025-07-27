@@ -25,7 +25,7 @@ async fn health_check() -> impl Responder {
 async fn send_transaction(
     data: web::Json<Transaction>,
     blockchain: web::Data<Arc<Mutex<Blockchain>>>,
-    _wallet: web::Data<Arc<Mutex<Wallet>>>, // unused var warning fixed
+    wallet: web::Data<Arc<Mutex<Wallet>>>,
 ) -> impl Responder {
     let tx = data.into_inner();
     let mut chain = blockchain.lock().unwrap();
@@ -49,7 +49,7 @@ async fn mine_block(
     blockchain: web::Data<Arc<Mutex<Blockchain>>>,
 ) -> impl Responder {
     let mut chain = blockchain.lock().unwrap();
-    let default_miner = "SYSTEM".to_string(); // placeholder
+    let default_miner = "SYSTEM".to_string();
     chain.mine_pending_transactions(default_miner);
     HttpResponse::Ok().body("✅ Mined new block")
 }
@@ -71,7 +71,10 @@ struct WalletResponse {
 
 #[get("/api/create-wallet")]
 async fn create_wallet_route() -> impl Responder {
-    let wallet = Wallet::new(); // 🔧 FIXED: no match needed
+    let wallet = match Wallet::new() {
+        Ok(w) => w,
+        Err(_) => return HttpResponse::InternalServerError().body("❌ Failed to generate secure wallet"),
+    };
 
     let response = WalletResponse {
         publicKey: wallet.get_public_key(),
