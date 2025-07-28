@@ -1,114 +1,105 @@
+use crate::block::Block;
 use crate::transaction::Transaction;
-use serde::{Serialize, Deserialize};
-use sha2::{Sha256, Digest};
-use hex;
+use std::fs::{File, OpenOptions};
+use std::io::{Read, Write};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Block {
-    pub index: usize,
-    pub transactions: Vec<Transaction>,
-    pub previous_hash: String,
-    pub hash: String,
-    pub nonce: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct Blockchain {
     pub blocks: Vec<Block>,
+    pub difficulty: usize,
     pub pending_transactions: Vec<Transaction>,
 }
 
 impl Blockchain {
     pub fn new() -> Self {
-        Blockchain {
+        let mut blockchain = Blockchain {
             blocks: vec![],
+            difficulty: 4,
             pending_transactions: vec![],
-        }
-    }
+        };
 
-    pub fn add_transaction(&mut self, tx: Transaction) {
-        self.pending_transactions.push(tx);
-    }
-
-    pub fn get_balance(&self, address: &str) -> u64 {
-        let mut balance = 0;
-        for block in &self.blocks {
-            for tx in &block.transactions {
-                if tx.recipient == address {
-                    balance += tx.amount;
-                }
-                if tx.sender == address {
-                    balance -= tx.amount;
+        // Load from disk if exists
+        if let Ok(mut file) = File::open("blockchain.json") {
+            let mut data = String::new();
+            if file.read_to_string(&mut data).is_ok() {
+                if let Ok(blocks) = serde_json::from_str::<Vec<Block>>(&data) {
+                    blockchain.blocks = blocks;
                 }
             }
         }
+
+        blockchain
+    }
+
+    pub fn add_transaction(&mut self, transaction: Transaction) {
+        self.pending_transactions.push(transaction);
+    }
+
+    pub fn mine_pending_transactions(&mut self, miner_address: &str) {
+        let reward_tx = Transaction {
+            sender: "Network".to_string(),
+            recipient: miner_address.to_string(),
+            amount: 1.0,
+            signature: None,
+        };
+        self.pending_transactions.push(reward_tx);
+
+        let last_hash = self.get_latest_hash();
+        let new_block = Block::new(self.pending_transactions.clone(), last_hash, self.difficulty);
+        self.blocks.push(new_block);
+
+        self.pending_transactions.clear();
+        self.save_to_disk();
+    }
+
+    pub fn get_latest_hash(&self) -> String {
+        self.blocks
+            .last()
+            .map(|block| block.hash.clone())
+            .unwrap_or_else(|| String::from("0"))
+    }
+
+    pub fn is_chain_valid(&self) -> bool {
+        for i in 1..self.blocks.len() {
+            let current = &self.blocks[i];
+            let previous = &self.blocks[i - 1];
+
+            if current.previous_hash != previous.hash {
+                return false;
+            }
+
+            if current.hash != current.calculate_hash() {
+                return false;
+            }
+        }
+        true
+    }
+
+    pub fn get_balance(&self, address: &str) -> f64 {
+        let mut balance = 0.0;
+
+        for block in &self.blocks {
+            for tx in &block.transactions {
+                if tx.sender == address {
+                    balance -= tx.amount;
+                }
+                if tx.recipient == address {
+                    balance += tx.amount;
+                }
+            }
+        }
+
         balance
     }
 
-    pub fn get_all_transactions(&self) -> Vec<Transaction> {
-        self.blocks
-            .iter()
-            .flat_map(|block| block.transactions.clone())
-            .collect()
-    }
-
-    pub fn load_from_file(filename: &str) -> Option<Self> {
-        let data = std::fs::read_to_string(filename).ok()?;
-        serde_json::from_str(&data).ok()
-    }
-
-    pub fn save_to_file(&self, filename: &str) {
-        if let Ok(json) = serde_json::to_string_pretty(&self) {
-            std::fs::write(filename, json).expect("Failed to write blockchain file");
-        }
-    }
-}
-
-impl Blockchain {
-    pub fn mine_pending_transactions(&mut self, miner_address: String) {
-        if self.pending_transactions.is_empty() {
-            println!("⛏️ No transactions to mine.");
-            return;
-        }
-
-        let last_hash = self.blocks.last().map_or(String::from("0"), |b| b.hash.clone());
-
-        let reward_tx = Transaction::new(
-            "SYSTEM".to_string(),
-            miner_address,
-            100, // mining reward
-            None,
-        );
-        self.pending_transactions.push(reward_tx);
-
-        let new_block = Block {
-            index: self.blocks.len(),
-            transactions: self.pending_transactions.clone(),
-            previous_hash: last_hash,
-            nonce: 0,
-            hash: String::new(),
-        };
-
-        let mined_block = Self::mine_block(new_block);
-        self.blocks.push(mined_block);
-        self.pending_transactions.clear();
-
-        self.save_to_file("blockchain.json");
-    }
-
-    pub fn mine_block(mut block: Block) -> Block {
-        loop {
-            let guess = format!("{:?}{:?}{:?}", block.index, block.transactions, block.nonce);
-            let mut hasher = Sha256::new();
-            hasher.update(guess.as_bytes());
-            let result = hasher.finalize();
-            let hash = hex::encode(&result);
-
-            if &hash[..4] == "0000" {
-                block.hash = hash;
-                return block;
-            } else {
-                block.nonce += 1;
+    pub fn save_to_disk(&self) {
+        if let Ok(json) = serde_json::to_string_pretty(&self.blocks) {
+            if let Ok(mut file) = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open("blockchain.json")
+            {
+                let _ = file.write_all(json.as_bytes());
             }
         }
     }
