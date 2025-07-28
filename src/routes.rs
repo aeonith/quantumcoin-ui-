@@ -21,8 +21,8 @@ pub struct WalletInfo {
 async fn get_wallet(data: web::Data<Arc<Mutex<Wallet>>>) -> impl Responder {
     let wallet = data.lock().unwrap();
     HttpResponse::Ok().json(WalletInfo {
-        publicKey: wallet.get_public_key_base64(),   // ✅ updated
-        privateKey: wallet.get_private_key_base64(), // ✅ updated
+        publicKey: wallet.get_public_key_base64(),
+        privateKey: wallet.get_private_key_base64(),
     })
 }
 
@@ -35,15 +35,25 @@ async fn send_transaction(
     let wallet = wallet_data.lock().unwrap();
     let mut blockchain = blockchain_data.lock().unwrap();
 
-    let tx = wallet.create_transaction(&req.recipient, req.amount);
+    // ✅ Fix: use full public address string
+    let sender_address = wallet.get_address_base64();
+    let tx = wallet.create_transaction(&req.recipient, req.amount, &sender_address);
+
     blockchain.add_transaction(tx);
     HttpResponse::Ok().body("Transaction created")
 }
 
 #[post("/mine")]
-async fn mine_block(blockchain_data: web::Data<Arc<Mutex<Blockchain>>>) -> impl Responder {
+async fn mine_block(
+    blockchain_data: web::Data<Arc<Mutex<Blockchain>>>,
+    wallet_data: web::Data<Arc<Mutex<Wallet>>>,
+) -> impl Responder {
     let mut blockchain = blockchain_data.lock().unwrap();
-    blockchain.mine_pending_transactions();
+    let wallet = wallet_data.lock().unwrap();
+
+    // ✅ Fix: provide miner address argument
+    let miner_address = wallet.get_address_base64();
+    blockchain.mine_pending_transactions(miner_address);
     HttpResponse::Ok().body("Block mined")
 }
 
@@ -54,7 +64,9 @@ async fn get_balance(
 ) -> impl Responder {
     let wallet = wallet_data.lock().unwrap();
     let blockchain = blockchain_data.lock().unwrap();
-    let balance = blockchain.get_balance(&wallet.get_address());
+
+    // ✅ Fix: use correct method name
+    let balance = blockchain.get_balance(&wallet.get_address_base64());
     HttpResponse::Ok().body(format!("Balance: {} QTC", balance))
 }
 
