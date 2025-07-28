@@ -1,58 +1,66 @@
-use rocket::{get, post, State};
-use rocket_contrib::json::Json;
-use serde::Deserialize;
-use std::sync::Mutex;
-use crate::blockchain::{Blockchain, Transaction};
+use crate::blockchain::Blockchain;
+use crate::transaction::Transaction;
 use crate::wallet::Wallet;
+use rocket::serde::{json::Json, Deserialize, Serialize};
+use rocket::State;
+use std::sync::Arc;
+use rocket::tokio::sync::Mutex;
 
-#[derive(Deserialize)]
-pub struct TransactionRequest {
+#[derive(Debug, Deserialize)]
+#[serde(crate = "rocket::serde")]
+pub struct SendRequest {
     pub recipient: String,
-    pub amount: u64,
+    pub amount: f64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct WalletInfo {
+    pub address: String,
+    pub balance: f64,
 }
 
 #[get("/wallet")]
-pub fn get_wallet_keys(wallet_data: State<Mutex<Wallet>>) -> Json<serde_json::Value> {
-    let wallet = wallet_data.lock().unwrap();
-    Json(serde_json::json!({
-        "publicKey": wallet.get_public_key_base64(),
-        "privateKey": wallet.get_private_key_base64(),
-    }))
+pub async fn get_wallet(wallet: &State<Arc<Mutex<Wallet>>>, blockchain: &State<Arc<Mutex<Blockchain>>>) -> Json<WalletInfo> {
+    let wallet = wallet.lock().await;
+    let blockchain = blockchain.lock().await;
+
+    Json(WalletInfo {
+        address: wallet.get_address_base64(),
+        balance: blockchain.get_balance(&wallet.get_address_base64()),
+    })
 }
 
 #[post("/send", format = "json", data = "<req>")]
-pub fn send_transaction(
-    req: Json<TransactionRequest>,
-    wallet_data: State<Mutex<Wallet>>,
-    blockchain_data: State<Mutex<Blockchain>>,
-) -> Json<serde_json::Value> {
-    let wallet = wallet_data.lock().unwrap();
+pub async fn send_coins(
+    req: Json<SendRequest>,
+    wallet: &State<Arc<Mutex<Wallet>>>,
+    blockchain: &State<Arc<Mutex<Blockchain>>>,
+) -> &'static str {
+    let wallet = wallet.lock().await;
+    let mut blockchain = blockchain.lock().await;
+
     let sender_address = wallet.get_address_base64();
-    let tx = Transaction::new(&sender_address, &req.recipient, req.amount, &wallet);
-    let mut blockchain = blockchain_data.lock().unwrap();
+    let tx = wallet.create_transaction(&req.recipient, req.amount, &sender_address);
     blockchain.add_transaction(tx);
-    Json(serde_json::json!({"status": "Transaction added"}))
+
+    "Transaction added"
 }
 
 #[post("/mine")]
-pub fn mine_block(
-    wallet_data: State<Mutex<Wallet>>,
-    blockchain_data: State<Mutex<Blockchain>>,
-) -> Json<serde_json::Value> {
-    let wallet = wallet_data.lock().unwrap();
+pub async fn mine(
+    wallet: &State<Arc<Mutex<Wallet>>>,
+    blockchain: &State<Arc<Mutex<Blockchain>>>,
+) -> &'static str {
+    let wallet = wallet.lock().await;
+    let mut blockchain = blockchain.lock().await;
+
     let miner_address = wallet.get_address_base64();
-    let mut blockchain = blockchain_data.lock().unwrap();
     blockchain.mine_pending_transactions(&miner_address);
-    Json(serde_json::json!({"status": "Block mined"}))
+
+    "Block mined"
 }
 
-#[get("/balance")]
-pub fn get_balance(
-    wallet_data: State<Mutex<Wallet>>,
-    blockchain_data: State<Mutex<Blockchain>>,
-) -> Json<serde_json::Value> {
-    let wallet = wallet_data.lock().unwrap();
-    let blockchain = blockchain_data.lock().unwrap();
-    let balance = blockchain.get_balance(&wallet.get_address_base64());
-    Json(serde_json::json!({ "balance": balance }))
+pub fn routes() -> Vec<rocket::Route> {
+    routes![get_wallet, send_coins, mine]
 }
