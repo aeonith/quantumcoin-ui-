@@ -1,83 +1,66 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+
 use crate::blockchain::Blockchain;
 use crate::wallet::Wallet;
-use crate::transaction::Transaction;
-use serde::Serialize;
 
-pub fn init_routes(cfg: &mut web::ServiceConfig) {
-    cfg
-        .service(health_check)
-        .service(send_transaction)
-        .service(get_balance)
-        .service(mine_block)
-        .service(get_transactions)
-        .service(create_wallet_route);
-}
-
-#[get("/")]
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().body("QuantumCoin API is live")
-}
-
-#[post("/send")]
-async fn send_transaction(
-    data: web::Json<Transaction>,
-    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
-    _wallet: web::Data<Arc<Mutex<Wallet>>>,
-) -> impl Responder {
-    let tx = data.into_inner();
-    let mut chain = blockchain.lock().unwrap();
-    chain.add_transaction(tx);
-    HttpResponse::Ok().body("Transaction added")
-}
-
-#[get("/balance/{address}")]
-async fn get_balance(
-    path: web::Path<String>,
-    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
-) -> impl Responder {
-    let address = path.into_inner();
-    let chain = blockchain.lock().unwrap();
-    let balance = chain.get_balance(&address);
-    HttpResponse::Ok().body(balance.to_string())
-}
-
-#[post("/mine")]
-async fn mine_block(
-    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
-) -> impl Responder {
-    let mut chain = blockchain.lock().unwrap();
-    let default_miner = "SYSTEM".to_string();
-    chain.mine_pending_transactions(default_miner);
-    HttpResponse::Ok().body("✅ Mined new block")
-}
-
-#[get("/transactions")]
-async fn get_transactions(
-    blockchain: web::Data<Arc<Mutex<Blockchain>>>,
-) -> impl Responder {
-    let chain = blockchain.lock().unwrap();
-    let txs = chain.get_all_transactions();
-    HttpResponse::Ok().json(txs)
+#[derive(Deserialize)]
+pub struct SendRequest {
+    recipient: String,
+    amount: u64,
 }
 
 #[derive(Serialize)]
-struct WalletResponse {
+pub struct WalletInfo {
     publicKey: String,
     privateKey: String,
 }
 
-#[get("/api/create-wallet")]
-async fn create_wallet_route() -> impl Responder {
-    match Wallet::new() {
-        Ok(wallet) => {
-            let response = WalletResponse {
-                publicKey: wallet.get_public_key(),
-                privateKey: wallet.get_private_key(),
-            };
-            HttpResponse::Ok().json(response)
-        }
-        Err(_) => HttpResponse::InternalServerError().body("❌ Failed to generate secure wallet"),
-    }
+#[get("/wallet")]
+async fn get_wallet(data: web::Data<Arc<Mutex<Wallet>>>) -> impl Responder {
+    let wallet = data.lock().unwrap();
+    HttpResponse::Ok().json(WalletInfo {
+        publicKey: wallet.get_public_key_base64(),   // ✅ updated
+        privateKey: wallet.get_private_key_base64(), // ✅ updated
+    })
+}
+
+#[post("/send")]
+async fn send_transaction(
+    blockchain_data: web::Data<Arc<Mutex<Blockchain>>>,
+    wallet_data: web::Data<Arc<Mutex<Wallet>>>,
+    req: web::Json<SendRequest>,
+) -> impl Responder {
+    let wallet = wallet_data.lock().unwrap();
+    let mut blockchain = blockchain_data.lock().unwrap();
+
+    let tx = wallet.create_transaction(&req.recipient, req.amount);
+    blockchain.add_transaction(tx);
+    HttpResponse::Ok().body("Transaction created")
+}
+
+#[post("/mine")]
+async fn mine_block(blockchain_data: web::Data<Arc<Mutex<Blockchain>>>) -> impl Responder {
+    let mut blockchain = blockchain_data.lock().unwrap();
+    blockchain.mine_pending_transactions();
+    HttpResponse::Ok().body("Block mined")
+}
+
+#[get("/balance")]
+async fn get_balance(
+    blockchain_data: web::Data<Arc<Mutex<Blockchain>>>,
+    wallet_data: web::Data<Arc<Mutex<Wallet>>>,
+) -> impl Responder {
+    let wallet = wallet_data.lock().unwrap();
+    let blockchain = blockchain_data.lock().unwrap();
+    let balance = blockchain.get_balance(&wallet.get_address());
+    HttpResponse::Ok().body(format!("Balance: {} QTC", balance))
+}
+
+pub fn init_routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(get_wallet);
+    cfg.service(send_transaction);
+    cfg.service(mine_block);
+    cfg.service(get_balance);
 }
