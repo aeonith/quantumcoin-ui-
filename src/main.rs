@@ -1,47 +1,37 @@
-use actix_web::{web, App, HttpServer};
-use std::sync::{Arc, Mutex};
+#![feature(proc_macro_hygiene, decl_macro)]
+
+#[macro_use]
+extern crate rocket;
 
 mod blockchain;
-mod revstop;
-mod transaction;
-mod wallet;
 mod routes;
+mod wallet;
 
 use blockchain::Blockchain;
+use routes::{get_balance, get_wallet_keys, mine_block, send_transaction};
+use std::sync::Mutex;
 use wallet::Wallet;
-use routes::init_routes;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    println!("🚀 QuantumCoin Engine Initializing...");
-
+fn main() {
     // Load or create wallet
-    let wallet = Wallet::load_from_files("wallet_public.key", "wallet_private.key").unwrap_or_else(|_| {
-        let w = Wallet::new().expect("❌ Failed to generate wallet");
-        w.save_to_files("wallet_public.key", "wallet_private.key")
-            .expect("❌ Failed to save wallet files");
-        println!("🔐 New wallet created and saved.");
-        w
-    });
+    let wallet = Wallet::load_from_files("wallet_public.key", "wallet_private.key")
+        .unwrap_or_else(|_| {
+            let new_wallet = Wallet::new();
+            new_wallet.save_to_files("wallet_public.key", "wallet_private.key").unwrap();
+            new_wallet
+        });
 
-    // Initialize blockchain
-    let mut blockchain = Blockchain::new();
-    blockchain.load_from_disk("blockchain.json");
-    println!("📦 Blockchain loaded.");
+    // Load or create blockchain
+    let blockchain = Blockchain::load_from_disk("blockchain.json")
+        .unwrap_or_else(|| Blockchain::new());
 
-    // Shared state
-    let wallet_data = Arc::new(Mutex::new(wallet));
-    let blockchain_data = Arc::new(Mutex::new(blockchain));
-
-    // Launch server
-    println!("🌐 Starting QuantumCoin API server at http://0.0.0.0:8080...");
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(blockchain_data.clone()))
-            .app_data(web::Data::new(wallet_data.clone()))
-            .configure(init_routes)
-    })
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+    // Launch Rocket server
+    rocket::ignite()
+        .manage(Mutex::new(wallet))
+        .manage(Mutex::new(blockchain))
+        .mount(
+            "/",
+            routes![get_wallet_keys, send_transaction, mine_block, get_balance],
+        )
+        .launch();
 }
