@@ -1,35 +1,47 @@
-use crate::block::Block;
+use crate::block::{Block, calculate_hash};
 use crate::transaction::Transaction;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::fs::{self, File};
 use std::io::{Read, Write};
-use std::path::Path;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Blockchain {
     pub chain: Vec<Block>,
-    pub pending_transactions: Vec<Transaction>,
     pub difficulty: usize,
+    pub pending_transactions: Vec<Transaction>,
     pub mining_reward: f64,
 }
 
 impl Blockchain {
     pub fn new() -> Self {
-        let mut blockchain = Blockchain {
-            chain: vec![],
-            pending_transactions: vec![],
-            difficulty: 4,
-            mining_reward: 50.0,
+        let mut chain = Vec::new();
+
+        // Create empty genesis block
+        let genesis_block = Block {
+            index: 0,
+            timestamp: Blockchain::now(),
+            transactions: vec![],
+            previous_hash: String::from("0"),
+            nonce: 0,
+            hash: String::new(),
         };
 
-        if Path::new("blockchain.json").exists() {
-            blockchain.load_from_disk("blockchain.json");
-        } else {
-            let genesis_block = Block::new(0, vec![], "0");
-            blockchain.chain.push(genesis_block);
-            blockchain.save_to_disk("blockchain.json");
-        }
+        let mut genesis_block = genesis_block;
+        genesis_block.hash = calculate_hash(&genesis_block);
 
-        blockchain
+        chain.push(genesis_block);
+
+        Blockchain {
+            chain,
+            difficulty: 4,
+            pending_transactions: vec![],
+            mining_reward: 50.0,
+        }
+    }
+
+    fn now() -> u128 {
+        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
     }
 
     pub fn add_transaction(&mut self, transaction: Transaction) {
@@ -38,27 +50,28 @@ impl Blockchain {
 
     pub fn mine_pending_transactions(&mut self, miner_address: &str) {
         let reward_tx = Transaction {
-            sender: "System".to_string(),
+            sender: "SYSTEM".to_string(),
             recipient: miner_address.to_string(),
             amount: self.mining_reward,
             signature: None,
         };
-
         self.pending_transactions.push(reward_tx);
 
-        let previous_hash = self.chain.last().unwrap().hash.clone();
-        let mut block = Block::new(self.chain.len() as u64, self.pending_transactions.clone(), &previous_hash);
-        block.mine(self.difficulty);
+        let block = Block::new(
+            self.chain.len() as u64,
+            Blockchain::now(),
+            self.pending_transactions.clone(),
+            &self.chain.last().unwrap().hash,
+            self.difficulty,
+        );
 
         self.chain.push(block);
         self.pending_transactions.clear();
-
         self.save_to_disk("blockchain.json");
     }
 
     pub fn get_balance(&self, address: &str) -> f64 {
         let mut balance = 0.0;
-
         for block in &self.chain {
             for tx in &block.transactions {
                 if tx.sender == address {
@@ -69,7 +82,6 @@ impl Blockchain {
                 }
             }
         }
-
         balance
     }
 
@@ -78,7 +90,7 @@ impl Blockchain {
             let current = &self.chain[i];
             let previous = &self.chain[i - 1];
 
-            if current.hash != current.calculate_hash() {
+            if current.hash != calculate_hash(current) {
                 return false;
             }
 
@@ -86,23 +98,22 @@ impl Blockchain {
                 return false;
             }
         }
-
         true
     }
 
-    pub fn save_to_disk(&self, filename: &str) {
-        let serialized = serde_json::to_string(&self.chain).unwrap();
-        let mut file = File::create(filename).unwrap();
-        file.write_all(serialized.as_bytes()).unwrap();
+    pub fn save_to_disk(&self, path: &str) {
+        let json = serde_json::to_string_pretty(self).unwrap();
+        let mut file = File::create(path).unwrap();
+        file.write_all(json.as_bytes()).unwrap();
     }
 
-    pub fn load_from_disk(&mut self, filename: &str) {
-        if let Ok(mut file) = File::open(filename) {
-            let mut contents = String::new();
-            file.read_to_string(&mut contents).unwrap();
-            if let Ok(chain) = serde_json::from_str(&contents) {
-                self.chain = chain;
-            }
+    pub fn load_from_disk(path: &str) -> Option<Self> {
+        if let Ok(mut file) = File::open(path) {
+            let mut data = String::new();
+            file.read_to_string(&mut data).unwrap();
+            serde_json::from_str(&data).ok()
+        } else {
+            None
         }
     }
 }
