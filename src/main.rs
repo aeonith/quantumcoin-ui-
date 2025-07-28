@@ -1,26 +1,39 @@
-mod block;
 mod blockchain;
+mod block;
 mod transaction;
 mod wallet;
 mod revstop;
 mod routes;
 
+use actix_web::{web, App, HttpServer};
+use std::sync::{Arc, Mutex};
 use blockchain::Blockchain;
-use rocket::tokio::sync::Mutex;
-use std::sync::Arc;
+use wallet::Wallet;
 
-#[macro_use]
-extern crate rocket;
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    println!("🚀 QuantumCoin Engine Initialized");
 
-#[launch]
-fn rocket() -> _ {
     let blockchain = Arc::new(Mutex::new(Blockchain::new()));
-    let wallet = Arc::new(Mutex::new(wallet::Wallet::new()));
-    let revstop = Arc::new(Mutex::new(revstop::RevStop::new()));
 
-    rocket::build()
-        .manage(blockchain)
-        .manage(wallet)
-        .manage(revstop)
-        .mount("/", routes::routes())
+    // Load or generate wallet
+    let wallet = Wallet::load_from_files("wallet_public.key", "wallet_private.key")
+        .unwrap_or_else(|| {
+            let w = Wallet::new().expect("Failed to generate wallet");
+            w.save_to_files("wallet_public.key", "wallet_private.key").unwrap();
+            w
+        });
+
+    let wallet_data = Arc::new(Mutex::new(wallet));
+
+    // Launch HTTP Server
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(blockchain.clone()))
+            .app_data(web::Data::new(wallet_data.clone()))
+            .configure(routes::init_routes)
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
 }
