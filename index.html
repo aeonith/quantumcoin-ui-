@@ -7,10 +7,71 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <video id="bg-video" autoplay muted playsinline>
-    <source src="quantum-bg.mp4" type="video/mp4">
+  <video id="bg-video" autoplay muted loop playsinline>
+    <source src="quantum-bg.mp4" type="video/mp4" />
   </video>
 
+  <div class="container">
+    <div class="logo">🚀 QuantumCoin™</div>
+    <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
+
+    <div class="box">
+      <h2 style="color: #00fdfd; margin-bottom: 15px;">💡 What is QuantumCoin™?</h2>
+      <p style="color: white; font-size: 1rem; line-height: 1.6;">
+        QuantumCoin™ is the world's first quantum-resistant digital currency — built from scratch using post-quantum cryptography and ultra-hardened mining logic. It’s designed for long-term sovereignty and protection against even the most powerful quantum computers.
+      </p>
+
+      <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        <a href="https://github.com/aeonith/quantumcoin-ui-" target="_blank">
+          <button>📂 View Code on GitHub</button>
+        </a>
+        <a href="https://t.me/+abzOvpCAUfwyYjIx" target="_blank">
+          <button>💬 Join Our Telegram</button>
+        </a>
+        <a href="#" id="open-terms">
+          <button>📖 Coming Soon: Whitepaper</button>
+        </a>
+      </div>
+    </div>
+
+    <div class="btc-info">
+      <h2>⚙️ Core Features</h2>
+      <ul style="list-style: disc; margin-left: 20px;">
+        <li>🛡️ Quantum-safe cryptography (Dilithium2)</li>
+        <li>💰 22 million max supply — hard-capped</li>
+        <li>⛏️ 2-year halving model for 66-year emission</li>
+        <li>🔐 RevStop™ irreversible wallet security system</li>
+        <li>🌐 Peer-to-peer, decentralized, trustless</li>
+      </ul>
+
+      <h2>📍 What’s Next?</h2>
+      <p>
+        QuantumCoin is preparing for its full launch. We're working toward listing on Trust Wallet and DEXs. The future roadmap includes an explorer, wallet dashboard, and Layer-1 API access. 
+      </p>
+    </div>
+
+    <footer>
+      &copy; 2025 QuantumCoin™ — Engineered for the Post-Quantum Era.
+    </footer>
+  </div>
+
+  <!-- Modal for Whitepaper / Terms -->
+  <div id="terms-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn" id="close-terms">&times;</span>
+      <h2>QuantumCoin™ Vision & Terms</h2>
+      <div class="modal-scroll">
+        <p>
+          QuantumCoin™ is committed to a decentralized future. By interacting with this project, you acknowledge that QuantumCoin™ is an open-source, community-governed ecosystem. No central entity controls its issuance, movement, or functionality.
+        </p>
+        <p>
+          Our mission is to empower individuals through quantum-safe financial sovereignty. Use responsibly.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script: Keep background looping every 5 seconds -->
   <script>
     const video = document.getElementById('bg-video');
     video.addEventListener('timeupdate', () => {
@@ -21,62 +82,8 @@
     });
   </script>
 
-  <div class="container">
-    <div class="logo">🚀 QuantumCoin™</div>
-    <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
-
-    <div class="box">
-      <input type="email" placeholder="Email" id="email" />
-      <input type="password" placeholder="Password" id="password" />
-      <input type="password" placeholder="Confirm Password" id="confirm-password" style="display: none;" />
-      <button id="form-button">🚀 Login</button>
-      <div class="terms-check">
-        <label>
-          <input type="checkbox" required />
-          I agree to the <a href="#" id="open-terms">Terms & Conditions</a>
-        </label>
-      </div>
-      <div class="toggle">
-        New here? <a href="#" id="toggle-form">Register</a>
-      </div>
-    </div>
-
-    <div class="btc-info">
-      <h2>🚀 The QuantumCoin™ Vision</h2>
-      <p>QuantumCoin™ is a next-generation digital currency engineered from the ground up to be quantum-resistant...</p>
-      <!-- Keep the rest of your original paragraphs -->
-    </div>
-
-    <footer>
-      &copy; 2025 QuantumCoin™. All rights reserved.
-    </footer>
-  </div>
-
-  <!-- Modal for Terms -->
-  <div id="terms-modal" class="modal hidden">
-    <div class="modal-content">
-      <span class="close-btn" id="close-terms">&times;</span>
-      <h2>QuantumCoin™ Terms & Conditions</h2>
-      <div class="modal-scroll">
-        <p>By using QuantumCoin™, you agree to the following terms...</p>
-      </div>
-    </div>
-  </div>
-
+  <!-- Modal Logic -->
   <script>
-    const toggleForm = document.getElementById('toggle-form');
-    const formButton = document.getElementById('form-button');
-    const confirmPassword = document.getElementById('confirm-password');
-    let isLogin = true;
-
-    toggleForm.addEventListener('click', (e) => {
-      e.preventDefault();
-      isLogin = !isLogin;
-      formButton.textContent = isLogin ? '🚀 Login' : '🚀 Register';
-      toggleForm.textContent = isLogin ? 'Register' : 'Back to Login';
-      confirmPassword.style.display = isLogin ? 'none' : 'block';
-    });
-
     const termsLink = document.getElementById('open-terms');
     const modal = document.getElementById('terms-modal');
     const closeModal = document.getElementById('close-terms');
@@ -88,39 +95,6 @@
 
     closeModal.addEventListener('click', () => {
       modal.classList.add('hidden');
-    });
-  </script>
-
-  <!-- ✅ Load new quantum API script -->
-  <script src="script-new.js"></script>
-  
-  <!-- ✅ Load wallet.js module -->
-  <script type="module" src="./wallet.js"></script>
-
-  <!-- ✅ Script using wallet.js functions -->
-  <script type="module">
-    import { getOrCreateWallet, showWalletInfo } from './wallet.js';
-
-    document.getElementById('form-button').addEventListener('click', () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const confirmPasswordField = document.getElementById('confirm-password');
-      const confirmPassword = confirmPasswordField ? confirmPasswordField.value.trim() : '';
-      const isLogin = confirmPasswordField?.style.display === 'none';
-
-      if (!email || !password) {
-        alert("Please fill out both fields.");
-        return;
-      }
-
-      if (!isLogin && password !== confirmPassword) {
-        alert("Passwords do not match.");
-        return;
-      }
-
-      // 🟢 Example usage of wallet.js
-      const wallet = getOrCreateWallet();
-      showWalletInfo(wallet);
     });
   </script>
 </body>
