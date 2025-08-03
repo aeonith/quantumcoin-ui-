@@ -15,6 +15,7 @@
     <div class="logo">🚀 QuantumCoin™</div>
     <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
 
+    <!-- 🧠 Intro Feature Box -->
     <div class="box">
       <h2 style="color: #00fdfd; margin-bottom: 15px;">💡 What is QuantumCoin™?</h2>
       <p style="color: white; font-size: 1rem; line-height: 1.6;">
@@ -29,11 +30,12 @@
           <button>💬 Join Our Telegram</button>
         </a>
         <a href="#" id="open-terms">
-          <button>📖 Coming Soon: Whitepaper</button>
+          <button>📖 Read the Vision</button>
         </a>
       </div>
     </div>
 
+    <!-- ⚙️ Features -->
     <div class="btc-info">
       <h2>⚙️ Core Features</h2>
       <ul style="list-style: disc; margin-left: 20px;">
@@ -50,28 +52,64 @@
       </p>
     </div>
 
+    <!-- 🌌 Vision Section -->
+    <div class="btc-info">
+      <h2>🌌 The Vision Behind QuantumCoin™</h2>
+      <p>
+        “We cannot fight tomorrow’s wars with today’s weapons. If money is power, then sovereignty must be protected at the source — with unbreakable math, not fragile trust.”
+        <br><em>— Aeonith</em>
+      </p>
+
+      <h3 style="color: #00fdfd;">🧠 Why QuantumCoin Exists</h3>
+      <p>
+        Aeonith created QuantumCoin not to get rich, but to defend freedom in a world racing toward quantum control. As centralized powers and quantum computers rise, the systems we trust today will collapse tomorrow.
+      </p>
+
+      <p>
+        QuantumCoin is a rebellion — engineered with post-quantum cryptography and hard-coded scarcity, giving people a chance to hold something no machine or government can take away.
+      </p>
+
+      <h3 style="color: #00fdfd;">🔐 What Makes It Different</h3>
+      <ul style="list-style: disc; margin-left: 20px;">
+        <li>Quantum-safe signatures (Dilithium2 — NIST-backed)</li>
+        <li>22 million max supply, with Bitcoin-style halving every 2 years</li>
+        <li>RevStop™ — an irreversible security lock for ultimate protection</li>
+        <li>True decentralization — no host chain, no pre-mine, no fraud</li>
+      </ul>
+
+      <h3 style="color: #00fdfd;">🌍 Aeonith’s Mission</h3>
+      <p>
+        Aeonith believes the future belongs to builders — to those who aren’t afraid to challenge the old systems and write new ones in code. QuantumCoin isn’t just a project. It’s a shield for the people. A weapon for the future. A tool of absolute financial freedom.
+      </p>
+
+      <p style="font-weight: bold; color: #00fdfd;">
+        This isn’t just a coin. This is your sovereignty — encrypted, immortal, and invincible.
+      </p>
+    </div>
+
+    <!-- Footer -->
     <footer>
       &copy; 2025 QuantumCoin™ — Engineered for the Post-Quantum Era.
     </footer>
   </div>
 
-  <!-- Modal for Whitepaper / Terms -->
+  <!-- Modal (used for Vision) -->
   <div id="terms-modal" class="modal hidden">
     <div class="modal-content">
       <span class="close-btn" id="close-terms">&times;</span>
-      <h2>QuantumCoin™ Vision & Terms</h2>
+      <h2>QuantumCoin™ Vision</h2>
       <div class="modal-scroll">
         <p>
           QuantumCoin™ is committed to a decentralized future. By interacting with this project, you acknowledge that QuantumCoin™ is an open-source, community-governed ecosystem. No central entity controls its issuance, movement, or functionality.
         </p>
         <p>
-          Our mission is to empower individuals through quantum-safe financial sovereignty. Use responsibly.
+          Our mission is to empower individuals through quantum-safe financial sovereignty. Use responsibly. The future belongs to those who build it.
         </p>
       </div>
     </div>
   </div>
 
-  <!-- Script: Keep background looping every 5 seconds -->
+  <!-- Background loop fix -->
   <script>
     const video = document.getElementById('bg-video');
     video.addEventListener('timeupdate', () => {
@@ -82,7 +120,7 @@
     });
   </script>
 
-  <!-- Modal Logic -->
+  <!-- Modal logic -->
   <script>
     const termsLink = document.getElementById('open-terms');
     const modal = document.getElementById('terms-modal');
