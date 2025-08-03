@@ -2,9 +2,170 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>QuantumCoin™</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: black;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    #bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.3);
+    }
+
+    .container {
+      padding: 20px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #00fdfd;
+      text-shadow: 0 0 20px #00fdfd;
+      margin-top: 20px;
+    }
+
+    .slogan {
+      font-size: 1rem;
+      color: #ffffff;
+      margin-bottom: 25px;
+    }
+
+    .box {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px cyan;
+      backdrop-filter: blur(8px);
+      margin-bottom: 25px;
+    }
+
+    .box h2 {
+      color: #00fdfd;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .box p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .box a button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      font-size: 1rem;
+      background-color: #00fdfd;
+      color: black;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 12px #00fdfd;
+      transition: 0.3s ease;
+    }
+
+    .box a button:hover {
+      transform: scale(1.03);
+    }
+
+    .btc-info {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 20px #00fdfd;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      text-align: left;
+    }
+
+    .btc-info h2 {
+      color: #00fdfd;
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .btc-info h3 {
+      color: #00fdfd;
+      font-size: 1.1rem;
+      margin-top: 20px;
+    }
+
+    .btc-info ul {
+      padding-left: 20px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #ccc;
+      margin-top: 20px;
+      margin-bottom: 40px;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal-content {
+      background: #111;
+      color: #fff;
+      padding: 25px;
+      border-radius: 15px;
+      max-width: 90%;
+      box-shadow: 0 0 20px cyan;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-content h2 {
+      color: #00fdfd;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 1.3rem;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
   <video id="bg-video" autoplay muted loop playsinline>
@@ -13,103 +174,70 @@
 
   <div class="container">
     <div class="logo">🚀 QuantumCoin™</div>
-    <div class="slogan">Secure. Sovereign. Quantum-Ready.</div>
+    <div class="slogan">The Future Belongs to the Unbreakable.</div>
 
-    <!-- 🧠 Intro Feature Box -->
     <div class="box">
-      <h2 style="color: #00fdfd; margin-bottom: 15px;">💡 What is QuantumCoin™?</h2>
-      <p style="color: white; font-size: 1rem; line-height: 1.6;">
-        QuantumCoin™ is the world's first quantum-resistant digital currency — built from scratch using post-quantum cryptography and ultra-hardened mining logic. It’s designed for long-term sovereignty and protection against even the most powerful quantum computers.
+      <h2>💡 The Birth of QuantumCoin™</h2>
+      <p>
+        QuantumCoin™ was born not from greed, but from prophecy. Aeonith foresaw a world overtaken by quantum machines — machines powerful enough to crack every coin we trust today. He didn’t just dream of a better future. He built one.
       </p>
 
-      <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; width: 100%;">
-        <a href="https://github.com/aeonith/quantumcoin-ui-" target="_blank">
-          <button>📂 View Code on GitHub</button>
-        </a>
-        <a href="https://t.me/+abzOvpCAUfwyYjIx" target="_blank">
-          <button>💬 Join Our Telegram</button>
-        </a>
-        <a href="#" id="open-terms">
-          <button>📖 Read the Vision</button>
-        </a>
-      </div>
+      <a href="https://github.com/aeonith/quantumcoin-ui-" target="_blank">
+        <button>📂 GitHub Code</button>
+      </a>
+      <a href="https://t.me/+abzOvpCAUfwyYjIx" target="_blank">
+        <button>💬 Join Telegram</button>
+      </a>
+      <a href="#" id="open-terms">
+        <button>📖 Read the Vision</button>
+      </a>
     </div>
 
-    <!-- ⚙️ Features -->
     <div class="btc-info">
-      <h2>⚙️ Core Features</h2>
-      <ul style="list-style: disc; margin-left: 20px;">
-        <li>🛡️ Quantum-safe cryptography (Dilithium2)</li>
-        <li>💰 22 million max supply — hard-capped</li>
-        <li>⛏️ 2-year halving model for 66-year emission</li>
-        <li>🔐 RevStop™ irreversible wallet security system</li>
-        <li>🌐 Peer-to-peer, decentralized, trustless</li>
+      <h2>⚙️ What Makes QuantumCoin™ Different</h2>
+      <ul>
+        <li>🛡️ Post-Quantum Dilithium2 Security</li>
+        <li>💰 22M Max Supply — Hard Capped</li>
+        <li>⛏️ Mining Halves Every 2 Years</li>
+        <li>🔐 RevStop™: Unbreakable Wallet Lock</li>
+        <li>🌐 Layer-1 Independence. No Chains. No Masters.</li>
       </ul>
-
-      <h2>📍 What’s Next?</h2>
-      <p>
-        QuantumCoin is preparing for its full launch. We're working toward listing on Trust Wallet and DEXs. The future roadmap includes an explorer, wallet dashboard, and Layer-1 API access. 
-      </p>
     </div>
 
-    <!-- 🌌 Vision Section -->
     <div class="btc-info">
-      <h2>🌌 The Vision Behind QuantumCoin™</h2>
+      <h2>🌌 Aeonith’s Vision</h2>
       <p>
-        “We cannot fight tomorrow’s wars with today’s weapons. If money is power, then sovereignty must be protected at the source — with unbreakable math, not fragile trust.”
-        <br><em>— Aeonith</em>
+        "If they build weapons to enslave us, then we must build shields to free us."
       </p>
-
-      <h3 style="color: #00fdfd;">🧠 Why QuantumCoin Exists</h3>
       <p>
-        Aeonith created QuantumCoin not to get rich, but to defend freedom in a world racing toward quantum control. As centralized powers and quantum computers rise, the systems we trust today will collapse tomorrow.
+        QuantumCoin™ is a revolution coded into existence. It does not ask for permission. It cannot be printed, paused, or seized. It cannot be censored — because it belongs to no one.
       </p>
-
       <p>
-        QuantumCoin is a rebellion — engineered with post-quantum cryptography and hard-coded scarcity, giving people a chance to hold something no machine or government can take away.
-      </p>
-
-      <h3 style="color: #00fdfd;">🔐 What Makes It Different</h3>
-      <ul style="list-style: disc; margin-left: 20px;">
-        <li>Quantum-safe signatures (Dilithium2 — NIST-backed)</li>
-        <li>22 million max supply, with Bitcoin-style halving every 2 years</li>
-        <li>RevStop™ — an irreversible security lock for ultimate protection</li>
-        <li>True decentralization — no host chain, no pre-mine, no fraud</li>
-      </ul>
-
-      <h3 style="color: #00fdfd;">🌍 Aeonith’s Mission</h3>
-      <p>
-        Aeonith believes the future belongs to builders — to those who aren’t afraid to challenge the old systems and write new ones in code. QuantumCoin isn’t just a project. It’s a shield for the people. A weapon for the future. A tool of absolute financial freedom.
-      </p>
-
-      <p style="font-weight: bold; color: #00fdfd;">
-        This isn’t just a coin. This is your sovereignty — encrypted, immortal, and invincible.
+        It is your right, your voice, and your shield — encrypted and eternal. QuantumCoin™ is the final firewall between human sovereignty and quantum tyranny.
       </p>
     </div>
 
-    <!-- Footer -->
-    <footer>
-      &copy; 2025 QuantumCoin™ — Engineered for the Post-Quantum Era.
-    </footer>
+    <footer>&copy; 2025 QuantumCoin™. All rights reserved.</footer>
   </div>
 
-  <!-- Modal (used for Vision) -->
+  <!-- Modal -->
   <div id="terms-modal" class="modal hidden">
     <div class="modal-content">
       <span class="close-btn" id="close-terms">&times;</span>
       <h2>QuantumCoin™ Vision</h2>
-      <div class="modal-scroll">
-        <p>
-          QuantumCoin™ is committed to a decentralized future. By interacting with this project, you acknowledge that QuantumCoin™ is an open-source, community-governed ecosystem. No central entity controls its issuance, movement, or functionality.
-        </p>
-        <p>
-          Our mission is to empower individuals through quantum-safe financial sovereignty. Use responsibly. The future belongs to those who build it.
-        </p>
-      </div>
+      <p>
+        QuantumCoin™ is not a financial instrument. It is a sovereign tool — a declaration of independence against the surveillance-driven, centralized systems of tomorrow.
+      </p>
+      <p>
+        As quantum computing threatens to compromise every blockchain, QuantumCoin™ stands unbroken. Built with post-quantum cryptography, guided by no institution, and owned by no master — it is the people’s chain.
+      </p>
+      <p>
+        Use it responsibly. Guard your keys. And never forget: sovereignty is not given. It is encrypted.
+      </p>
     </div>
   </div>
 
-  <!-- Background loop fix -->
+  <!-- Scripts -->
   <script>
     const video = document.getElementById('bg-video');
     video.addEventListener('timeupdate', () => {
@@ -118,10 +246,7 @@
         video.play();
       }
     });
-  </script>
 
-  <!-- Modal logic -->
-  <script>
     const termsLink = document.getElementById('open-terms');
     const modal = document.getElementById('terms-modal');
     const closeModal = document.getElementById('close-terms');
