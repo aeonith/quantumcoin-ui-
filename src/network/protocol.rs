@@ -1,335 +1,161 @@
-use serde::{Serialize, Deserialize};
-use crate::block::Block;
-use crate::transaction::Transaction;
-use crate::network::{NetworkError, NetworkConfig};
-use chrono::{DateTime, Utc};
-use uuid::Uuid;
 use std::net::SocketAddr;
-use blake3;
-use base64::{encode, decode};
-use aes_gcm::{Aes256Gcm, Key, Nonce, aead::{Aead, NewAead}};
-use tokio_rustls::{TlsAcceptor, TlsConnector};
-use rustls::{Certificate, PrivateKey, ServerConfig, ClientConfig};
-use std::sync::Arc;
+use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum MessageType {
-    // Connection Management
-    Handshake,
-    HandshakeAck,
-    Version,
-    Ping,
-    Pong,
-    Disconnect,
-    
-    // Blockchain Sync
-    GetBlocks,
-    SendBlock,
-    GetHeaders,
-    SendHeaders,
-    GetBlockData,
-    
-    // Transaction Handling
-    GetTransaction,
-    SendTransaction,
-    TransactionInventory,
-    GetMempool,
-    
-    // Peer Discovery
-    GetPeers,
-    SendPeers,
-    
-    // Network Status
-    GetStatus,
-    SendStatus,
-    
-    // Error Handling
-    Error,
-    Reject,
-}
+// Protocol version
+pub const PROTOCOL_VERSION: u32 = 1;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Message {
-    pub id: String,
-    pub message_type: MessageType,
-    pub timestamp: DateTime<Utc>,
-    pub sender: SocketAddr,
-    pub payload: MessagePayload,
-    pub signature: Option<String>,
-    pub checksum: String,
-}
+// Network magic bytes for message identification
+pub const NETWORK_MAGIC: u32 = 0xD9B4BEF9;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum MessagePayload {
-    Handshake(HandshakeData),
-    Version(VersionData),
-    Ping(PingData),
-    Pong(PongData),
-    Block(Block),
-    Transaction(Transaction),
-    Blocks(Vec<Block>),
-    Transactions(Vec<Transaction>),
-    Headers(Vec<BlockHeader>),
-    Peers(Vec<PeerInfo>),
-    Status(NetworkStatus),
-    Error(ErrorData),
-    Empty,
-}
+// Message types
+pub const MSG_HANDSHAKE: u8 = 1;
+pub const MSG_HANDSHAKE_ACK: u8 = 2;
+pub const MSG_GET_BLOCKS: u8 = 3;
+pub const MSG_BLOCKS: u8 = 4;
+pub const MSG_NEW_BLOCK: u8 = 5;
+pub const MSG_GET_BLOCK: u8 = 6;
+pub const MSG_BLOCK: u8 = 7;
+pub const MSG_NEW_TRANSACTION: u8 = 8;
+pub const MSG_GET_MEMPOOL: u8 = 9;
+pub const MSG_MEMPOOL: u8 = 10;
+pub const MSG_GET_CHAIN_INFO: u8 = 11;
+pub const MSG_CHAIN_INFO: u8 = 12;
+pub const MSG_GET_PEERS: u8 = 13;
+pub const MSG_PEERS: u8 = 14;
+pub const MSG_PING: u8 = 15;
+pub const MSG_PONG: u8 = 16;
+pub const MSG_ERROR: u8 = 255;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct HandshakeData {
-    pub protocol_version: u32,
-    pub network_id: u32,
-    pub node_id: String,
-    pub user_agent: String,
-    pub services: u64, // Bitfield of supported services
-    pub timestamp: DateTime<Utc>,
-    pub best_block_height: u64,
-    pub best_block_hash: String,
-    pub public_key: String, // For authentication
-}
+// Protocol limits
+pub const MAX_MESSAGE_SIZE: usize = 32 * 1024 * 1024; // 32MB
+pub const MAX_BLOCKS_PER_MESSAGE: usize = 500;
+pub const MAX_TRANSACTIONS_PER_MESSAGE: usize = 10000;
+pub const MAX_PEERS_PER_MESSAGE: usize = 1000;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct VersionData {
-    pub protocol_version: u32,
-    pub services: u64,
-    pub timestamp: DateTime<Utc>,
-    pub receiver_address: SocketAddr,
-    pub sender_address: SocketAddr,
-    pub nonce: u64,
-    pub user_agent: String,
-    pub start_height: u64,
-}
+// Connection timeouts
+pub const HANDSHAKE_TIMEOUT_SECS: u64 = 30;
+pub const MESSAGE_TIMEOUT_SECS: u64 = 60;
+pub const KEEPALIVE_INTERVAL_SECS: u64 = 30;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PingData {
-    pub nonce: u64,
-    pub timestamp: DateTime<Utc>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PongData {
-    pub nonce: u64,
-    pub timestamp: DateTime<Utc>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BlockHeader {
-    pub hash: String,
-    pub previous_hash: String,
-    pub merkle_root: String,
-    pub timestamp: DateTime<Utc>,
-    pub height: u64,
-    pub difficulty: usize,
-    pub nonce: u64,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct PeerInfo {
-    pub address: SocketAddr,
-    pub last_seen: DateTime<Utc>,
-    pub services: u64,
-    pub user_agent: String,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProtocolSettings {
     pub version: u32,
+    pub max_connections: usize,
+    pub connection_timeout: u64,
+    pub message_timeout: u64,
+    pub keepalive_interval: u64,
+    pub max_message_size: usize,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct NetworkStatus {
-    pub version: u32,
-    pub block_height: u64,
-    pub best_block_hash: String,
-    pub connected_peers: usize,
-    pub mempool_size: usize,
-    pub is_syncing: bool,
-    pub sync_progress: f64,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ErrorData {
-    pub code: u32,
-    pub message: String,
-    pub details: Option<String>,
-}
-
-impl Message {
-    pub fn new(
-        message_type: MessageType,
-        sender: SocketAddr,
-        payload: MessagePayload,
-    ) -> Self {
-        let mut message = Message {
-            id: Uuid::new_v4().to_string(),
-            message_type,
-            timestamp: Utc::now(),
-            sender,
-            payload,
-            signature: None,
-            checksum: String::new(),
-        };
-        
-        message.checksum = message.calculate_checksum();
-        message
-    }
-
-    pub fn calculate_checksum(&self) -> String {
-        let mut hasher = blake3::Hasher::new();
-        hasher.update(self.id.as_bytes());
-        hasher.update(&bincode::serialize(&self.message_type).unwrap_or_default());
-        hasher.update(&self.timestamp.timestamp().to_be_bytes());
-        hasher.update(&bincode::serialize(&self.payload).unwrap_or_default());
-        encode(hasher.finalize().as_bytes())
-    }
-
-    pub fn verify_checksum(&self) -> bool {
-        let calculated = {
-            let mut hasher = blake3::Hasher::new();
-            hasher.update(self.id.as_bytes());
-            hasher.update(&bincode::serialize(&self.message_type).unwrap_or_default());
-            hasher.update(&self.timestamp.timestamp().to_be_bytes());
-            hasher.update(&bincode::serialize(&self.payload).unwrap_or_default());
-            encode(hasher.finalize().as_bytes())
-        };
-        calculated == self.checksum
-    }
-
-    pub fn sign(&mut self, private_key: &pqcrypto_dilithium::dilithium2::SecretKey) {
-        let message_bytes = self.to_bytes();
-        let signature = pqcrypto_dilithium::dilithium2::sign_detached(&message_bytes, private_key);
-        self.signature = Some(encode(signature.as_bytes()));
-    }
-
-    pub fn verify_signature(&self, public_key: &pqcrypto_dilithium::dilithium2::PublicKey) -> bool {
-        if let Some(sig_str) = &self.signature {
-            if let Ok(sig_bytes) = decode(sig_str) {
-                if let Ok(signature) = pqcrypto_dilithium::dilithium2::DetachedSignature::from_bytes(&sig_bytes) {
-                    let message_bytes = self.to_bytes_without_signature();
-                    return signature.verify_detached(&message_bytes, public_key).is_ok();
-                }
-            }
+impl Default for ProtocolSettings {
+    fn default() -> Self {
+        Self {
+            version: PROTOCOL_VERSION,
+            max_connections: 100,
+            connection_timeout: 30,
+            message_timeout: 60,
+            keepalive_interval: 30,
+            max_message_size: MAX_MESSAGE_SIZE,
         }
-        false
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        bincode::serialize(self).unwrap_or_default()
-    }
-
-    pub fn to_bytes_without_signature(&self) -> Vec<u8> {
-        let mut temp = self.clone();
-        temp.signature = None;
-        bincode::serialize(&temp).unwrap_or_default()
-    }
-
-    pub fn from_bytes(data: &[u8]) -> Result<Self, NetworkError> {
-        bincode::deserialize(data).map_err(|_| NetworkError::InvalidMessage)
-    }
-
-    pub fn is_expired(&self, timeout_secs: u64) -> bool {
-        let now = Utc::now();
-        let elapsed = now.signed_duration_since(self.timestamp);
-        elapsed.num_seconds() > timeout_secs as i64
     }
 }
 
-pub struct ProtocolHandler {
-    config: NetworkConfig,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NodeCapabilities {
+    pub supports_mining: bool,
+    pub supports_wallet: bool,
+    pub supports_relay: bool,
+    pub supports_bloom_filter: bool,
+    pub supports_compact_blocks: bool,
 }
 
-impl ProtocolHandler {
-    pub fn new(config: NetworkConfig) -> Self {
-        Self { config }
-    }
-
-    pub fn validate_message(&self, message: &Message) -> Result<(), NetworkError> {
-        // Check message integrity
-        if !message.verify_checksum() {
-            return Err(NetworkError::InvalidMessage);
-        }
-
-        // Check if message is expired
-        if message.is_expired(self.config.connection_timeout_secs) {
-            return Err(NetworkError::Timeout);
-        }
-
-        // Additional validation based on message type
-        match &message.message_type {
-            MessageType::Handshake => self.validate_handshake(message),
-            MessageType::Version => self.validate_version(message),
-            MessageType::SendBlock => self.validate_block_message(message),
-            MessageType::SendTransaction => self.validate_transaction_message(message),
-            _ => Ok(()),
+impl Default for NodeCapabilities {
+    fn default() -> Self {
+        Self {
+            supports_mining: true,
+            supports_wallet: true,
+            supports_relay: true,
+            supports_bloom_filter: false,
+            supports_compact_blocks: false,
         }
     }
+}
 
-    fn validate_handshake(&self, message: &Message) -> Result<(), NetworkError> {
-        if let MessagePayload::Handshake(handshake) = &message.payload {
-            if handshake.protocol_version != self.config.protocol_version {
-                return Err(NetworkError::VersionMismatch);
-            }
-            if handshake.network_id != self.config.network_id {
-                return Err(NetworkError::VersionMismatch);
-            }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NetworkStats {
+    pub bytes_sent: u64,
+    pub bytes_received: u64,
+    pub messages_sent: u64,
+    pub messages_received: u64,
+    pub connections_accepted: u64,
+    pub connections_initiated: u64,
+    pub handshakes_completed: u64,
+    pub handshakes_failed: u64,
+}
+
+impl NetworkStats {
+    pub fn new() -> Self {
+        Self {
+            bytes_sent: 0,
+            bytes_received: 0,
+            messages_sent: 0,
+            messages_received: 0,
+            connections_accepted: 0,
+            connections_initiated: 0,
+            handshakes_completed: 0,
+            handshakes_failed: 0,
         }
-        Ok(())
     }
-
-    fn validate_version(&self, message: &Message) -> Result<(), NetworkError> {
-        if let MessagePayload::Version(version) = &message.payload {
-            if version.protocol_version != self.config.protocol_version {
-                return Err(NetworkError::VersionMismatch);
-            }
-        }
-        Ok(())
+    
+    pub fn record_message_sent(&mut self, size: usize) {
+        self.messages_sent += 1;
+        self.bytes_sent += size as u64;
     }
-
-    fn validate_block_message(&self, _message: &Message) -> Result<(), NetworkError> {
-        // Add block-specific validation
-        Ok(())
+    
+    pub fn record_message_received(&mut self, size: usize) {
+        self.messages_received += 1;
+        self.bytes_received += size as u64;
     }
-
-    fn validate_transaction_message(&self, _message: &Message) -> Result<(), NetworkError> {
-        // Add transaction-specific validation
-        Ok(())
+    
+    pub fn record_connection_accepted(&mut self) {
+        self.connections_accepted += 1;
     }
-
-    pub fn create_handshake(
-        &self,
-        sender: SocketAddr,
-        node_id: &str,
-        best_height: u64,
-        best_hash: &str,
-        public_key: &str,
-    ) -> Message {
-        let handshake = HandshakeData {
-            protocol_version: self.config.protocol_version,
-            network_id: self.config.network_id,
-            node_id: node_id.to_string(),
-            user_agent: "QuantumCoin/1.0.0".to_string(),
-            services: 1, // Full node
-            timestamp: Utc::now(),
-            best_block_height: best_height,
-            best_block_hash: best_hash.to_string(),
-            public_key: public_key.to_string(),
-        };
-
-        Message::new(MessageType::Handshake, sender, MessagePayload::Handshake(handshake))
+    
+    pub fn record_connection_initiated(&mut self) {
+        self.connections_initiated += 1;
     }
-
-    pub fn create_ping(&self, sender: SocketAddr) -> Message {
-        let ping = PingData {
-            nonce: rand::random(),
-            timestamp: Utc::now(),
-        };
-
-        Message::new(MessageType::Ping, sender, MessagePayload::Ping(ping))
+    
+    pub fn record_handshake_completed(&mut self) {
+        self.handshakes_completed += 1;
     }
-
-    pub fn create_pong(&self, sender: SocketAddr, ping_nonce: u64) -> Message {
-        let pong = PongData {
-            nonce: ping_nonce,
-            timestamp: Utc::now(),
-        };
-
-        Message::new(MessageType::Pong, sender, MessagePayload::Pong(pong))
+    
+    pub fn record_handshake_failed(&mut self) {
+        self.handshakes_failed += 1;
     }
+}
+
+impl Default for NetworkStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+pub fn validate_message_size(size: usize) -> bool {
+    size <= MAX_MESSAGE_SIZE
+}
+
+pub fn validate_blocks_count(count: usize) -> bool {
+    count <= MAX_BLOCKS_PER_MESSAGE
+}
+
+pub fn validate_transactions_count(count: usize) -> bool {
+    count <= MAX_TRANSACTIONS_PER_MESSAGE
+}
+
+pub fn validate_peers_count(count: usize) -> bool {
+    count <= MAX_PEERS_PER_MESSAGE
+}
+
+pub fn is_valid_protocol_version(version: u32) -> bool {
+    version == PROTOCOL_VERSION
 }

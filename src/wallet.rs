@@ -60,3 +60,9 @@ impl Wallet {
         }
     }
 }
+
+// Legacy functions for compatibility with old code
+pub fn get_keys() -> (String, String) {
+    let wallet = Wallet::generate();
+    (wallet.get_public_key_base64(), wallet.get_private_key_base64())
+}

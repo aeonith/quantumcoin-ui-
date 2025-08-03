@@ -1,151 +1,303 @@
-mod wallet;
+mod blockchain;
 mod transaction;
 mod block;
-mod blockchain;
-mod routes;
-mod merkle;
-mod revstop;
+mod mining;
+mod mempool;
 mod network;
-mod auth;
-mod database;
-mod production_database;
-mod fast_processor;
-mod secure_transport;
+mod revstop;
 mod quantum_crypto;
-mod revolutionary_features;
-mod api_handlers;
-mod config;
-mod monitoring;
+mod wallet;
 
-use actix_web::{App, HttpServer, web, middleware::Logger};
-use actix_cors::Cors;
-use tokio::sync::RwLock;
+use blockchain::Blockchain;
+use transaction::Transaction;
+use block::Block;
+use mining::Miner;
+use mempool::Mempool;
+use network::NetworkNode;
+use revstop::RevStop;
+
+use clap::{Parser, Subcommand};
+use std::net::SocketAddr;
 use std::sync::Arc;
-use tracing::{info, warn, error};
+use tokio::sync::RwLock;
+use anyhow::Result;
+use tracing::{info, error};
 use tracing_subscriber;
 
-use crate::blockchain::Blockchain;
-use crate::auth::AuthService;
-use crate::production_database::ProductionDatabase;
-use crate::quantum_crypto::QuantumCryptoSuite;
-use crate::revolutionary_features::{AIValidationEngine, EnvironmentalEngine};
-use crate::api_handlers::{AppState, configure_routes};
-use crate::config::QuantumCoinConfig;
-use crate::monitoring::{MetricsCollector, MetricsMiddleware};
+#[derive(Parser)]
+#[command(name = "quantumcoin")]
+#[command(about = "QuantumCoin - A quantum-resistant cryptocurrency")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // Load configuration
-    let config = QuantumCoinConfig::load();
+#[derive(Subcommand)]
+enum Commands {
+    /// Start a full node
+    Node {
+        /// Port to listen on
+        #[arg(short, long, default_value = "8333")]
+        port: u16,
+        /// Address to bind to
+        #[arg(short, long, default_value = "0.0.0.0")]
+        bind: String,
+        /// Enable mining
+        #[arg(short, long)]
+        mine: bool,
+        /// Mining address
+        #[arg(long)]
+        mining_address: Option<String>,
+        /// Peer addresses to connect to
+        #[arg(long)]
+        peers: Vec<String>,
+    },
+    /// Mining operations
+    Mine {
+        /// Mining address
+        address: String,
+        /// Number of threads
+        #[arg(short, long, default_value = "1")]
+        threads: usize,
+    },
+    /// Wallet operations
+    Wallet {
+        #[command(subcommand)]
+        command: WalletCommands,
+    },
+    /// Blockchain operations
+    Blockchain {
+        #[command(subcommand)]
+        command: BlockchainCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum WalletCommands {
+    /// Generate a new wallet
+    Generate,
+    /// Get balance
+    Balance { address: String },
+    /// Send transaction
+    Send {
+        from: String,
+        to: String,
+        amount: u64,
+        fee: Option<u64>,
+    },
+}
+
+#[derive(Subcommand)]
+enum BlockchainCommands {
+    /// Get blockchain info
+    Info,
+    /// Get block by hash
+    Block { hash: String },
+    /// Get transaction by ID
+    Transaction { id: String },
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Initialize logging
+    tracing_subscriber::init();
     
-    // Validate configuration
-    if let Err(e) = config.validate() {
-        eprintln!("❌ Configuration validation failed: {}", e);
-        std::process::exit(1);
-    }
-
-    // Initialize structured logging
-    let log_level = &config.logging.level;
-    tracing_subscriber::fmt()
-        .with_env_filter(log_level)
-        .with_target(false)
-        .compact()
-        .init();
-
-    info!("🚀 QuantumCoin Production Engine v2.0.0 Starting...");
-    info!("📋 Configuration loaded and validated");
+    let cli = Cli::parse();
     
-    // Ensure data directory exists
-    if let Some(parent) = std::path::Path::new(&config.database.path).parent() {
-        tokio::fs::create_dir_all(parent).await
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+    match cli.command {
+        Commands::Node { port, bind, mine, mining_address, peers } => {
+            start_node(port, &bind, mine, mining_address, peers).await?;
+        }
+        Commands::Mine { address, threads } => {
+            start_mining(&address, threads).await?;
+        }
+        Commands::Wallet { command } => {
+            handle_wallet_command(command).await?;
+        }
+        Commands::Blockchain { command } => {
+            handle_blockchain_command(command).await?;
+        }
     }
+    
+    Ok(())
+}
 
-    // Initialize production database with configuration
-    let database = Arc::new(
-        ProductionDatabase::new(&config.database.path)
-            .await
-            .expect("Failed to initialize production database")
-    );
-    info!("✅ Production SQLite database initialized at: {}", config.database.path);
-
-    // Initialize blockchain with genesis block
+async fn start_node(
+    port: u16,
+    bind: &str,
+    enable_mining: bool,
+    mining_address: Option<String>,
+    peer_addresses: Vec<String>,
+) -> Result<()> {
+    info!("Starting QuantumCoin node on {}:{}", bind, port);
+    
+    // Initialize components
     let blockchain = Arc::new(RwLock::new(Blockchain::new()));
-    info!("✅ Blockchain initialized with genesis block");
-
-    // Initialize security services with configuration
-    let auth_service = Arc::new(AuthService::new(&config.security.jwt_secret));
-    let quantum_crypto = Arc::new(QuantumCryptoSuite::new(config.security.quantum_security_level));
-    info!("✅ Authentication and quantum cryptography initialized (Security Level: {})", config.security.quantum_security_level);
-
-    // Initialize AI and environmental engines
-    let ai_engine = Arc::new(RwLock::new(AIValidationEngine::new()));
-    let env_engine = Arc::new(EnvironmentalEngine::new());
-    info!("✅ AI validation and environmental engines initialized");
-
-    // Initialize monitoring system
-    let metrics_collector = Arc::new(MetricsCollector::new());
-    metrics_collector.start_monitoring();
-    info!("✅ Comprehensive monitoring system started");
-
-    // Create application state
-    let app_state = AppState {
-        blockchain,
-        database,
-        auth_service,
-        quantum_crypto,
-        ai_engine,
-        env_engine,
-    };
-
-    // Create bind address - Use PORT environment variable for Render
-    let port = std::env::var("PORT")
-        .unwrap_or_else(|_| config.server.port.to_string())
-        .parse::<u16>()
-        .unwrap_or(config.server.port);
+    let mempool = Arc::new(RwLock::new(Mempool::default()));
+    let revstop = Arc::new(RwLock::new(RevStop::new()));
     
-    let bind_address = format!("{}:{}", config.server.host, port);
-
-    info!("🎯 QuantumCoin Production System Ready:");
-    info!("   🔐 Quantum-safe cryptography: ACTIVE (Level {})", config.quantum.security_level);
-    info!("   🤖 AI fraud detection: ACTIVE");
-    info!("   ⚡ Lightning-fast processor: ACTIVE");
-    info!("   🌱 Carbon-negative engine: ACTIVE");
-    info!("   🛡️  Security level: MAXIMUM");
-    info!("   💾 Production SQLite database: ACTIVE");
-    info!("   📊 Real-time monitoring: ACTIVE");
-    info!("   🚀 Performance target: {} TPS", config.performance.max_transactions_per_block);
-    info!("   👥 Worker threads: {}", config.server.workers);
-    info!("   🌐 Server binding to: {}", bind_address);
-    info!("   🌍 Environment: {}", if config.is_production() { "PRODUCTION" } else { "DEVELOPMENT" });
-
-    // Start HTTP server with production configuration
-    let metrics_middleware = MetricsMiddleware::new(Arc::clone(&metrics_collector));
+    // Start network node
+    let listen_addr: SocketAddr = format!("{}:{}", bind, port).parse()?;
+    let mut network_node = NetworkNode::new(listen_addr, {
+        let blockchain_read = blockchain.read().await;
+        blockchain_read.clone()
+    });
     
-    HttpServer::new(move || {
-        App::new()
-            .app_data(web::Data::new(app_state.clone()))
-            .app_data(web::Data::new(Arc::clone(&metrics_collector)))
-            .wrap(metrics_middleware.clone())
-            .wrap(
-                Cors::default()
-                    .allow_any_origin()
-                    .allow_any_method()
-                    .allow_any_header()
-                    .max_age(3600)
-            )
-            .wrap(Logger::default())
-            .configure(configure_routes)
-            .service(
-                actix_files::Files::new("/", "./")
-                    .index_file("index.html")
-            )
-    })
-    .workers(config.server.workers)
-    .keep_alive(std::time::Duration::from_secs(config.server.keep_alive))
-    .client_timeout(config.server.client_timeout)
-    .client_shutdown(config.server.client_shutdown)
-    .bind(&bind_address)?
-    .run()
-    .await
+    network_node.start().await?;
+    
+    // Connect to peers
+    for peer_addr in peer_addresses {
+        if let Ok(addr) = peer_addr.parse::<SocketAddr>() {
+            if let Err(e) = network_node.connect_to_peer(addr).await {
+                error!("Failed to connect to peer {}: {}", addr, e);
+            }
+        }
+    }
+    
+    // Start mining if enabled
+    if enable_mining {
+        if let Some(mining_addr) = mining_address {
+            let miner = Miner::new(
+                mining_addr,
+                Arc::clone(&blockchain),
+                Arc::clone(&mempool),
+                Arc::clone(&revstop),
+            );
+            
+            tokio::spawn(async move {
+                if let Err(e) = miner.start_mining().await {
+                    error!("Mining error: {}", e);
+                }
+            });
+        } else {
+            error!("Mining enabled but no mining address provided");
+        }
+    }
+    
+    // Start mempool cleanup task
+    {
+        let mempool = Arc::clone(&mempool);
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(300));
+            loop {
+                interval.tick().await;
+                let mempool_read = mempool.read().await;
+                mempool_read.cleanup_expired();
+            }
+        });
+    }
+    
+    info!("Node started successfully");
+    
+    // Keep the node running
+    loop {
+        tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+        
+        let peer_count = network_node.get_peer_count().await;
+        let mempool_size = {
+            let mempool_read = mempool.read().await;
+            mempool_read.size()
+        };
+        let chain_height = {
+            let blockchain_read = blockchain.read().await;
+            blockchain_read.chain.len()
+        };
+        
+        info!(
+            "Node status - Peers: {}, Mempool: {}, Chain height: {}",
+            peer_count, mempool_size, chain_height
+        );
+    }
+}
+
+async fn start_mining(address: &str, threads: usize) -> Result<()> {
+    info!("Starting mining with {} threads on address: {}", threads, address);
+    
+    let blockchain = Arc::new(RwLock::new(Blockchain::new()));
+    let mempool = Arc::new(RwLock::new(Mempool::default()));
+    let revstop = Arc::new(RwLock::new(RevStop::new()));
+    
+    let mut miners = Vec::new();
+    
+    for i in 0..threads {
+        let miner = Miner::new(
+            format!("{}_{}", address, i),
+            Arc::clone(&blockchain),
+            Arc::clone(&mempool),
+            Arc::clone(&revstop),
+        );
+        
+        let miner_handle = tokio::spawn(async move {
+            if let Err(e) = miner.start_mining().await {
+                error!("Miner {} error: {}", i, e);
+            }
+        });
+        
+        miners.push(miner_handle);
+    }
+    
+    // Wait for all miners to complete
+    for miner_handle in miners {
+        let _ = miner_handle.await;
+    }
+    
+    Ok(())
+}
+
+async fn handle_wallet_command(command: WalletCommands) -> Result<()> {
+    match command {
+        WalletCommands::Generate => {
+            let (public_key, private_key) = quantum_crypto::generate_keypair();
+            println!("Generated new wallet:");
+            println!("Public Key: {}", public_key);
+            println!("Private Key: {}", private_key);
+            println!("Address: {}", quantum_crypto::public_key_to_address(&public_key));
+        }
+        WalletCommands::Balance { address } => {
+            let blockchain = Blockchain::new();
+            let balance = blockchain.get_balance(&address);
+            println!("Balance for {}: {} QTC", address, balance as f64 / 100_000_000.0);
+        }
+        WalletCommands::Send { from, to, amount, fee } => {
+            println!("Sending {} QTC from {} to {}", amount as f64 / 100_000_000.0, from, to);
+            // TODO: Implement transaction creation and signing
+            println!("Transaction functionality not yet implemented in CLI");
+        }
+    }
+    Ok(())
+}
+
+async fn handle_blockchain_command(command: BlockchainCommands) -> Result<()> {
+    let blockchain = Blockchain::new();
+    
+    match command {
+        BlockchainCommands::Info => {
+            println!("Blockchain Info:");
+            println!("Height: {}", blockchain.chain.len());
+            println!("Difficulty: {}", blockchain.difficulty);
+            println!("Total Supply: {} QTC", blockchain.total_supply as f64 / 100_000_000.0);
+            println!("Mining Reward: {} QTC", blockchain.get_current_mining_reward() as f64 / 100_000_000.0);
+            if let Some(latest_block) = blockchain.chain.last() {
+                println!("Latest Block: {}", latest_block.hash);
+                println!("Latest Block Time: {}", latest_block.timestamp);
+            }
+        }
+        BlockchainCommands::Block { hash } => {
+            if let Some(block) = blockchain.chain.iter().find(|b| b.hash == hash) {
+                println!("Block: {}", serde_json::to_string_pretty(block)?);
+            } else {
+                println!("Block not found: {}", hash);
+            }
+        }
+        BlockchainCommands::Transaction { id } => {
+            for block in &blockchain.chain {
+                if let Some(tx) = block.transactions.iter().find(|t| t.id == id) {
+                    println!("Transaction: {}", serde_json::to_string_pretty(tx)?);
+                    return Ok(());
+                }
+            }
+            println!("Transaction not found: {}", id);
+        }
+    }
+    Ok(())
 }

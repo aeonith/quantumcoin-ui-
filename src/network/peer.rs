@@ -1,445 +1,186 @@
-use crate::network::{NetworkError, NetworkConfig};
-use crate::network::protocol::{Message, MessageType, MessagePayload, ProtocolHandler};
-use serde::{Serialize, Deserialize};
-use std::net::SocketAddr;
-use std::collections::HashMap;
-use std::time::{Duration, Instant};
-use chrono::{DateTime, Utc};
-use tokio::net::{TcpStream, TcpListener};
+use crate::network::{NetworkMessage, MessageHeader};
+use tokio::net::TcpStream;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::sync::{mpsc, RwLock};
-use tokio::time::{sleep, timeout};
-use std::sync::Arc;
-use dashmap::DashMap;
-use parking_lot::Mutex;
+use std::net::SocketAddr;
+use std::time::{SystemTime, UNIX_EPOCH};
+use sha2::{Sha256, Digest};
+use anyhow::{Result, anyhow};
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct PeerInfo {
-    pub address: SocketAddr,
+    pub addr: SocketAddr,
     pub node_id: String,
-    pub user_agent: String,
-    pub protocol_version: u32,
-    pub services: u64,
-    pub best_height: u64,
-    pub connected_at: DateTime<Utc>,
-    pub last_seen: DateTime<Utc>,
-    pub bytes_sent: u64,
-    pub bytes_received: u64,
-    pub ping_time: Option<Duration>,
-    pub is_inbound: bool,
-    pub reputation_score: i32,
-}
-
-impl PeerInfo {
-    pub fn new(address: SocketAddr, is_inbound: bool) -> Self {
-        Self {
-            address,
-            node_id: String::new(),
-            user_agent: String::new(),
-            protocol_version: 0,
-            services: 0,
-            best_height: 0,
-            connected_at: Utc::now(),
-            last_seen: Utc::now(),
-            bytes_sent: 0,
-            bytes_received: 0,
-            ping_time: None,
-            is_inbound,
-            reputation_score: 0,
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct RateLimiter {
-    requests: Arc<Mutex<Vec<Instant>>>,
-    max_requests: u32,
-    window_duration: Duration,
-}
-
-impl RateLimiter {
-    pub fn new(max_requests: u32, window_minutes: u64) -> Self {
-        Self {
-            requests: Arc::new(Mutex::new(Vec::new())),
-            max_requests,
-            window_duration: Duration::from_secs(window_minutes * 60),
-        }
-    }
-
-    pub fn is_allowed(&self) -> bool {
-        let now = Instant::now();
-        let mut requests = self.requests.lock();
-        
-        // Remove old requests outside the window
-        requests.retain(|&time| now.duration_since(time) < self.window_duration);
-        
-        if requests.len() >= self.max_requests as usize {
-            false
-        } else {
-            requests.push(now);
-            true
-        }
-    }
+    pub version: u32,
+    pub chain_height: u64,
+    pub last_seen: u64,
+    pub connected: bool,
 }
 
 pub struct Peer {
-    pub info: RwLock<PeerInfo>,
-    pub stream: Arc<Mutex<Option<TcpStream>>>,
-    pub message_sender: mpsc::UnboundedSender<Message>,
-    pub message_receiver: Arc<Mutex<Option<mpsc::UnboundedReceiver<Message>>>>,
-    pub rate_limiter: RateLimiter,
-    pub is_connected: Arc<parking_lot::Mutex<bool>>,
-    pub last_ping: Arc<Mutex<Option<Instant>>>,
+    pub info: PeerInfo,
+    stream: Option<TcpStream>,
 }
 
 impl Peer {
-    pub fn new(address: SocketAddr, is_inbound: bool, config: &NetworkConfig) -> Self {
-        let (tx, rx) = mpsc::unbounded_channel();
-        
+    pub fn new(addr: SocketAddr) -> Self {
         Self {
-            info: RwLock::new(PeerInfo::new(address, is_inbound)),
-            stream: Arc::new(Mutex::new(None)),
-            message_sender: tx,
-            message_receiver: Arc::new(Mutex::new(Some(rx))),
-            rate_limiter: RateLimiter::new(
-                config.rate_limit_requests_per_minute,
-                config.blacklist_duration_hours,
-            ),
-            is_connected: Arc::new(parking_lot::Mutex::new(false)),
-            last_ping: Arc::new(Mutex::new(None)),
+            info: PeerInfo {
+                addr,
+                node_id: String::new(),
+                version: 0,
+                chain_height: 0,
+                last_seen: 0,
+                connected: false,
+            },
+            stream: None,
         }
     }
-
-    pub async fn connect(&self, stream: TcpStream) -> Result<(), NetworkError> {
-        {
-            let mut connection = self.stream.lock();
-            *connection = Some(stream);
-        }
-        
-        {
-            let mut connected = self.is_connected.lock();
-            *connected = true;
-        }
-
+    
+    pub async fn connect(&mut self) -> Result<()> {
+        let stream = TcpStream::connect(self.info.addr).await?;
+        self.stream = Some(stream);
+        self.info.connected = true;
+        self.info.last_seen = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         Ok(())
     }
-
-    pub async fn disconnect(&self) {
-        {
-            let mut connection = self.stream.lock();
-            if let Some(mut stream) = connection.take() {
-                let _ = stream.shutdown().await;
-            }
+    
+    pub async fn disconnect(&mut self) {
+        if let Some(stream) = &mut self.stream {
+            let _ = stream.shutdown().await;
         }
-        
-        {
-            let mut connected = self.is_connected.lock();
-            *connected = false;
-        }
+        self.stream = None;
+        self.info.connected = false;
     }
-
-    pub fn is_connected(&self) -> bool {
-        *self.is_connected.lock()
-    }
-
-    pub async fn send_message(&self, message: Message) -> Result<(), NetworkError> {
-        if !self.rate_limiter.is_allowed() {
-            return Err(NetworkError::RateLimited);
-        }
-
-        self.message_sender
-            .send(message)
-            .map_err(|_| NetworkError::ConnectionFailed("Channel closed".to_string()))?;
-
-        // Update bytes sent
-        {
-            let mut info = self.info.write().await;
-            info.bytes_sent += message.to_bytes().len() as u64;
-            info.last_seen = Utc::now();
-        }
-
-        Ok(())
-    }
-
-    pub async fn handle_message(&self, message: Message) -> Result<Option<Message>, NetworkError> {
-        // Update bytes received
-        {
-            let mut info = self.info.write().await;
-            info.bytes_received += message.to_bytes().len() as u64;
-            info.last_seen = Utc::now();
-        }
-
-        match message.message_type {
-            MessageType::Ping => {
-                if let MessagePayload::Ping(ping_data) = message.payload {
-                    let pong = Message::new(
-                        MessageType::Pong,
-                        message.sender,
-                        MessagePayload::Pong(crate::network::protocol::PongData {
-                            nonce: ping_data.nonce,
-                            timestamp: Utc::now(),
-                        }),
-                    );
-                    return Ok(Some(pong));
-                }
-            }
-            MessageType::Pong => {
-                if let Some(ping_time) = self.last_ping.lock().take() {
-                    let duration = ping_time.elapsed();
-                    let mut info = self.info.write().await;
-                    info.ping_time = Some(duration);
-                }
-            }
-            MessageType::Handshake => {
-                if let MessagePayload::Handshake(handshake) = message.payload {
-                    let mut info = self.info.write().await;
-                    info.node_id = handshake.node_id;
-                    info.user_agent = handshake.user_agent;
-                    info.protocol_version = handshake.protocol_version;
-                    info.services = handshake.services;
-                    info.best_height = handshake.best_block_height;
-                }
-            }
-            _ => {}
-        }
-
-        Ok(None)
-    }
-
-    pub async fn ping(&self) -> Result<(), NetworkError> {
-        {
-            let mut last_ping = self.last_ping.lock();
-            *last_ping = Some(Instant::now());
-        }
-
-        let ping = Message::new(
-            MessageType::Ping,
-            self.info.read().await.address,
-            MessagePayload::Ping(crate::network::protocol::PingData {
-                nonce: rand::random(),
-                timestamp: Utc::now(),
-            }),
-        );
-
-        self.send_message(ping).await
-    }
-
-    pub fn update_reputation(&self, delta: i32) {
-        tokio::spawn({
-            let info = self.info.clone();
-            async move {
-                let mut peer_info = info.write().await;
-                peer_info.reputation_score += delta;
-                // Cap reputation between -100 and 100
-                peer_info.reputation_score = peer_info.reputation_score.clamp(-100, 100);
-            }
-        });
-    }
-
-    pub async fn is_misbehaving(&self) -> bool {
-        self.info.read().await.reputation_score < -50
-    }
-}
-
-pub struct PeerManager {
-    peers: Arc<DashMap<SocketAddr, Arc<Peer>>>,
-    blacklist: Arc<DashMap<SocketAddr, DateTime<Utc>>>,
-    config: NetworkConfig,
-    protocol_handler: ProtocolHandler,
-}
-
-impl PeerManager {
-    pub fn new(config: NetworkConfig) -> Self {
-        let protocol_handler = ProtocolHandler::new(config.clone());
-        
-        Self {
-            peers: Arc::new(DashMap::new()),
-            blacklist: Arc::new(DashMap::new()),
-            config,
-            protocol_handler,
-        }
-    }
-
-    pub async fn add_peer(&self, address: SocketAddr, is_inbound: bool) -> Result<Arc<Peer>, NetworkError> {
-        // Check blacklist
-        if self.is_blacklisted(&address).await {
-            return Err(NetworkError::Blacklisted);
-        }
-
-        // Check peer limits
-        let current_peers = self.peers.len();
-        let inbound_count = self.get_inbound_peer_count().await;
-        let outbound_count = current_peers - inbound_count;
-
-        if current_peers >= self.config.max_peers {
-            return Err(NetworkError::ConnectionFailed("Max peers reached".to_string()));
-        }
-
-        if is_inbound && inbound_count >= self.config.max_inbound_peers {
-            return Err(NetworkError::ConnectionFailed("Max inbound peers reached".to_string()));
-        }
-
-        if !is_inbound && outbound_count >= self.config.max_outbound_peers {
-            return Err(NetworkError::ConnectionFailed("Max outbound peers reached".to_string()));
-        }
-
-        let peer = Arc::new(Peer::new(address, is_inbound, &self.config));
-        self.peers.insert(address, peer.clone());
-
-        Ok(peer)
-    }
-
-    pub async fn remove_peer(&self, address: &SocketAddr) {
-        if let Some((_, peer)) = self.peers.remove(address) {
-            peer.disconnect().await;
-        }
-    }
-
-    pub async fn blacklist_peer(&self, address: SocketAddr, reason: &str) {
-        println!("Blacklisting peer {} for reason: {}", address, reason);
-        
-        let expiry = Utc::now() + chrono::Duration::hours(self.config.blacklist_duration_hours as i64);
-        self.blacklist.insert(address, expiry);
-        
-        // Remove from active peers
-        self.remove_peer(&address).await;
-    }
-
-    pub async fn is_blacklisted(&self, address: &SocketAddr) -> bool {
-        if let Some(expiry) = self.blacklist.get(address) {
-            if Utc::now() < *expiry {
-                true
-            } else {
-                self.blacklist.remove(address);
-                false
-            }
-        } else {
-            false
-        }
-    }
-
-    pub async fn get_peer(&self, address: &SocketAddr) -> Option<Arc<Peer>> {
-        self.peers.get(address).map(|peer| peer.clone())
-    }
-
-    pub async fn get_all_peers(&self) -> Vec<Arc<Peer>> {
-        self.peers.iter().map(|entry| entry.value().clone()).collect()
-    }
-
-    pub async fn get_connected_peers(&self) -> Vec<Arc<Peer>> {
-        let mut connected = Vec::new();
-        for peer in self.peers.iter() {
-            if peer.is_connected() {
-                connected.push(peer.value().clone());
-            }
-        }
-        connected
-    }
-
-    pub async fn get_inbound_peer_count(&self) -> usize {
-        let mut count = 0;
-        for peer in self.peers.iter() {
-            let info = peer.info.read().await;
-            if info.is_inbound {
-                count += 1;
-            }
-        }
-        count
-    }
-
-    pub async fn broadcast_message(&self, message: Message) -> Result<usize, NetworkError> {
-        let peers = self.get_connected_peers().await;
-        let mut success_count = 0;
-
-        for peer in peers {
-            if peer.send_message(message.clone()).await.is_ok() {
-                success_count += 1;
-            }
-        }
-
-        Ok(success_count)
-    }
-
-    pub async fn send_to_peer(&self, address: &SocketAddr, message: Message) -> Result<(), NetworkError> {
-        if let Some(peer) = self.get_peer(address).await {
-            peer.send_message(message).await
-        } else {
-            Err(NetworkError::ConnectionFailed("Peer not found".to_string()))
-        }
-    }
-
-    pub async fn cleanup_expired_blacklist(&self) {
-        let now = Utc::now();
-        self.blacklist.retain(|_, expiry| now < *expiry);
-    }
-
-    pub async fn cleanup_stale_peers(&self) {
-        let stale_timeout = Duration::from_secs(self.config.connection_timeout_secs * 2);
-        let mut to_remove = Vec::new();
-
-        for peer in self.peers.iter() {
-            let info = peer.info.read().await;
-            let elapsed = Utc::now().signed_duration_since(info.last_seen);
+    
+    pub async fn send_message(&mut self, message: &NetworkMessage) -> Result<()> {
+        if let Some(stream) = &mut self.stream {
+            let payload = message.serialize()?;
+            let checksum = self.calculate_checksum(&payload);
             
-            if elapsed.to_std().unwrap_or(Duration::MAX) > stale_timeout {
-                to_remove.push(info.address);
+            let header = MessageHeader {
+                magic: MessageHeader::MAGIC,
+                command: self.message_type_to_command(message),
+                length: payload.len() as u32,
+                checksum,
+            };
+            
+            // Send header
+            stream.write_all(&header.to_bytes()).await?;
+            // Send payload
+            stream.write_all(&payload).await?;
+            stream.flush().await?;
+            
+            self.info.last_seen = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+            Ok(())
+        } else {
+            Err(anyhow!("Not connected"))
+        }
+    }
+    
+    pub async fn receive_message(&mut self) -> Result<NetworkMessage> {
+        if let Some(stream) = &mut self.stream {
+            // Read header
+            let mut header_bytes = [0u8; MessageHeader::SIZE];
+            stream.read_exact(&mut header_bytes).await?;
+            
+            let header = MessageHeader::from_bytes(&header_bytes)
+                .map_err(|e| anyhow!("Invalid header: {}", e))?;
+            
+            // Read payload
+            let mut payload = vec![0u8; header.length as usize];
+            stream.read_exact(&mut payload).await?;
+            
+            // Verify checksum
+            let calculated_checksum = self.calculate_checksum(&payload);
+            if calculated_checksum != header.checksum {
+                return Err(anyhow!("Checksum mismatch"));
             }
-        }
-
-        for address in to_remove {
-            self.remove_peer(&address).await;
+            
+            let message = NetworkMessage::deserialize(&payload)?;
+            self.info.last_seen = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+            
+            Ok(message)
+        } else {
+            Err(anyhow!("Not connected"))
         }
     }
-
-    pub async fn ping_all_peers(&self) {
-        for peer in self.peers.iter() {
-            if peer.is_connected() {
-                let _ = peer.ping().await;
+    
+    pub async fn handshake(&mut self, our_version: u32, our_node_id: &str, our_height: u64) -> Result<bool> {
+        // Send handshake
+        let handshake = NetworkMessage::Handshake {
+            version: our_version,
+            node_id: our_node_id.to_string(),
+            chain_height: our_height,
+            timestamp: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
+        };
+        
+        self.send_message(&handshake).await?;
+        
+        // Wait for response
+        match self.receive_message().await? {
+            NetworkMessage::HandshakeAck { accepted, .. } => {
+                if accepted {
+                    // Get peer info from their handshake
+                    match self.receive_message().await? {
+                        NetworkMessage::Handshake { version, node_id, chain_height, .. } => {
+                            self.info.version = version;
+                            self.info.node_id = node_id;
+                            self.info.chain_height = chain_height;
+                            
+                            // Send our ack
+                            let ack = NetworkMessage::HandshakeAck {
+                                accepted: true,
+                                peer_list: vec![], // TODO: Add known peers
+                            };
+                            self.send_message(&ack).await?;
+                            
+                            Ok(true)
+                        }
+                        _ => Err(anyhow!("Expected handshake from peer")),
+                    }
+                } else {
+                    Err(anyhow!("Handshake rejected by peer"))
+                }
             }
+            _ => Err(anyhow!("Expected handshake ack")),
         }
     }
-
-    pub fn get_stats(&self) -> HashMap<String, usize> {
-        let mut stats = HashMap::new();
-        stats.insert("total_peers".to_string(), self.peers.len());
-        stats.insert("blacklisted_peers".to_string(), self.blacklist.len());
-        stats
+    
+    fn calculate_checksum(&self, data: &[u8]) -> u32 {
+        let mut hasher = Sha256::new();
+        hasher.update(data);
+        let hash = hasher.finalize();
+        u32::from_le_bytes([hash[0], hash[1], hash[2], hash[3]])
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::net::{IpAddr, Ipv4Addr};
-
-    #[tokio::test]
-    async fn test_peer_creation() {
-        let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
-        let config = NetworkConfig::default();
-        let peer = Peer::new(addr, false, &config);
-        
-        assert!(!peer.is_connected());
-        assert_eq!(peer.info.read().await.address, addr);
+    
+    fn message_type_to_command(&self, message: &NetworkMessage) -> u8 {
+        match message {
+            NetworkMessage::Handshake { .. } => 1,
+            NetworkMessage::HandshakeAck { .. } => 2,
+            NetworkMessage::GetBlocks { .. } => 3,
+            NetworkMessage::Blocks(_) => 4,
+            NetworkMessage::NewBlock(_) => 5,
+            NetworkMessage::GetBlock(_) => 6,
+            NetworkMessage::Block(_) => 7,
+            NetworkMessage::NewTransaction(_) => 8,
+            NetworkMessage::GetMempool => 9,
+            NetworkMessage::Mempool(_) => 10,
+            NetworkMessage::GetChainInfo => 11,
+            NetworkMessage::ChainInfo { .. } => 12,
+            NetworkMessage::GetPeers => 13,
+            NetworkMessage::Peers(_) => 14,
+            NetworkMessage::Ping(_) => 15,
+            NetworkMessage::Pong(_) => 16,
+            NetworkMessage::Error(_) => 255,
+        }
     }
-
-    #[tokio::test]
-    async fn test_rate_limiter() {
-        let limiter = RateLimiter::new(2, 1);
+    
+    pub fn is_alive(&self) -> bool {
+        if !self.info.connected {
+            return false;
+        }
         
-        assert!(limiter.is_allowed());
-        assert!(limiter.is_allowed());
-        assert!(!limiter.is_allowed()); // Should be rate limited
-    }
-
-    #[tokio::test]
-    async fn test_peer_manager() {
-        let config = NetworkConfig::default();
-        let manager = PeerManager::new(config);
-        
-        let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 8080);
-        let peer = manager.add_peer(addr, false).await.unwrap();
-        
-        assert_eq!(manager.peers.len(), 1);
-        assert!(manager.get_peer(&addr).await.is_some());
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        now - self.info.last_seen < 300 // 5 minutes timeout
     }
 }

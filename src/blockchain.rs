@@ -89,6 +89,234 @@ impl Blockchain {
 
         blockchain
     }
+    
+    pub fn add_block(&mut self, block: Block) -> Result<(), BlockchainError> {
+        // Validate block before adding
+        self.validate_block(&block)?;
+        
+        // Check if we need to adjust difficulty
+        if self.chain.len() > 0 && (self.chain.len() + 1) % self.difficulty_config.adjustment_interval as usize == 0 {
+            self.adjust_difficulty()?;
+        }
+        
+        // Add block to chain
+        self.chain.push(block.clone());
+        
+        // Update UTXO set
+        self.update_utxo_set(&block)?;
+        
+        // Update total supply
+        self.total_supply += self.get_current_mining_reward();
+        
+        // Save to disk
+        self.save_to_disk("blockchain.json");
+        
+        Ok(())
+    }
+    
+    pub fn validate_block(&self, block: &Block) -> Result<(), BlockchainError> {
+        // Check if block hash is valid
+        if block.hash != block.calculate_hash() {
+            return Err(BlockchainError::InvalidBlock);
+        }
+        
+        // Check proof of work
+        if !self.is_valid_proof_of_work(&block.hash) {
+            return Err(BlockchainError::InvalidBlock);
+        }
+        
+        // Check previous hash
+        if let Some(last_block) = self.chain.last() {
+            if block.previous_hash != last_block.hash {
+                return Err(BlockchainError::InvalidBlock);
+            }
+            
+            // Check timestamp (not too far in future or past)
+            let time_diff = block.timestamp.signed_duration_since(last_block.timestamp);
+            if time_diff.num_seconds() < -7200 || time_diff.num_seconds() > 7200 {
+                return Err(BlockchainError::InvalidBlock);
+            }
+        } else if block.previous_hash != "0" {
+            return Err(BlockchainError::InvalidBlock);
+        }
+        
+        // Validate all transactions in the block
+        for tx in &block.transactions {
+            self.validate_transaction(tx)?;
+        }
+        
+        // Check block reward
+        let reward_tx = block.transactions.first()
+            .ok_or(BlockchainError::InvalidBlock)?;
+        
+        if reward_tx.sender != "NETWORK" || reward_tx.amount != self.get_current_mining_reward() {
+            return Err(BlockchainError::InvalidBlock);
+        }
+        
+        Ok(())
+    }
+    
+    pub fn validate_transaction(&self, tx: &Transaction) -> Result<(), BlockchainError> {
+        // Check transaction format
+        if tx.amount == 0 {
+            return Err(BlockchainError::InvalidTransaction(TransactionError::InvalidAmount));
+        }
+        
+        if tx.fee < self.calculate_minimum_fee(tx) {
+            return Err(BlockchainError::InvalidTransaction(TransactionError::FeeTooLow));
+        }
+        
+        // Skip validation for coinbase transactions
+        if tx.sender == "NETWORK" {
+            return Ok(());
+        }
+        
+        // Check if sender has enough balance
+        let sender_balance = self.get_balance(&tx.sender);
+        if sender_balance < tx.amount + tx.fee {
+            return Err(BlockchainError::InsufficientBalance);
+        }
+        
+        // Verify signature
+        if let (Some(signature), Some(public_key)) = (&tx.signature, &tx.public_key) {
+            let tx_data = format!("{}{}{}{}", tx.sender, tx.recipient, tx.amount, tx.nonce);
+            if !self.verify_signature(&tx_data, signature, public_key) {
+                return Err(BlockchainError::InvalidTransaction(TransactionError::InvalidSignature));
+            }
+        } else {
+            return Err(BlockchainError::InvalidTransaction(TransactionError::InvalidSignature));
+        }
+        
+        Ok(())
+    }
+    
+    fn verify_signature(&self, data: &str, signature: &str, public_key: &str) -> bool {
+        use pqcrypto_dilithium::dilithium2::{DetachedSignature, PublicKey};
+        use pqcrypto_traits::sign::Verifier;
+        
+        if let (Ok(sig), Ok(pk)) = (
+            DetachedSignature::from_bytes(&base64::decode(signature).unwrap_or_default()),
+            PublicKey::from_bytes(&base64::decode(public_key).unwrap_or_default())
+        ) {
+            pk.verify(data.as_bytes(), &sig).is_ok()
+        } else {
+            false
+        }
+    }
+    
+    fn is_valid_proof_of_work(&self, hash: &str) -> bool {
+        let target = "0".repeat(self.difficulty);
+        hash.starts_with(&target)
+    }
+    
+    fn adjust_difficulty(&mut self) -> Result<(), BlockchainError> {
+        let current_height = self.chain.len();
+        let adjustment_interval = self.difficulty_config.adjustment_interval as usize;
+        
+        if current_height < adjustment_interval {
+            return Ok(());
+        }
+        
+        let start_block = &self.chain[current_height - adjustment_interval];
+        let end_block = &self.chain[current_height - 1];
+        
+        let time_taken = end_block.timestamp
+            .signed_duration_since(start_block.timestamp)
+            .num_seconds() as u64;
+        
+        let expected_time = self.difficulty_config.target_block_time * self.difficulty_config.adjustment_interval;
+        
+        let ratio = time_taken as f64 / expected_time as f64;
+        
+        if ratio > self.difficulty_config.max_adjustment_factor {
+            // Too slow, decrease difficulty
+            if self.difficulty > 1 {
+                self.difficulty -= 1;
+            }
+        } else if ratio < 1.0 / self.difficulty_config.max_adjustment_factor {
+            // Too fast, increase difficulty
+            self.difficulty += 1;
+        }
+        
+        Ok(())
+    }
+    
+    fn update_utxo_set(&mut self, block: &Block) -> Result<(), BlockchainError> {
+        for tx in &block.transactions {
+            if tx.sender != "NETWORK" {
+                // Subtract from sender
+                let sender_balance = self.utxo_set.get(&tx.sender).copied().unwrap_or(0);
+                if sender_balance < tx.amount + tx.fee {
+                    return Err(BlockchainError::InsufficientBalance);
+                }
+                self.utxo_set.insert(tx.sender.clone(), sender_balance - tx.amount - tx.fee);
+            }
+            
+            // Add to recipient
+            let recipient_balance = self.utxo_set.get(&tx.recipient).copied().unwrap_or(0);
+            self.utxo_set.insert(tx.recipient.clone(), recipient_balance + tx.amount);
+        }
+        Ok(())
+    }
+    
+    pub fn get_balance(&self, address: &str) -> u64 {
+        self.utxo_set.get(address).copied().unwrap_or(0)
+    }
+    
+    pub fn get_current_mining_reward(&self) -> u64 {
+        let halvings = self.chain.len() as u64 / self.halving_interval;
+        self.mining_reward >> halvings
+    }
+    
+    fn calculate_minimum_fee(&self, _tx: &Transaction) -> u64 {
+        1000 // 0.00001 QTC minimum fee
+    }
+    
+    pub fn calculate_total_work(&self) -> u64 {
+        self.chain.iter().map(|_| 2_u64.pow(self.difficulty as u32)).sum()
+    }
+    
+    pub fn get_latest_block_hash(&self) -> String {
+        self.chain.last().map(|b| b.hash.clone()).unwrap_or_else(|| "0".to_string())
+    }
+    
+    pub fn get_blocks_range(&self, start_hash: &str, end_hash: Option<&str>, limit: usize) -> Vec<Block> {
+        let start_idx = if start_hash == "0" {
+            0
+        } else {
+            self.chain.iter().position(|b| b.hash == start_hash).unwrap_or(0)
+        };
+        
+        let end_idx = if let Some(end_hash) = end_hash {
+            self.chain.iter().position(|b| b.hash == end_hash).unwrap_or(self.chain.len())
+        } else {
+            self.chain.len()
+        };
+        
+        let actual_limit = std::cmp::min(limit, end_idx - start_idx);
+        self.chain[start_idx..start_idx + actual_limit].to_vec()
+    }
+    
+    fn rebuild_utxo_set(&mut self) {
+        self.utxo_set.clear();
+        for block in &self.chain {
+            let _ = self.update_utxo_set(block);
+        }
+    }
+    
+    pub fn save_to_disk(&self, filename: &str) {
+        if let Ok(serialized) = serde_json::to_string_pretty(self) {
+            let _ = std::fs::write(filename, serialized);
+        }
+    }
+    
+    pub fn load_from_disk(&mut self, filename: &str) {
+        if let Ok(content) = std::fs::read_to_string(filename) {
+            if let Ok(blockchain) = serde_json::from_str::<Blockchain>(&content) {
+                *self = blockchain;
+            }
+        }
+    }
 
     pub fn create_genesis_block(&mut self) {
         use crate::transaction::Transaction;

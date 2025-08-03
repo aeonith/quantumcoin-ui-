@@ -1,178 +1,345 @@
-use crate::network::{NetworkError, NetworkConfig, NetworkStats};
-use crate::network::peer::PeerManager;
-use crate::network::discovery::PeerDiscovery;
-use crate::network::sync::BlockchainSync;
-use crate::network::protocol::{Message, MessageType, ProtocolHandler};
-use crate::blockchain::Blockchain;
-use std::sync::Arc;
+use crate::{Blockchain, Transaction, Block};
+use crate::network::{NetworkMessage, Peer, PeerInfo};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{RwLock, mpsc};
+use std::collections::HashMap;
 use std::net::SocketAddr;
-use tokio::sync::Mutex;
-use tokio::net::TcpListener;
-use parking_lot::RwLock;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
+use anyhow::Result;
+use tracing::{info, warn, error, debug};
 
 pub struct NetworkNode {
-    config: NetworkConfig,
-    peer_manager: Arc<PeerManager>,
-    peer_discovery: Arc<PeerDiscovery>,
-    blockchain_sync: Arc<BlockchainSync>,
-    protocol_handler: ProtocolHandler,
-    listener: Option<TcpListener>,
-    is_running: Arc<RwLock<bool>>,
-    stats: Arc<RwLock<NetworkStats>>,
+    pub node_id: String,
+    pub version: u32,
+    pub listen_addr: SocketAddr,
+    pub blockchain: Arc<RwLock<Blockchain>>,
+    pub peers: Arc<RwLock<HashMap<SocketAddr, Peer>>>,
+    pub mempool: Arc<RwLock<Vec<Transaction>>>,
+    pub known_peers: Arc<RwLock<Vec<SocketAddr>>>,
+    pub message_tx: mpsc::UnboundedSender<(SocketAddr, NetworkMessage)>,
+    pub message_rx: Option<mpsc::UnboundedReceiver<(SocketAddr, NetworkMessage)>>,
 }
 
 impl NetworkNode {
-    pub fn new(blockchain: Arc<Mutex<Blockchain>>, config: NetworkConfig) -> Self {
-        let peer_manager = Arc::new(PeerManager::new(config.clone()));
-        let peer_discovery = Arc::new(PeerDiscovery::new(config.clone(), peer_manager.clone()));
-        let blockchain_sync = Arc::new(BlockchainSync::new(blockchain, peer_manager.clone(), config.clone()));
-        let protocol_handler = ProtocolHandler::new(config.clone());
-
+    pub fn new(listen_addr: SocketAddr, blockchain: Blockchain) -> Self {
+        let (message_tx, message_rx) = mpsc::unbounded_channel();
+        
         Self {
-            config,
-            peer_manager,
-            peer_discovery,
-            blockchain_sync,
-            protocol_handler,
-            listener: None,
-            is_running: Arc::new(RwLock::new(false)),
-            stats: Arc::new(RwLock::new(NetworkStats {
-                connected_peers: 0,
-                inbound_peers: 0,
-                outbound_peers: 0,
-                total_bytes_sent: 0,
-                total_bytes_received: 0,
-                messages_sent: 0,
-                messages_received: 0,
-                blacklisted_peers: 0,
-                sync_height: 0,
-                is_syncing: false,
-            })),
+            node_id: Uuid::new_v4().to_string(),
+            version: 1,
+            listen_addr,
+            blockchain: Arc::new(RwLock::new(blockchain)),
+            peers: Arc::new(RwLock::new(HashMap::new())),
+            mempool: Arc::new(RwLock::new(Vec::new())),
+            known_peers: Arc::new(RwLock::new(Vec::new())),
+            message_tx,
+            message_rx: Some(message_rx),
         }
     }
-
-    pub async fn start(&mut self) -> Result<(), NetworkError> {
-        println!("Starting QuantumCoin network node on port {}", self.config.listen_port);
-
-        {
-            let mut running = self.is_running.write();
-            *running = true;
-        }
-
-        // Start listening for incoming connections
-        let listener = TcpListener::bind(("0.0.0.0", self.config.listen_port))
-            .await
-            .map_err(|e| NetworkError::ConnectionFailed(format!("Failed to bind listener: {}", e)))?;
+    
+    pub async fn start(&mut self) -> Result<()> {
+        info!("Starting network node on {}", self.listen_addr);
         
-        self.listener = Some(listener);
-
-        // Start peer discovery
-        self.peer_discovery.start_discovery().await?;
-
-        // Start blockchain sync
-        self.blockchain_sync.start_sync().await?;
-
-        // Start main network loop
-        let node_data = self.get_node_data();
+        // Start listening for incoming connections
+        let listener = TcpListener::bind(self.listen_addr).await?;
+        let peers = Arc::clone(&self.peers);
+        let blockchain = Arc::clone(&self.blockchain);
+        let mempool = Arc::clone(&self.mempool);
+        let message_tx = self.message_tx.clone();
+        let node_id = self.node_id.clone();
+        let version = self.version;
+        
         tokio::spawn(async move {
-            Self::run_network_loop(node_data).await;
+            loop {
+                match listener.accept().await {
+                    Ok((stream, addr)) => {
+                        info!("New connection from {}", addr);
+                        let peers = Arc::clone(&peers);
+                        let blockchain = Arc::clone(&blockchain);
+                        let mempool = Arc::clone(&mempool);
+                        let message_tx = message_tx.clone();
+                        let node_id = node_id.clone();
+                        
+                        tokio::spawn(async move {
+                            if let Err(e) = Self::handle_connection(
+                                stream, addr, peers, blockchain, mempool, message_tx, &node_id, version
+                            ).await {
+                                error!("Error handling connection from {}: {}", addr, e);
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        error!("Failed to accept connection: {}", e);
+                    }
+                }
+            }
         });
-
-        println!("Network node started successfully");
+        
+        // Start message processing loop
+        let mut message_rx = self.message_rx.take().unwrap();
+        let peers = Arc::clone(&self.peers);
+        let blockchain = Arc::clone(&self.blockchain);
+        let mempool = Arc::clone(&self.mempool);
+        
+        tokio::spawn(async move {
+            while let Some((addr, message)) = message_rx.recv().await {
+                if let Err(e) = Self::process_message(
+                    addr, message, &peers, &blockchain, &mempool
+                ).await {
+                    error!("Error processing message from {}: {}", addr, e);
+                }
+            }
+        });
+        
+        // Start peer maintenance loop
+        self.start_peer_maintenance().await;
+        
         Ok(())
     }
-
-    pub async fn stop(&mut self) {
-        println!("Stopping network node...");
+    
+    async fn handle_connection(
+        stream: TcpStream,
+        addr: SocketAddr,
+        peers: Arc<RwLock<HashMap<SocketAddr, Peer>>>,
+        blockchain: Arc<RwLock<Blockchain>>,
+        mempool: Arc<RwLock<Vec<Transaction>>>,
+        message_tx: mpsc::UnboundedSender<(SocketAddr, NetworkMessage)>,
+        node_id: &str,
+        version: u32,
+    ) -> Result<()> {
+        let mut peer = Peer::new(addr);
+        peer.stream = Some(stream);
+        peer.info.connected = true;
         
+        // Perform handshake
+        let blockchain_read = blockchain.read().await;
+        let chain_height = blockchain_read.chain.len() as u64;
+        drop(blockchain_read);
+        
+        if peer.handshake(version, node_id, chain_height).await? {
+            info!("Handshake successful with {}", addr);
+            
+            // Add to peers
+            {
+                let mut peers_write = peers.write().await;
+                peers_write.insert(addr, peer);
+            }
+            
+            // Listen for messages from this peer
+            loop {
+                let message = {
+                    let mut peers_write = peers.write().await;
+                    if let Some(peer) = peers_write.get_mut(&addr) {
+                        match peer.receive_message().await {
+                            Ok(msg) => msg,
+                            Err(e) => {
+                                warn!("Error receiving message from {}: {}", addr, e);
+                                break;
+                            }
+                        }
+                    } else {
+                        break;
+                    }
+                };
+                
+                // Forward message to processing loop
+                if message_tx.send((addr, message)).is_err() {
+                    break;
+                }
+            }
+        }
+        
+        // Remove peer on disconnect
         {
-            let mut running = self.is_running.write();
-            *running = false;
+            let mut peers_write = peers.write().await;
+            peers_write.remove(&addr);
         }
-
-        // Disconnect all peers
-        let peers = self.peer_manager.get_all_peers().await;
-        for peer in peers {
-            peer.disconnect().await;
-        }
-
-        println!("Network node stopped");
+        
+        info!("Peer {} disconnected", addr);
+        Ok(())
     }
-
-    async fn run_network_loop(data: NodeData) {
-        while *data.is_running.read() {
-            if let Err(e) = Self::handle_network_iteration(&data).await {
-                println!("Network iteration error: {}", e);
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    
+    async fn process_message(
+        addr: SocketAddr,
+        message: NetworkMessage,
+        peers: &Arc<RwLock<HashMap<SocketAddr, Peer>>>,
+        blockchain: &Arc<RwLock<Blockchain>>,
+        mempool: &Arc<RwLock<Vec<Transaction>>>,
+    ) -> Result<()> {
+        debug!("Processing message from {}: {:?}", addr, message);
+        
+        match message {
+            NetworkMessage::NewBlock(block) => {
+                let mut blockchain_write = blockchain.write().await;
+                match blockchain_write.add_block(block.clone()) {
+                    Ok(_) => {
+                        info!("Added new block from network: {}", block.hash);
+                        // Broadcast to other peers
+                        Self::broadcast_message(peers, &NetworkMessage::NewBlock(block), Some(addr)).await;
+                    }
+                    Err(e) => {
+                        warn!("Failed to add block from {}: {}", addr, e);
+                    }
+                }
+            }
+            
+            NetworkMessage::NewTransaction(tx) => {
+                let blockchain_read = blockchain.read().await;
+                if blockchain_read.validate_transaction(&tx).is_ok() {
+                    let mut mempool_write = mempool.write().await;
+                    mempool_write.push(tx.clone());
+                    drop(mempool_write);
+                    drop(blockchain_read);
+                    
+                    info!("Added new transaction to mempool: {}", tx.id);
+                    // Broadcast to other peers
+                    Self::broadcast_message(peers, &NetworkMessage::NewTransaction(tx), Some(addr)).await;
+                } else {
+                    warn!("Invalid transaction from {}: {}", addr, tx.id);
+                }
+            }
+            
+            NetworkMessage::GetBlocks { start_hash, end_hash, limit } => {
+                let blockchain_read = blockchain.read().await;
+                let blocks = blockchain_read.get_blocks_range(&start_hash, end_hash.as_deref(), limit);
+                drop(blockchain_read);
+                
+                let response = NetworkMessage::Blocks(blocks);
+                Self::send_to_peer(peers, addr, &response).await;
+            }
+            
+            NetworkMessage::GetChainInfo => {
+                let blockchain_read = blockchain.read().await;
+                let response = NetworkMessage::ChainInfo {
+                    height: blockchain_read.chain.len() as u64,
+                    best_hash: blockchain_read.get_latest_block_hash(),
+                    difficulty: blockchain_read.difficulty,
+                    total_work: blockchain_read.calculate_total_work(),
+                };
+                drop(blockchain_read);
+                
+                Self::send_to_peer(peers, addr, &response).await;
+            }
+            
+            NetworkMessage::GetMempool => {
+                let mempool_read = mempool.read().await;
+                let response = NetworkMessage::Mempool(mempool_read.clone());
+                drop(mempool_read);
+                
+                Self::send_to_peer(peers, addr, &response).await;
+            }
+            
+            NetworkMessage::Ping(nonce) => {
+                let response = NetworkMessage::Pong(nonce);
+                Self::send_to_peer(peers, addr, &response).await;
+            }
+            
+            _ => {
+                debug!("Unhandled message type from {}", addr);
+            }
+        }
+        
+        Ok(())
+    }
+    
+    async fn broadcast_message(
+        peers: &Arc<RwLock<HashMap<SocketAddr, Peer>>>,
+        message: &NetworkMessage,
+        exclude: Option<SocketAddr>,
+    ) {
+        let mut peers_write = peers.write().await;
+        for (addr, peer) in peers_write.iter_mut() {
+            if exclude.map_or(true, |ex| *addr != ex) && peer.info.connected {
+                if let Err(e) = peer.send_message(message).await {
+                    error!("Failed to send message to {}: {}", addr, e);
+                }
             }
         }
     }
-
-    async fn handle_network_iteration(data: &NodeData) -> Result<(), NetworkError> {
-        // Accept incoming connections
-        // Handle peer messages
-        // Update statistics
-        // Cleanup tasks
+    
+    async fn send_to_peer(
+        peers: &Arc<RwLock<HashMap<SocketAddr, Peer>>>,
+        addr: SocketAddr,
+        message: &NetworkMessage,
+    ) {
+        let mut peers_write = peers.write().await;
+        if let Some(peer) = peers_write.get_mut(&addr) {
+            if let Err(e) = peer.send_message(message).await {
+                error!("Failed to send message to {}: {}", addr, e);
+            }
+        }
+    }
+    
+    pub async fn connect_to_peer(&self, addr: SocketAddr) -> Result<()> {
+        let mut peer = Peer::new(addr);
+        peer.connect().await?;
         
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-        Ok(())
-    }
-
-    pub async fn broadcast_transaction(&self, transaction: crate::transaction::Transaction) -> Result<usize, NetworkError> {
-        let message = Message::new(
-            MessageType::SendTransaction,
-            SocketAddr::from(([0, 0, 0, 0], 0)),
-            crate::network::protocol::MessagePayload::Transaction(transaction),
-        );
-
-        self.peer_manager.broadcast_message(message).await
-    }
-
-    pub async fn broadcast_block(&self, block: crate::block::Block) -> Result<usize, NetworkError> {
-        let message = Message::new(
-            MessageType::SendBlock,
-            SocketAddr::from(([0, 0, 0, 0], 0)),
-            crate::network::protocol::MessagePayload::Block(block),
-        );
-
-        self.peer_manager.broadcast_message(message).await
-    }
-
-    pub async fn get_network_stats(&self) -> NetworkStats {
-        let connected_peers = self.peer_manager.get_connected_peers().await;
-        let inbound_count = self.peer_manager.get_inbound_peer_count().await;
-        let sync_progress = self.blockchain_sync.get_sync_progress().await;
-
-        NetworkStats {
-            connected_peers: connected_peers.len(),
-            inbound_peers: inbound_count,
-            outbound_peers: connected_peers.len() - inbound_count,
-            total_bytes_sent: 0, // Would be tracked in real implementation
-            total_bytes_received: 0,
-            messages_sent: 0,
-            messages_received: 0,
-            blacklisted_peers: 0,
-            sync_height: sync_progress.current_height,
-            is_syncing: matches!(self.blockchain_sync.get_sync_state().await, crate::network::sync::SyncState::Syncing),
+        let blockchain_read = self.blockchain.read().await;
+        let chain_height = blockchain_read.chain.len() as u64;
+        drop(blockchain_read);
+        
+        if peer.handshake(self.version, &self.node_id, chain_height).await? {
+            info!("Connected to peer {}", addr);
+            
+            let mut peers_write = self.peers.write().await;
+            peers_write.insert(addr, peer);
+            
+            // Add to known peers
+            let mut known_peers_write = self.known_peers.write().await;
+            if !known_peers_write.contains(&addr) {
+                known_peers_write.push(addr);
+            }
+            
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("Handshake failed with {}", addr))
         }
     }
-
-    pub fn is_running(&self) -> bool {
-        *self.is_running.read()
+    
+    async fn start_peer_maintenance(&self) {
+        let peers = Arc::clone(&self.peers);
+        
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
+            
+            loop {
+                interval.tick().await;
+                
+                // Clean up dead peers
+                let mut peers_write = peers.write().await;
+                let dead_peers: Vec<SocketAddr> = peers_write
+                    .iter()
+                    .filter(|(_, peer)| !peer.is_alive())
+                    .map(|(addr, _)| *addr)
+                    .collect();
+                
+                for addr in dead_peers {
+                    info!("Removing dead peer {}", addr);
+                    peers_write.remove(&addr);
+                }
+                
+                // Send ping to all connected peers
+                let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                for (_, peer) in peers_write.iter_mut() {
+                    if peer.info.connected {
+                        let _ = peer.send_message(&NetworkMessage::Ping(now)).await;
+                    }
+                }
+            }
+        });
     }
-
-    fn get_node_data(&self) -> NodeData {
-        NodeData {
-            config: self.config.clone(),
-            peer_manager: self.peer_manager.clone(),
-            is_running: self.is_running.clone(),
-        }
+    
+    pub async fn broadcast_transaction(&self, tx: Transaction) {
+        Self::broadcast_message(&self.peers, &NetworkMessage::NewTransaction(tx), None).await;
     }
-}
-
-#[derive(Clone)]
-struct NodeData {
-    config: NetworkConfig,
-    peer_manager: Arc<PeerManager>,
-    is_running: Arc<RwLock<bool>>,
+    
+    pub async fn broadcast_block(&self, block: Block) {
+        Self::broadcast_message(&self.peers, &NetworkMessage::NewBlock(block), None).await;
+    }
+    
+    pub async fn get_peer_count(&self) -> usize {
+        self.peers.read().await.len()
+    }
 }
