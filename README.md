@@ -23,7 +23,7 @@ A quantum-resistant cryptocurrency implementation built with Rust, featuring pos
 - Mining reward halving (Bitcoin-like economics)
 
 ### 💰 Economic Model
-- **Total Supply**: 21 Million QTC
+- **Total Supply**: 22 Million QTC
 - **Block Reward**: 50 QTC (halving every 210,000 blocks)
 - **Block Time**: ~10 minutes target
 - **Minimum Fee**: 0.00001 QTC
