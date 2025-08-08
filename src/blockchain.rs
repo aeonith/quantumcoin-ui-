@@ -11,6 +11,8 @@ use chrono::{DateTime, Utc, Duration};
 use parking_lot::RwLock;
 use std::sync::Arc;
 use thiserror::Error;
+use sha2::{Sha256, Digest};
+use hex;
 
 #[derive(Error, Debug)]
 pub enum BlockchainError {
@@ -73,7 +75,7 @@ impl Blockchain {
             difficulty_config: DifficultyAdjustment::default(),
             halving_interval: 210_000, // Blocks until reward halves
             total_supply: 0,
-            max_supply: 21_000_000_000_000, // 21M QTC in satoshis
+            max_supply: 22_000_000_000_000, // 22M QTC in satoshis
         };
 
         // Load from disk first
@@ -296,27 +298,6 @@ impl Blockchain {
         let actual_limit = std::cmp::min(limit, end_idx - start_idx);
         self.chain[start_idx..start_idx + actual_limit].to_vec()
     }
-    
-    fn rebuild_utxo_set(&mut self) {
-        self.utxo_set.clear();
-        for block in &self.chain {
-            let _ = self.update_utxo_set(block);
-        }
-    }
-    
-    pub fn save_to_disk(&self, filename: &str) {
-        if let Ok(serialized) = serde_json::to_string_pretty(self) {
-            let _ = std::fs::write(filename, serialized);
-        }
-    }
-    
-    pub fn load_from_disk(&mut self, filename: &str) {
-        if let Ok(content) = std::fs::read_to_string(filename) {
-            if let Ok(blockchain) = serde_json::from_str::<Blockchain>(&content) {
-                *self = blockchain;
-            }
-        }
-    }
 
     pub fn create_genesis_block(&mut self) {
         use crate::transaction::Transaction;
@@ -334,15 +315,16 @@ impl Blockchain {
             nonce: 0,
         };
 
-        let genesis_block = Block {
+        let mut genesis_block = Block {
             index: 0,
             timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis(),
             transactions: vec![genesis_tx],
             previous_hash: "0".to_string(),
-            hash: "0".to_string(),
+            hash: String::new(),
             nonce: 0,
         };
 
+        genesis_block.hash = genesis_block.calculate_hash();
         self.chain.push(genesis_block);
         self.save_to_disk("blockchain.json");
     }
@@ -396,12 +378,10 @@ impl Blockchain {
         self.mine_block(&mut new_block)?;
 
         // Validate block before adding
-        if !self.validate_block(&new_block)? {
-            return Err(BlockchainError::InvalidBlock);
-        }
+        self.validate_block(&new_block)?;
 
         // Update UTXO set
-        self.update_utxo_set(&new_block);
+        self.update_utxo_set(&new_block)?;
         
         // Update total supply
         self.total_supply += current_reward + total_fees;
@@ -437,10 +417,6 @@ impl Blockchain {
         self.create_block(miner_address)
     }
 
-    pub fn get_balance(&self, address: &str) -> u64 {
-        self.utxo_set.get(address).copied().unwrap_or(0)
-    }
-
     pub fn is_chain_valid(&self) -> Result<bool, BlockchainError> {
         if self.chain.is_empty() {
             return Ok(true);
@@ -457,9 +433,7 @@ impl Blockchain {
             let previous = &self.chain[i - 1];
 
             // Check block structure
-            if !self.validate_block(current)? {
-                return Ok(false);
-            }
+            self.validate_block(current)?;
 
             // Check hash integrity
             if current.hash != current.calculate_hash() {
@@ -491,19 +465,16 @@ impl Blockchain {
     }
 
     pub fn save_to_disk(&self, path: &str) {
-        if let Ok(json) = serde_json::to_string(&self.chain) {
+        if let Ok(json) = serde_json::to_string_pretty(&self) {
             let _ = std::fs::write(path, json);
         }
     }
 
     pub fn load_from_disk(&mut self, path: &str) {
         if Path::new(path).exists() {
-            if let Ok(mut file) = File::open(path) {
-                let mut contents = String::new();
-                if file.read_to_string(&mut contents).is_ok() {
-                    if let Ok(chain) = serde_json::from_str::<Vec<Block>>(&contents) {
-                        self.chain = chain;
-                    }
+            if let Ok(content) = std::fs::read_to_string(path) {
+                if let Ok(blockchain) = serde_json::from_str::<Blockchain>(&content) {
+                    *self = blockchain;
                 }
             }
         }
@@ -515,11 +486,11 @@ impl Blockchain {
         self.total_supply = 0;
 
         for block in &self.chain {
-            self.update_utxo_set(block);
+            let _ = self.update_utxo_set(block);
         }
     }
 
-    pub fn update_utxo_set(&mut self, block: &Block) {
+    pub fn update_utxo_set(&mut self, block: &Block) -> Result<(), BlockchainError> {
         for tx in &block.transactions {
             // Add outputs (credits)
             if tx.sender == "MINING_REWARD" || tx.sender == "GENESIS" {
@@ -535,6 +506,7 @@ impl Blockchain {
                 }
             }
         }
+        Ok(())
     }
 
     // Transaction Validation
@@ -628,33 +600,7 @@ impl Blockchain {
         Ok(())
     }
 
-    pub fn adjust_difficulty(&mut self) -> Result<(), BlockchainError> {
-        let config = &self.difficulty_config;
-        
-        if self.chain.len() < config.adjustment_interval as usize {
-            return Ok(()); // Not enough blocks yet
-        }
 
-        let current_block = &self.chain[self.chain.len() - 1];
-        let target_block = &self.chain[self.chain.len() - config.adjustment_interval as usize];
-        
-        let actual_time = (current_block.timestamp - target_block.timestamp) / 1000; // Convert to seconds
-        let expected_time = config.target_block_time * config.adjustment_interval;
-        
-        let adjustment_factor = actual_time as f64 / expected_time as f64;
-        let clamped_factor = adjustment_factor.max(1.0 / config.max_adjustment_factor)
-            .min(config.max_adjustment_factor);
-
-        if clamped_factor > 1.1 {
-            // Decrease difficulty (increase target)
-            self.difficulty = self.difficulty.saturating_sub(1).max(1);
-        } else if clamped_factor < 0.9 {
-            // Increase difficulty (decrease target)
-            self.difficulty = (self.difficulty + 1).min(32);
-        }
-
-        Ok(())
-    }
 
     pub fn calculate_mining_reward(&self) -> u64 {
         let halvings = self.chain.len() as u64 / self.halving_interval;
@@ -667,41 +613,7 @@ impl Blockchain {
         base_reward >> halvings // Equivalent to dividing by 2^halvings
     }
 
-    // Block Validation
-    pub fn validate_block(&self, block: &Block) -> Result<bool, BlockchainError> {
-        // Check block structure
-        if block.transactions.is_empty() {
-            return Ok(false);
-        }
 
-        // Check timestamp is reasonable (not too far in future)
-        if !self.validate_block_timestamp(block) {
-            return Ok(false);
-        }
-
-        // Validate all transactions in block
-        for (i, tx) in block.transactions.iter().enumerate() {
-            if i == 0 {
-                // First transaction should be mining reward
-                if tx.sender != "MINING_REWARD" {
-                    return Ok(false);
-                }
-            } else {
-                // Validate regular transactions
-                if !self.validate_transaction_against_utxo(tx)? {
-                    return Ok(false);
-                }
-            }
-        }
-
-        // Check proof of work
-        let target = "0".repeat(self.difficulty);
-        if !block.hash.starts_with(&target) {
-            return Ok(false);
-        }
-
-        Ok(true)
-    }
 
     pub fn validate_merkle_root(&self, block: &Block) -> bool {
         let merkle_tree = MerkleTree::new(&block.transactions);

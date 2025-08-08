@@ -1,0 +1,35 @@
+{
+    "name": "QuantumCoin",
+    "symbol": "QTC",
+    "type": "ERC20",
+    "decimals": 8,
+    "website": "https://quantumcoin.com",
+    "description": "QuantumCoin (QTC) is a quantum-resistant cryptocurrency with a 22 million coin cap, implementing post-quantum cryptography for future-proof security. Features dynamic mining difficulty, halving mechanism, and emergency RevStop protocol.",
+    "explorer": "https://etherscan.io/token/0x0000000000000000000000000000000000000000",
+    "status": "active",
+    "id": "0x0000000000000000000000000000000000000000",
+    "links": [
+        {
+            "name": "github",
+            "url": "https://github.com/aeonith/quantumcoin-ui-"
+        },
+        {
+            "name": "whitepaper",
+            "url": "https://quantumcoin.com/whitepaper.pdf"
+        },
+        {
+            "name": "telegram",
+            "url": "https://t.me/quantumcoin"
+        },
+        {
+            "name": "twitter",
+            "url": "https://twitter.com/quantumcoin"
+        }
+    ],
+    "tags": [
+        "defi",
+        "quantum-resistant",
+        "cryptocurrency",
+        "blockchain"
+    ]
+}
