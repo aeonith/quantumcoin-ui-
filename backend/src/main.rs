@@ -4,12 +4,21 @@ extern crate rocket;
 use rocket::fs::{FileServer, relative, TempFile};
 use rocket::form::Form;
 use rocket::response::Redirect;
-use rocket::serde::{Serialize, Deserialize};
+use rocket::serde::{Serialize, Deserialize, json::Json};
+use rocket::{State, get, post, routes, launch, Build, Rocket};
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use serde_json::{Value, json};
 
 mod wallet;
 mod revstop;
+
+// Import blockchain components (assuming they exist in parent directory)
+// Note: In production, these would be proper crate imports
+use crate::blockchain::Blockchain;
+use crate::rpc::{RpcServer, RpcRequest, RpcResponse};
 
 #[derive(FromForm, Serialize, Deserialize)]
 struct UserData {
