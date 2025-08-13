@@ -122,7 +122,7 @@ HALVING_PERIOD_YEARS:      2 years
 HALVING_DURATION_YEARS:    66 years  
 BLOCK_TIME_TARGET_SEC:     600 seconds (10 minutes)
 TOTAL_HALVINGS:           33 halvings
-GENESIS_PREMINE_QTC:      1,250,000 QTC
+GENESIS_PREMINE_QTC:      0 QTC (No pre-mining)
 ```
 
 ### Mathematical Proofs ✅ IMPLEMENTED

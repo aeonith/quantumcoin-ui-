@@ -24,7 +24,7 @@
       "total_halvings": 33
     },
     "block_time_seconds": 600,
-    "genesis_premine": 1250000,
+    "genesis_premine": 0,
     "dev_fund": 250000
   },
   

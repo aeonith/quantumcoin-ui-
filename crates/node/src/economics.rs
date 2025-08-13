@@ -38,9 +38,9 @@ impl Economics {
         self.config.halving_duration_years / self.config.halving_period_years
     }
     
-    /// Calculate initial block reward (after genesis/dev allocations)
+    /// Calculate initial block reward (after dev allocations)
     pub fn initial_block_reward(&self) -> u64 {
-        let allocated = self.config.genesis_premine_qtc + self.config.dev_fund_qtc;
+        let allocated = self.config.dev_fund_qtc;
         let remaining = self.config.total_supply - allocated;
         
         // Calculate total blocks over all halvings
@@ -72,13 +72,8 @@ impl Economics {
     
     /// Calculate block reward for a given height
     pub fn block_reward(&self, height: BlockHeight) -> u64 {
-        if height == 0 {
-            // Genesis block gets premine
-            return self.config.genesis_premine_qtc;
-        }
-        
         let halving_period = self.blocks_per_halving();
-        let halvings = (height - 1) / halving_period;
+        let halvings = height / halving_period;
         let total_halvings = self.total_halvings();
         
         if halvings >= total_halvings as u64 {
@@ -96,18 +91,18 @@ impl Economics {
             return 0;
         }
         
-        let mut total = self.config.genesis_premine_qtc; // Genesis block
+        let mut total = 0u64; // Start with no pre-mining
         let halving_period = self.blocks_per_halving();
         let initial_reward = self.initial_block_reward();
         
         // Calculate rewards for each halving period
-        let mut current_height = 1;
+        let mut current_height = 0;
         let mut halving = 0;
         
         while current_height <= height {
             let period_end = std::cmp::min(
                 height + 1,
-                (halving + 1) * halving_period + 1
+                (halving + 1) * halving_period
             );
             let blocks_in_period = period_end - current_height;
             
@@ -141,13 +136,13 @@ impl Economics {
     /// Get next halving height
     pub fn next_halving_height(&self, current_height: BlockHeight) -> Option<BlockHeight> {
         let halving_period = self.blocks_per_halving();
-        let current_halving = (current_height.saturating_sub(1)) / halving_period;
+        let current_halving = current_height / halving_period;
         let next_halving = current_halving + 1;
         
         if next_halving >= self.total_halvings() as u64 {
             None // No more halvings
         } else {
-            Some(next_halving * halving_period + 1)
+            Some(next_halving * halving_period)
         }
     }
 }
@@ -187,7 +182,7 @@ impl Economics {
         
         let blocks_to_halving = next_halving.map(|h| h.saturating_sub(height));
         let halving_period = self.blocks_per_halving();
-        let current_period = if height == 0 { 0 } else { (height - 1) / halving_period };
+        let current_period = height / halving_period;
         
         IssuanceSchedule {
             height,
@@ -252,9 +247,9 @@ mod tests {
         let halving_period = economics.blocks_per_halving();
         
         // Test that rewards halve at the right intervals
-        let reward_0 = economics.block_reward(1);
-        let reward_1 = economics.block_reward(halving_period + 1);
-        let reward_2 = economics.block_reward(2 * halving_period + 1);
+        let reward_0 = economics.block_reward(0);
+        let reward_1 = economics.block_reward(halving_period);
+        let reward_2 = economics.block_reward(2 * halving_period);
         
         assert_eq!(reward_1 * 2, reward_0, "First halving should halve reward");
         assert_eq!(reward_2 * 2, reward_1, "Second halving should halve reward");
@@ -287,19 +282,14 @@ mod tests {
     }
     
     #[test]
-    fn test_genesis_allocation() {
+    fn test_genesis_block() {
         let economics = test_economics();
         
-        // Genesis block should have premine
-        assert_eq!(
-            economics.block_reward(0),
-            economics.config.genesis_premine_qtc
-        );
-        
-        // Regular blocks should have calculated reward
-        let regular_reward = economics.block_reward(1);
-        assert!(regular_reward > 0);
-        assert!(regular_reward < economics.config.genesis_premine_qtc);
+        // Genesis block should have same reward as other blocks in first period
+        let genesis_reward = economics.block_reward(0);
+        let first_reward = economics.block_reward(1);
+        assert_eq!(genesis_reward, first_reward, "Genesis should have same reward as first block");
+        assert!(genesis_reward > 0, "Genesis reward should be positive");
     }
     
     #[test]

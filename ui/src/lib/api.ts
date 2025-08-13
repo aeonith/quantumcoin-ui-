@@ -265,7 +265,7 @@ export class QuantumCoinAPI {
         block_time_target_sec: 600,
         supply: {
           total: 22000000,
-          issued: 12500000,
+          issued: 0,
           remaining: 9500000,
         },
       }

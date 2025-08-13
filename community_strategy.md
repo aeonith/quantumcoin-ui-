@@ -68,7 +68,7 @@
 ### Testnet Rewards
 - **Early Testers**: 10,000 QTC per qualified tester
 - **Bug Bounties**: $1,000 - $25,000 per critical bug
-- **Total Allocation**: 1M QTC (5% of initial supply)
+- **Total Allocation**: 0 QTC (No pre-mining - all coins must be mined)
 
 ### Ambassador Program
 - **Selection**: 100 global ambassadors

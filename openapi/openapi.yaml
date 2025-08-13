@@ -282,7 +282,7 @@ components:
             issued:
               type: integer
               description: Currently issued coins
-              example: 12500000
+              example: 0
             remaining:
               type: integer
               description: Remaining coins to be issued

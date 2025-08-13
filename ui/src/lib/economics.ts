@@ -29,7 +29,7 @@ export const ECONOMICS = {
   BLOCK_TIME_TARGET_SEC: getEnvNumber('NEXT_PUBLIC_BLOCK_TIME_TARGET_SEC', 600),
   
   // Genesis allocations (from canonical config)
-  GENESIS_PREMINE_QTC: 1_250_000,
+  // No pre-mining - all coins must be mined
   DEV_FUND_QTC: 250_000,
   
   // Chain info
@@ -56,14 +56,14 @@ export const CALCULATED = {
     return this.BLOCKS_PER_YEAR * ECONOMICS.HALVING_PERIOD_YEARS;
   },
   
-  // Total pre-allocated coins
-  get TOTAL_PREALLOCATION(): number {
-    return ECONOMICS.GENESIS_PREMINE_QTC + ECONOMICS.DEV_FUND_QTC;
+  // Total allocated coins (dev fund only, no pre-mining)
+  get TOTAL_ALLOCATION(): number {
+    return ECONOMICS.DEV_FUND_QTC;
   },
   
   // Remaining supply for mining rewards
   get MINING_SUPPLY(): number {
-    return ECONOMICS.TOTAL_SUPPLY - this.TOTAL_PREALLOCATION;
+    return ECONOMICS.TOTAL_SUPPLY - this.TOTAL_ALLOCATION;
   },
 } as const;
 
@@ -92,11 +92,7 @@ export class IssuanceCalculator {
    * Calculate block reward at a given height
    */
   static getBlockReward(height: number): number {
-    if (height === 0) {
-      return ECONOMICS.GENESIS_PREMINE_QTC;
-    }
-    
-    const halvingPeriod = Math.floor((height - 1) / CALCULATED.BLOCKS_PER_HALVING);
+    const halvingPeriod = Math.floor(height / CALCULATED.BLOCKS_PER_HALVING);
     
     if (halvingPeriod >= CALCULATED.TOTAL_HALVINGS) {
       return 0; // No more rewards after all halvings
@@ -112,13 +108,13 @@ export class IssuanceCalculator {
   static getCumulativeIssuance(height: number): number {
     if (height === 0) return 0;
     
-    let total = ECONOMICS.GENESIS_PREMINE_QTC; // Genesis block
+    let total = 0; // No pre-mining - all coins must be mined
     const initialReward = this.getInitialBlockReward();
     
     // Calculate rewards for each halving period
     for (let period = 0; period < CALCULATED.TOTAL_HALVINGS; period++) {
-      const periodStart = period * CALCULATED.BLOCKS_PER_HALVING + 1;
-      const periodEnd = Math.min(height + 1, (period + 1) * CALCULATED.BLOCKS_PER_HALVING + 1);
+      const periodStart = period * CALCULATED.BLOCKS_PER_HALVING;
+      const periodEnd = Math.min(height + 1, (period + 1) * CALCULATED.BLOCKS_PER_HALVING);
       
       if (periodStart > height) break;
       
@@ -134,14 +130,14 @@ export class IssuanceCalculator {
    * Get next halving height
    */
   static getNextHalvingHeight(currentHeight: number): number | null {
-    const currentPeriod = Math.floor((currentHeight - 1) / CALCULATED.BLOCKS_PER_HALVING);
+    const currentPeriod = Math.floor(currentHeight / CALCULATED.BLOCKS_PER_HALVING);
     const nextPeriod = currentPeriod + 1;
     
     if (nextPeriod >= CALCULATED.TOTAL_HALVINGS) {
       return null; // No more halvings
     }
     
-    return nextPeriod * CALCULATED.BLOCKS_PER_HALVING + 1;
+    return nextPeriod * CALCULATED.BLOCKS_PER_HALVING;
   }
   
   /**
@@ -214,8 +210,8 @@ export const validation = {
       errors.push('Total supply must be positive');
     }
     
-    if (CALCULATED.TOTAL_PREALLOCATION >= ECONOMICS.TOTAL_SUPPLY) {
-      errors.push('Pre-allocation exceeds total supply');
+    if (CALCULATED.TOTAL_ALLOCATION >= ECONOMICS.TOTAL_SUPPLY) {
+      errors.push('Dev fund exceeds total supply');
     }
     
     if (ECONOMICS.HALVING_PERIOD_YEARS <= 0) {

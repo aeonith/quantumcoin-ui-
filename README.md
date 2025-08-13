@@ -46,7 +46,7 @@ cargo run --bin quantumcoin
 | **Halving Period** | 2 years |
 | **Total Duration** | 66 years |
 | **Block Time** | 10 minutes (600s) |
-| **Genesis Premine** | 1,250,000 QTC |
+| **Genesis Premine** | 0 QTC (No pre-mining) |
 | **Algorithm** | Proof of Work |
 
 ### Issuance Schedule

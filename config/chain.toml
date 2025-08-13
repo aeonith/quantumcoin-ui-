@@ -11,7 +11,7 @@ halving_duration_years = 66
 block_time_target_sec = 600
 
 # Genesis allocations
-genesis_premine_qtc = 1_250_000
+# No pre-mining - all coins must be mined
 dev_fund_qtc = 250_000
 
 [network]

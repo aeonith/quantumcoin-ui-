@@ -39,9 +39,6 @@ pub struct EconomicsConfig {
     /// Target block time in seconds
     pub block_time_target_sec: u32,
     
-    /// Genesis premine amount
-    pub genesis_premine_qtc: u64,
-    
     /// Development fund amount
     pub dev_fund_qtc: u64,
 }
@@ -61,8 +58,8 @@ impl EconomicsConfig {
             return Err(ConfigError::Invalid("block_time_target_sec cannot be zero".to_string()));
         }
         
-        if self.genesis_premine_qtc + self.dev_fund_qtc > self.total_supply {
-            return Err(ConfigError::Invalid("premine + dev fund exceeds total supply".to_string()));
+        if self.dev_fund_qtc > self.total_supply {
+            return Err(ConfigError::Invalid("dev fund exceeds total supply".to_string()));
         }
         
         Ok(())
@@ -141,7 +138,6 @@ impl ChainConfig {
                 halving_period_years: 2,
                 halving_duration_years: 66,
                 block_time_target_sec: 600,
-                genesis_premine_qtc: 1_250_000,
                 dev_fund_qtc: 250_000,
             },
             network: NetworkConfig {
@@ -257,10 +253,9 @@ mod tests {
         config.economics.total_supply = 0;
         assert!(config.validate().is_err());
         
-        // Reset and test premine overflow
+        // Reset and test dev fund overflow
         config.economics.total_supply = 1000;
-        config.economics.genesis_premine_qtc = 800;
-        config.economics.dev_fund_qtc = 300; // 800 + 300 > 1000
+        config.economics.dev_fund_qtc = 1200; // 1200 > 1000
         assert!(config.validate().is_err());
     }
 }
