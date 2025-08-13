@@ -1,0 +1,129 @@
+version: '3.8'
+
+name: quantumcoin
+
+services:
+  # Next.js UI
+  ui:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_BACKEND_BASE_URL=http://localhost:8080
+      - NEXT_PUBLIC_EXPLORER_BASE_URL=http://localhost:8080
+      - NEXT_PUBLIC_CHAIN_NAME=QuantumCoin
+      - NEXT_PUBLIC_TOTAL_SUPPLY=22000000
+      - NEXT_PUBLIC_HALVING_YEARS=2
+      - NEXT_PUBLIC_HALVING_DURATION_YEARS=66
+      - NEXT_PUBLIC_BLOCK_TIME_TARGET_SEC=600
+    volumes:
+      - ./ui:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - explorer
+    develop:
+      watch:
+        - action: sync
+          path: ./ui/src
+          target: /app/src
+        - action: rebuild
+          path: ./ui/package.json
+
+  # Explorer API (Rust-based)
+  explorer:
+    build:
+      context: .
+      dockerfile: services/explorer/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+      - DATABASE_URL=sqlite:///data/quantumcoin.db
+      - BIND_ADDRESS=0.0.0.0:8080
+    volumes:
+      - explorer_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Explorer proxy (Node.js fallback)
+  explorer-proxy:
+    build:
+      context: ./services/explorer-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+      - RUST_BACKEND_URL=http://explorer:8080
+    depends_on:
+      - explorer
+    profiles:
+      - fallback
+
+  # Seed node (optional, for testing)
+  seed-node:
+    build:
+      context: .
+      dockerfile: crates/node/Dockerfile
+    ports:
+      - "9333:9333"  # P2P
+      - "9332:9332"  # RPC
+    environment:
+      - RUST_LOG=info
+      - QTC_CONFIG_PATH=/config/chain.toml
+      - QTC_DATA_DIR=/data
+      - QTC_SEED_NODES=
+    volumes:
+      - ./config:/config:ro
+      - seed_data:/data
+    profiles:
+      - fullnode
+
+  # PostgreSQL (optional, for production-like setup)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=quantumcoin
+      - POSTGRES_USER=quantumcoin
+      - POSTGRES_PASSWORD=development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    profiles:
+      - database
+
+  # Redis (optional, for caching)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    profiles:
+      - cache
+
+volumes:
+  explorer_data:
+    driver: local
+  seed_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: quantumcoin-network
+    driver: bridge

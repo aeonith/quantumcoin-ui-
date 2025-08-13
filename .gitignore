@@ -1,0 +1,108 @@
+# Compiled binaries
+/target/
+**/target/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm/
+.yarn/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.staging
+!.env.example
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+log/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
+*.cache
+
+# Package manager lock files (keep pnpm-lock.yaml)
+package-lock.json
+yarn.lock
+
+# Security and keys
+*.pem
+*.key
+*.crt
+*.p12
+wallets/
+private_keys/
+*.wallet
+
+# Test artifacts
+coverage/
+.nyc_output/
+.coverage/
+junit.xml
+test-results/
+
+# SBOM and security scan results
+*.sbom.json
+*.spdx.json
+*.sarif
+
+# Docker
+.dockerignore
+
+# Rust-specific
+Cargo.lock
+# Note: Cargo.lock should be committed for applications, uncomment if needed
+
+# Local development
+.local/
+local/
+dev-data/
+
+# Backup files
+*.bak
+*.backup

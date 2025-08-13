@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QuantumCoin™ Register</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+
+    form {
+      background: #111;
+      padding: 30px;
+      border-radius: 10px;
+      display: inline-block;
+    }
+
+    input, button {
+      width: 250px;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #00ffaa;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #00cc88;
+    }
+  </style>
+</head>
+<body>
+  <h2>Create QuantumCoin™ Wallet</h2>
+
+  <form id="register-form">
+    <input type="email" id="register-username" placeholder="Email" required><br>
+    <input type="password" id="register-password" placeholder="Password" required><br>
+    <input type="checkbox" id="terms-checkbox" checked> I agree to the Terms & Conditions<br><br>
+    <button type="submit">🧬 Register</button>
+  </form>
+
+  <script>
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('register-username').value;
+      const password = document.getElementById('register-password').value;
+      const agreed = document.getElementById('terms-checkbox').checked;
+
+      if (!agreed) {
+        alert("You must agree to the Terms & Conditions.");
+        return;
+      }
+
+      try {
+        const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert("✅ Registration successful!");
+          window.location.href = "login.html";
+        } else {
+          alert(`❌ Registration failed: ${data.error || 'Unknown error'}`);
+        }
+      } catch (err) {
+        alert("🌐 Network error. Try again later.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

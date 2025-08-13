@@ -1,0 +1,70 @@
+{
+  "name": "QuantumCoin Development",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "containerEnv": {
+    "CARGO_NET_GIT_FETCH_WITH_CLI": "true"
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "bradlc.vscode-tailwindcss", 
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode-remote.remote-containers",
+        "github.vscode-pull-request-github",
+        "ms-playwright.playwright"
+      ],
+      "settings": {
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.cargo.features": "all",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[rust]": {
+          "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        }
+      }
+    }
+  },
+
+  "forwardPorts": [3000, 8080, 9332, 9333],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js UI",
+      "onAutoForward": "openBrowser"
+    },
+    "8080": {
+      "label": "Explorer API"
+    },
+    "9332": {
+      "label": "Node RPC"
+    },
+    "9333": {
+      "label": "Node P2P"
+    }
+  },
+
+  "mounts": [
+    "source=${localWorkspaceFolder}/.env.local,target=${containerWorkspaceFolder}/.env.local,type=bind,consistency=cached"
+  ],
+
+  "remoteUser": "vscode"
+}

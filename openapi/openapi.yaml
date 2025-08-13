@@ -1,0 +1,568 @@
+openapi: 3.0.3
+info:
+  title: QuantumCoin Explorer API
+  description: |
+    REST API for QuantumCoin blockchain explorer.
+    
+    Provides access to blockchain data including blocks, transactions, addresses, and network status.
+    All endpoints support CORS for web applications and include rate limiting.
+    
+    ## Authentication
+    No authentication required for read-only endpoints.
+    
+    ## Rate Limiting
+    - 100 requests per minute per IP for most endpoints
+    - 10 requests per minute for POST /tx
+    
+    ## Error Handling
+    Standard HTTP status codes are used. Error responses include:
+    - `400` - Bad Request (invalid parameters)
+    - `404` - Not Found (resource doesn't exist)
+    - `429` - Too Many Requests (rate limit exceeded)
+    - `500` - Internal Server Error
+    
+  version: 2.0.0
+  contact:
+    name: QuantumCoin Development Team
+    email: api@quantumcoincrypto.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://explorer-api.quantumcoin.network
+    description: Production API
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Simple health check endpoint for load balancers
+      operationId: getHealth
+      tags: [System]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+  
+  /status:
+    get:
+      summary: Network status
+      description: Get current network and chain status information
+      operationId: getStatus
+      tags: [Network]
+      responses:
+        '200':
+          description: Network status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkStatus'
+
+  /blocks:
+    get:
+      summary: List blocks
+      description: Get paginated list of blocks, ordered by height (descending)
+      operationId: getBlocks
+      tags: [Blocks]
+      parameters:
+        - name: limit
+          in: query
+          description: Number of blocks to return (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: Cursor for pagination (block height)
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          description: List of blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blocks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BlockSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /blocks/{hashOrHeight}:
+    get:
+      summary: Get block by hash or height
+      description: Retrieve detailed block information by hash or height
+      operationId: getBlock
+      tags: [Blocks]
+      parameters:
+        - name: hashOrHeight
+          in: path
+          required: true
+          description: Block hash (hex) or height (number)
+          schema:
+            type: string
+          examples:
+            by_hash:
+              value: "0x1a2b3c4d..."
+            by_height:
+              value: "12345"
+      responses:
+        '200':
+          description: Block details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlockDetails'
+        '404':
+          description: Block not found
+
+  /tx/{id}:
+    get:
+      summary: Get transaction by ID
+      description: Retrieve transaction details by transaction ID
+      operationId: getTransaction
+      tags: [Transactions]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID (hex)
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{64}$'
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDetails'
+        '404':
+          description: Transaction not found
+
+  /address/{addr}:
+    get:
+      summary: Get address information
+      description: Get balance and transaction history for an address
+      operationId: getAddress
+      tags: [Addresses]
+      parameters:
+        - name: addr
+          in: path
+          required: true
+          description: Address (base64 encoded public key)
+          schema:
+            type: string
+        - name: include_utxos
+          in: query
+          description: Include UTXO details in response
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Address information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressSummary'
+
+  /mempool:
+    get:
+      summary: Get mempool status
+      description: Get current mempool size and pending transactions
+      operationId: getMempool
+      tags: [Mempool]
+      parameters:
+        - name: include_txs
+          in: query
+          description: Include full transaction details
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Mempool information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MempoolStatus'
+
+  /tx:
+    post:
+      summary: Broadcast transaction
+      description: Submit a signed transaction to the network
+      operationId: broadcastTransaction
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                raw:
+                  type: string
+                  description: Hex-encoded signed transaction
+                  pattern: '^[0-9a-fA-F]+$'
+              required: [raw]
+      responses:
+        '200':
+          description: Transaction accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tx_id:
+                    type: string
+                    description: Transaction ID
+                  status:
+                    type: string
+                    enum: [accepted]
+        '400':
+          description: Invalid transaction
+        '429':
+          description: Rate limit exceeded
+
+components:
+  schemas:
+    NetworkStatus:
+      type: object
+      properties:
+        chain:
+          type: string
+          description: Chain identifier
+          example: "quantumcoin-mainnet-v2"
+        network:
+          type: string
+          enum: [mainnet, testnet, devnet]
+        height:
+          type: integer
+          description: Current chain height
+          example: 123456
+        tip_hash:
+          type: string
+          description: Hash of chain tip block
+          example: "0x1a2b3c4d..."
+        peers:
+          type: integer
+          description: Number of connected peers
+          example: 24
+        block_time_target_sec:
+          type: integer
+          description: Target block time in seconds
+          example: 600
+        supply:
+          type: object
+          properties:
+            total:
+              type: integer
+              description: Maximum possible supply
+              example: 22000000
+            issued:
+              type: integer
+              description: Currently issued coins
+              example: 12500000
+            remaining:
+              type: integer
+              description: Remaining coins to be issued
+              example: 9500000
+
+    BlockSummary:
+      type: object
+      properties:
+        hash:
+          type: string
+          description: Block hash
+          example: "0x1a2b3c4d..."
+        height:
+          type: integer
+          description: Block height
+          example: 12345
+        time:
+          type: string
+          format: date-time
+          description: Block timestamp
+        tx_count:
+          type: integer
+          description: Number of transactions in block
+          example: 42
+        prev_hash:
+          type: string
+          description: Previous block hash
+          example: "0x9e8d7c6b..."
+
+    BlockDetails:
+      allOf:
+        - $ref: '#/components/schemas/BlockSummary'
+        - type: object
+          properties:
+            difficulty:
+              type: integer
+              description: Block difficulty
+              example: 486604799
+            nonce:
+              type: integer
+              description: Proof of work nonce
+              example: 2083236893
+            merkle_root:
+              type: string
+              description: Merkle root of transactions
+              example: "0x5f4e3d2c..."
+            transactions:
+              type: array
+              items:
+                type: string
+                description: Transaction IDs in this block
+              example: ["0xabc123...", "0xdef456..."]
+            reward:
+              type: integer
+              description: Block reward amount
+              example: 5000000
+
+    TransactionDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Transaction ID
+          example: "0xabc123..."
+        hash:
+          type: string
+          description: Transaction hash (same as ID)
+          example: "0xabc123..."
+        block_hash:
+          type: string
+          nullable: true
+          description: Block hash containing this transaction
+          example: "0x1a2b3c4d..."
+        block_height:
+          type: integer
+          nullable: true
+          description: Block height containing this transaction
+          example: 12345
+        confirmations:
+          type: integer
+          description: Number of confirmations (0 if unconfirmed)
+          example: 6
+        timestamp:
+          type: string
+          format: date-time
+          description: Transaction timestamp
+        inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionInput'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionOutput'
+        fee:
+          type: integer
+          description: Transaction fee
+          example: 1000
+        size:
+          type: integer
+          description: Transaction size in bytes
+          example: 250
+
+    TransactionInput:
+      type: object
+      properties:
+        prev_tx_id:
+          type: string
+          description: Previous transaction ID
+          example: "0xdef456..."
+        output_index:
+          type: integer
+          description: Output index in previous transaction
+          example: 0
+        signature:
+          type: string
+          description: Input signature (hex)
+          example: "0x304502..."
+        amount:
+          type: integer
+          description: Input amount (resolved from UTXO)
+          example: 1000000
+
+    TransactionOutput:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: Output index in transaction
+          example: 0
+        amount:
+          type: integer
+          description: Output amount
+          example: 999000
+        address:
+          type: string
+          description: Recipient address
+          example: "QtC1a2b3c4d..."
+        spent:
+          type: boolean
+          description: Whether this output has been spent
+          example: false
+
+    AddressSummary:
+      type: object
+      properties:
+        address:
+          type: string
+          description: Address
+          example: "QtC1a2b3c4d..."
+        balance:
+          type: integer
+          description: Current balance
+          example: 5000000
+        tx_count:
+          type: integer
+          description: Total number of transactions
+          example: 25
+        received_total:
+          type: integer
+          description: Total amount received
+          example: 10000000
+        sent_total:
+          type: integer
+          description: Total amount sent
+          example: 5000000
+        utxos:
+          type: array
+          nullable: true
+          description: Unspent transaction outputs (if requested)
+          items:
+            $ref: '#/components/schemas/UTXO'
+
+    UTXO:
+      type: object
+      properties:
+        tx_id:
+          type: string
+          description: Transaction ID
+          example: "0xabc123..."
+        output_index:
+          type: integer
+          description: Output index
+          example: 0
+        amount:
+          type: integer
+          description: Output amount
+          example: 1000000
+        confirmations:
+          type: integer
+          description: Number of confirmations
+          example: 6
+
+    MempoolStatus:
+      type: object
+      properties:
+        size:
+          type: integer
+          description: Number of pending transactions
+          example: 42
+        total_fees:
+          type: integer
+          description: Total fees in mempool
+          example: 100000
+        transactions:
+          type: array
+          nullable: true
+          description: Pending transactions (if requested)
+          items:
+            $ref: '#/components/schemas/TransactionDetails'
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: Number of items returned
+          example: 20
+        next_cursor:
+          type: integer
+          nullable: true
+          description: Cursor for next page
+          example: 12300
+        has_more:
+          type: boolean
+          description: Whether more items are available
+          example: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Block not found"
+        code:
+          type: string
+          description: Error code
+          example: "BLOCK_NOT_FOUND"
+        details:
+          type: object
+          nullable: true
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimit:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: System
+    description: System health and monitoring endpoints
+  - name: Network
+    description: Network status and information
+  - name: Blocks
+    description: Block data and queries
+  - name: Transactions
+    description: Transaction data and broadcasting
+  - name: Addresses
+    description: Address balance and history
+  - name: Mempool
+    description: Memory pool operations

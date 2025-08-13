@@ -1,0 +1,35 @@
+# QuantumCoin Canonical Economics Configuration
+# This is the SINGLE SOURCE OF TRUTH for all economic parameters
+
+[economics]
+# Total supply cap (QTC)  
+total_supply = 22_000_000
+
+# Halving parameters
+halving_period_years = 2
+halving_duration_years = 66
+block_time_target_sec = 600
+
+# Genesis allocations
+genesis_premine_qtc = 1_250_000
+dev_fund_qtc = 250_000
+
+[network]
+# Network identification
+chain_id = "quantumcoin-mainnet-v2"
+network_magic = 0x51434D4E  # "QTCM" in hex
+
+# Default ports
+p2p_port = 9333
+rpc_port = 9332
+explorer_port = 8080
+
+[pow]
+# Proof of work parameters
+difficulty_adjustment_blocks = 2016
+target_timespan_seconds = 1_209_600  # 2 weeks
+
+[features]
+# Feature flags
+revstop_enabled = true
+revstop_default_on = false  # Must be OFF by default on exchanges

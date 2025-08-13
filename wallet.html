@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My QuantumCoin Wallet</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding-top: 80px; }
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 15px 0;
+      z-index: 1000;
+      border-bottom: 1px solid #00fdfd;
+    }
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-logo a {
+      color: #00fdfd;
+      font-size: 1.5em;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      gap: 30px;
+    }
+    .nav-menu a {
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+    .nav-menu a:hover,
+    .nav-menu a.active {
+      background: #00fdfd;
+      color: black;
+    }
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #00fdfd;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .nav-toggle { display: block; }
+      .nav-menu {
+        position: fixed;
+        top: 70px;
+        left: -100%;
+        width: 100%;
+        height: calc(100vh - 70px);
+        background: rgba(0, 0, 0, 0.95);
+        flex-direction: column;
+        align-items: center;
+        padding-top: 50px;
+        gap: 20px;
+        transition: left 0.3s ease;
+      }
+      .nav-menu.active { left: 0; }
+      .nav-menu a {
+        font-size: 1.1rem;
+        padding: 15px 30px;
+        width: 200px;
+        text-align: center;
+        border: 1px solid #00fdfd;
+        border-radius: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <a href="index.html">⚛️ QuantumCoin</a>
+      </div>
+      <button class="nav-toggle" id="nav-toggle">☰</button>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="wallet.html" class="active">Wallet</a></li>
+        <li><a href="explorer.html">Explorer</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="mining.html">Mining</a></li>
+        <li><a href="kyc.html">KYC</a></li>
+      </ul>
+    </div>
+  </nav>
+  <h2>Welcome to Your Wallet</h2>
+  <p><strong>Wallet Address:</strong> <span id="wallet-address"></span></p>
+  <p><strong>Balance:</strong> <span id="wallet-balance">0</span> QTC</p>
+  <p><strong>To receive QTC:</strong></p>
+  <p>Send BTC to the address below:</p>
+  <p><strong>Bitcoin Address:</strong> <span id="btc-address">1BitcoinTestAddressXYZ</span></p>
+  <p>You'll receive 1 QTC per $0.25 of BTC.</p>
+
+  <script>
+    const walletAddress = localStorage.getItem("walletAddress");
+    document.getElementById("wallet-address").innerText = walletAddress || "Not available";
+
+    async function updateBalance() {
+      try {
+        const res = await fetch(`https://quantumcoin-ui-1rust1.onrender.com/balance/${walletAddress}`);
+        const data = await res.json();
+        document.getElementById("wallet-balance").innerText = data.balance;
+      } catch (err) {
+        console.error(err);
+        alert("Error fetching balance.");
+      }
+    }
+
+    updateBalance();
+  </script>
+  <script src="mobile-nav.js"></script>
+</body>
+</html>

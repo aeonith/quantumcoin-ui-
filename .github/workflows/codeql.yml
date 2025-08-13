@@ -1,0 +1,65 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly on Mondays at 6 AM UTC
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      # required for all workflows
+      security-events: write
+      
+      # required to fetch internal or private CodeQL packs
+      packages: read
+      
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: rust
+          build-mode: manual
+        - language: javascript-typescript
+          build-mode: none
+          
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        queries: +security-and-quality
+
+    - if: matrix.build-mode == 'manual' && matrix.language == 'rust'
+      name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - if: matrix.build-mode == 'manual' && matrix.language == 'rust' 
+      name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - if: matrix.build-mode == 'manual' && matrix.language == 'rust'
+      name: Build Rust components
+      run: |
+        cargo build --workspace --all-features
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: true
+        wait-for-processing: true

@@ -1,0 +1,4 @@
+- rustc/cargo: stable (see CI)
+- Build: `cargo build --release`
+- Explorer: `cargo build --release --features explorer`
+- Checksums: `shasum -a 256 target/release/quantumcoin`

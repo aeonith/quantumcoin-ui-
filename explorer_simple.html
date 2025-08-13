@@ -1,0 +1,12 @@
+<!doctype html><html><body>
+<h1>QuantumCoin Explorer</h1>
+<div>Height: <span id="h">...</span></div>
+<script>
+async function tick(){ 
+  const r = await fetch('/api/height'); 
+  const j = await r.json(); 
+  document.getElementById('h').textContent = j.height; 
+}
+setInterval(tick, 1000); tick();
+</script>
+</body></html>

@@ -1,0 +1,119 @@
+{
+  "name": "QuantumCoin",
+  "symbol": "QTC",
+  "decimals": 8,
+  "description": "A quantum-resistant cryptocurrency with post-quantum cryptography and sustainable economics",
+  "website": "https://quantumcoin.network",
+  "explorer": "https://explorer.quantumcoin.network",
+  "source_code": "https://github.com/aeonith/quantumcoin-ui-",
+  "whitepaper": "https://github.com/aeonith/quantumcoin-ui-/blob/main/docs/brief-whitepaper.md",
+  
+  "blockchain": {
+    "type": "independent_l1",
+    "consensus": "proof_of_work",
+    "cryptography": "post_quantum",
+    "signature_scheme": "dilithium2"
+  },
+  
+  "economics": {
+    "total_supply": 22000000,
+    "circulating_supply_method": "calculated",
+    "halving_schedule": {
+      "period_years": 2,
+      "duration_years": 66,
+      "total_halvings": 33
+    },
+    "block_time_seconds": 600,
+    "genesis_premine": 1250000,
+    "dev_fund": 250000
+  },
+  
+  "network": {
+    "chain_id": "quantumcoin-mainnet-v2",
+    "network_magic": "0x51434D4E",
+    "default_ports": {
+      "p2p": 9333,
+      "rpc": 9332,
+      "explorer": 8080
+    },
+    "seed_nodes": [
+      "seed1.quantumcoin.network:9333",
+      "seed2.quantumcoin.network:9333"
+    ]
+  },
+  
+  "features": {
+    "quantum_resistant": true,
+    "revstop_protection": true,
+    "revstop_default_off": true,
+    "smart_contracts": false,
+    "privacy_features": false
+  },
+  
+  "standards": {
+    "slip44_coin_type": null,
+    "bip44_derivation": null,
+    "address_format": "base64_pubkey",
+    "transaction_format": "custom_utxo"
+  },
+  
+  "security": {
+    "audit_reports": [],
+    "bug_bounty": false,
+    "sbom_available": true,
+    "container_signing": true,
+    "supply_chain_security": true
+  },
+  
+  "integration": {
+    "exchange_ready": true,
+    "revstop_disabled_exchanges": true,
+    "withdrawal_confirmations": 6,
+    "deposit_confirmations": 6,
+    "minimum_withdrawal": 1000000,
+    "withdrawal_fee_suggestion": 10000
+  },
+  
+  "assets": {
+    "logo_256": "https://raw.githubusercontent.com/aeonith/quantumcoin-ui-/main/listing/logo-256.png",
+    "logo_512": "https://raw.githubusercontent.com/aeonith/quantumcoin-ui-/main/listing/logo-512.png",
+    "logo_1024": "https://raw.githubusercontent.com/aeonith/quantumcoin-ui-/main/listing/logo-1024.png",
+    "logo_svg": "https://raw.githubusercontent.com/aeonith/quantumcoin-ui-/main/listing/logo.svg"
+  },
+  
+  "social": {
+    "twitter": "https://twitter.com/quantumcoindev",
+    "discord": "https://discord.gg/quantumcoin",
+    "telegram": null,
+    "reddit": null
+  },
+  
+  "api": {
+    "explorer_api": "https://explorer.quantumcoin.network",
+    "openapi_spec": "https://raw.githubusercontent.com/aeonith/quantumcoin-ui-/main/openapi/openapi.yaml",
+    "websocket": null,
+    "rate_limits": {
+      "general": "100/minute",
+      "broadcast": "10/minute"
+    }
+  },
+  
+  "compliance": {
+    "kyc_required": false,
+    "aml_compliant": true,
+    "regulatory_status": "experimental",
+    "jurisdictions_blocked": [],
+    "license_info": "MIT"
+  },
+  
+  "launch_info": {
+    "genesis_date": null,
+    "mainnet_launch": null,
+    "testnet_available": true,
+    "current_phase": "development"
+  },
+  
+  "version": "2.0.0",
+  "last_updated": "2024-12-08",
+  "maintained_by": "QuantumCoin Development Team <dev@quantumcoincrypto.com>"
+}

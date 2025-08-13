@@ -1,0 +1,14 @@
+# QuantumCoin Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global ownership
+* @aeonith
+
+# Critical components require additional review
+/config/ @aeonith
+/crates/node/ @aeonith  
+/crates/wallet/ @aeonith
+/services/explorer/ @aeonith
+/.github/ @aeonith
+/Cargo.* @aeonith
+/docker-compose.yml @aeonith

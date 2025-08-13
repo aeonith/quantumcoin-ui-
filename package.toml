@@ -1,0 +1,19 @@
+# Root package metadata (maintains backwards compatibility)
+# The main implementation is now in workspace crates
+
+[package]
+name = "quantumcoin-root"
+version = "2.0.0"
+edition = "2021"
+authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+description = "QuantumCoin™ - A quantum-resistant cryptocurrency (root package)"
+license = "MIT"
+
+[dependencies]
+# Re-export workspace crates
+quantumcoin-node = { path = "crates/node" }
+quantumcoin-wallet = { path = "crates/wallet" }
+
+[[bin]]
+name = "quantumcoin"
+path = "src/main.rs"

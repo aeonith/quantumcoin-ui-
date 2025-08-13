@@ -1,0 +1,40 @@
+[package]
+name = "quantumcoin-node"
+version = "2.0.0"
+edition = "2021"
+authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+description = "QuantumCoin blockchain node implementation"
+license = "MIT"
+
+[dependencies]
+# Workspace dependencies
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+sha2 = { workspace = true }
+sha3 = { workspace = true }
+blake3 = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+hex = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+# Node-specific dependencies  
+toml = "0.8"
+parking_lot = { workspace = true }
+crossbeam = { workspace = true }
+rayon = { workspace = true }
+
+# Optional database support
+sqlx = { workspace = true, optional = true }
+
+[features]
+default = ["database"]
+database = ["sqlx"]
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio-test = "0.4"

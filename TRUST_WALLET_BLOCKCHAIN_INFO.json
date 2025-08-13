@@ -1,0 +1,46 @@
+{
+  "name": "QuantumCoin",
+  "symbol": "QTC",
+  "type": "coin",
+  "decimals": 8,
+  "description": "QuantumCoin is a next-generation cryptocurrency featuring quantum-resistant security, post-quantum cryptography, and a 22 million coin cap with dynamic mining difficulty adjustment.",
+  "website": "https://quantumcoin.network",
+  "explorer": "https://explorer.quantumcoin.network",
+  "source_code": "https://github.com/aeonith/quantumcoin-ui-",
+  "whitepaper": "https://quantumcoin.network/whitepaper.pdf",
+  "consensus_mechanism": "Proof of Work (SHA-256)",
+  "total_supply": "22000000",
+  "circulating_supply": "0",
+  "block_time": "10 minutes",
+  "confirmation_blocks": 6,
+  "rpc_port": 8332,
+  "p2p_port": 8333,
+  "features": [
+    "Quantum-resistant cryptography",
+    "Post-quantum signatures (Dilithium2)",
+    "Dynamic difficulty adjustment", 
+    "Bitcoin-compatible RPC API",
+    "P2P networking",
+    "Mining pool support",
+    "RevStop quantum protection"
+  ],
+  "blockchain_info": {
+    "genesis_block": "0000000000000000000000000000000000000000000000000000000000000000",
+    "network_magic": "f9beb4d9",
+    "address_prefix": "Q",
+    "p2pkh_version": 58,
+    "p2sh_version": 5,
+    "wif_version": 128,
+    "bip32_public": "0488b21e",
+    "bip32_private": "0488ade4",
+    "bech32_hrp": "qtc"
+  },
+  "technical_specs": {
+    "hash_algorithm": "SHA-256",
+    "signature_algorithm": "Dilithium2 (Post-Quantum)",
+    "merkle_tree": "SHA-256",
+    "difficulty_adjustment": "Every 2016 blocks",
+    "block_size_limit": "32MB",
+    "transaction_format": "Bitcoin-compatible"
+  }
+}

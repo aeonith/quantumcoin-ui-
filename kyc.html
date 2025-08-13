@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuantumCoin KYC Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      text-align: center;
+      padding: 50px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #00ffcc;
+      border: none;
+      color: #000;
+      border-radius: 5px;
+    }
+
+    .captcha {
+      font-size: 24px;
+      margin-bottom: 20px;
+      background-color: #111;
+      padding: 10px;
+      letter-spacing: 4px;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🔒 KYC Verification</h2>
+    <p>Type the code you see below:</p>
+    <div id="captcha" class="captcha"></div>
+    <input type="text" id="captchaInput" placeholder="Enter code here"/>
+    <button onclick="verifyCaptcha()">Verify</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const captcha = document.getElementById("captcha");
+    const captchaInput = document.getElementById("captchaInput");
+    const resultDiv = document.getElementById("result");
+
+    function generateCaptcha() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let text = "";
+      for (let i = 0; i < 6; i++) {
+        text += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return text;
+    }
+
+    const actualCaptcha = generateCaptcha();
+    captcha.innerText = actualCaptcha;
+
+    function verifyCaptcha() {
+      const entered = captchaInput.value.toUpperCase();
+      if (entered === actualCaptcha) {
+        localStorage.setItem("kyc_verified", "true");
+        resultDiv.innerHTML = "<p style='color: lightgreen;'>✅ Verified! Redirecting...</p>";
+        setTimeout(() => {
+          window.location.href = "wallet.html";
+        }, 1200);
+      } else {
+        resultDiv.innerHTML = "<p style='color: red;'>❌ Incorrect. Try again.</p>";
+        captchaInput.value = "";
+      }
+    }
+  </script>
+</body>
+</html>
