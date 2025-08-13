@@ -123,6 +123,8 @@ HALVING_DURATION_YEARS:    66 years
 BLOCK_TIME_TARGET_SEC:     600 seconds (10 minutes)
 TOTAL_HALVINGS:           33 halvings
 GENESIS_PREMINE_QTC:      0 QTC (No pre-mining)
+DEV_FUND_QTC:             0 QTC (No development fund)
+TOTAL_MINEABLE:           22,000,000 QTC (100% mineable)
 ```
 
 ### Mathematical Proofs ✅ IMPLEMENTED

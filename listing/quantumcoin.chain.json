@@ -25,7 +25,7 @@
     },
     "block_time_seconds": 600,
     "genesis_premine": 0,
-    "dev_fund": 250000
+    "dev_fund": 0
   },
   
   "network": {

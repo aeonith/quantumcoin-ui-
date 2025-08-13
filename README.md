@@ -47,6 +47,8 @@ cargo run --bin quantumcoin
 | **Total Duration** | 66 years |
 | **Block Time** | 10 minutes (600s) |
 | **Genesis Premine** | 0 QTC (No pre-mining) |
+| **Development Fund** | 0 QTC (No pre-allocation) |
+| **Total Mineable** | 22,000,000 QTC (100%) |
 | **Algorithm** | Proof of Work |
 
 ### Issuance Schedule

@@ -39,8 +39,7 @@ pub struct EconomicsConfig {
     /// Target block time in seconds
     pub block_time_target_sec: u32,
     
-    /// Development fund amount
-    pub dev_fund_qtc: u64,
+    // No pre-allocation - all coins must be mined
 }
 
 impl EconomicsConfig {
@@ -58,9 +57,7 @@ impl EconomicsConfig {
             return Err(ConfigError::Invalid("block_time_target_sec cannot be zero".to_string()));
         }
         
-        if self.dev_fund_qtc > self.total_supply {
-            return Err(ConfigError::Invalid("dev fund exceeds total supply".to_string()));
-        }
+        // All supply must be mined - no pre-allocation validation needed
         
         Ok(())
     }
@@ -138,7 +135,6 @@ impl ChainConfig {
                 halving_period_years: 2,
                 halving_duration_years: 66,
                 block_time_target_sec: 600,
-                dev_fund_qtc: 250_000,
             },
             network: NetworkConfig {
                 chain_id: "quantumcoin-mainnet-v2".to_string(),
@@ -253,9 +249,8 @@ mod tests {
         config.economics.total_supply = 0;
         assert!(config.validate().is_err());
         
-        // Reset and test dev fund overflow
+        // All validation tests pass - no pre-allocation to validate
         config.economics.total_supply = 1000;
-        config.economics.dev_fund_qtc = 1200; // 1200 > 1000
-        assert!(config.validate().is_err());
+        assert!(config.validate().is_ok());
     }
 }

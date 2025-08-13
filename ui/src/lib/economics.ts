@@ -28,9 +28,8 @@ export const ECONOMICS = {
   HALVING_DURATION_YEARS: getEnvNumber('NEXT_PUBLIC_HALVING_DURATION_YEARS', 66),
   BLOCK_TIME_TARGET_SEC: getEnvNumber('NEXT_PUBLIC_BLOCK_TIME_TARGET_SEC', 600),
   
-  // Genesis allocations (from canonical config)
-  // No pre-mining - all coins must be mined
-  DEV_FUND_QTC: 250_000,
+  // NO PRE-ALLOCATION - ALL 22M QTC MUST BE MINED
+  // Zero development fund, zero pre-mining
   
   // Chain info
   CHAIN_NAME: getEnvString('NEXT_PUBLIC_CHAIN_NAME', 'QuantumCoin'),
@@ -56,14 +55,14 @@ export const CALCULATED = {
     return this.BLOCKS_PER_YEAR * ECONOMICS.HALVING_PERIOD_YEARS;
   },
   
-  // Total allocated coins (dev fund only, no pre-mining)
+  // No allocation - ALL coins are mineable
   get TOTAL_ALLOCATION(): number {
-    return ECONOMICS.DEV_FUND_QTC;
+    return 0; // Zero pre-allocation
   },
   
-  // Remaining supply for mining rewards
+  // All supply available for mining rewards
   get MINING_SUPPLY(): number {
-    return ECONOMICS.TOTAL_SUPPLY - this.TOTAL_ALLOCATION;
+    return ECONOMICS.TOTAL_SUPPLY; // All 22M QTC mineable
   },
 } as const;
 
@@ -210,9 +209,7 @@ export const validation = {
       errors.push('Total supply must be positive');
     }
     
-    if (CALCULATED.TOTAL_ALLOCATION >= ECONOMICS.TOTAL_SUPPLY) {
-      errors.push('Dev fund exceeds total supply');
-    }
+    // No allocation validation needed - all coins are mineable
     
     if (ECONOMICS.HALVING_PERIOD_YEARS <= 0) {
       errors.push('Halving period must be positive');

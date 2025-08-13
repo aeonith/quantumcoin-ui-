@@ -38,10 +38,9 @@ impl Economics {
         self.config.halving_duration_years / self.config.halving_period_years
     }
     
-    /// Calculate initial block reward (after dev allocations)
+    /// Calculate initial block reward (100% mineable supply)
     pub fn initial_block_reward(&self) -> u64 {
-        let allocated = self.config.dev_fund_qtc;
-        let remaining = self.config.total_supply - allocated;
+        let mineable_supply = self.config.total_supply; // All coins are mineable
         
         // Calculate total blocks over all halvings
         let total_halvings = self.total_halvings();
@@ -54,8 +53,8 @@ impl Economics {
         let geometric_sum_factor = self.calculate_geometric_sum_factor(total_halvings);
         let total_blocks = blocks_per_halving * total_halvings as u64;
         
-        // Distribute remaining supply over all blocks with halving
-        let base_reward = remaining / total_blocks;
+        // Distribute entire supply over all blocks with halving
+        let base_reward = mineable_supply / total_blocks;
         
         // Adjust for geometric series to get initial reward
         (base_reward * 2) / geometric_sum_factor as u64

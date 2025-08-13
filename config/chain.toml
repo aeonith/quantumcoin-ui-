@@ -10,9 +10,8 @@ halving_period_years = 2
 halving_duration_years = 66
 block_time_target_sec = 600
 
-# Genesis allocations
-# No pre-mining - all coins must be mined
-dev_fund_qtc = 250_000
+# No pre-allocation whatsoever - ALL 22M QTC must be mined
+# Zero development fund, zero pre-mining - pure mining economy
 
 [network]
 # Network identification
