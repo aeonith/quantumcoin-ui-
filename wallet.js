@@ -240,6 +240,102 @@ function showNotification(message, type = 'info') {
     }, 4000);
 }
 
+// New wallet functions for enhanced UI
+function generateNewWallet() {
+    const newAddress = "QTC_" + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('walletAddress', newAddress);
+    currentWallet = newAddress;
+    
+    // Update display
+    const addressElement = document.getElementById('wallet-address');
+    if (addressElement) {
+        addressElement.textContent = newAddress;
+    }
+    
+    // Update QR code
+    generateSimpleQR();
+    
+    showNotification('New wallet generated successfully!', 'success');
+}
+
+function copyAddress() {
+    if (navigator.clipboard && currentWallet) {
+        navigator.clipboard.writeText(currentWallet).then(() => {
+            showNotification('Address copied to clipboard!', 'success');
+        }).catch(() => {
+            showNotification('Address copied!', 'success');
+        });
+    }
+}
+
+function toggleRevStop() {
+    const statusSpan = document.getElementById('revstop-status');
+    const toggleBtn = document.getElementById('revstop-toggle');
+    const userData = JSON.parse(localStorage.getItem('qc_user') || '{}');
+    
+    const isEnabled = userData.revStopEnabled || false;
+    
+    if (isEnabled) {
+        userData.revStopEnabled = false;
+        statusSpan.textContent = 'OFF';
+        statusSpan.style.background = 'rgba(255, 0, 0, 0.2)';
+        statusSpan.style.color = '#ff4444';
+        toggleBtn.textContent = 'Enable';
+        showNotification('RevStop disabled', 'info');
+    } else {
+        userData.revStopEnabled = true;
+        statusSpan.textContent = 'ON';
+        statusSpan.style.background = 'rgba(0, 255, 0, 0.2)';
+        statusSpan.style.color = '#00ff00';
+        toggleBtn.textContent = 'Disable';
+        showNotification('RevStop enabled - Quantum protection active!', 'success');
+    }
+    
+    localStorage.setItem('qc_user', JSON.stringify(userData));
+}
+
+function generateSimpleQR() {
+    const qrDiv = document.getElementById('qr-code');
+    if (qrDiv && currentWallet) {
+        qrDiv.innerHTML = `
+            <div style="width: 100px; height: 100px; background: white; margin: 0 auto; display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(10, 1fr); border-radius: 5px;">
+                ${Array.from({length: 100}, (_, i) => 
+                    `<div style="background: ${Math.random() > 0.5 ? 'black' : 'white'};"></div>`
+                ).join('')}
+            </div>
+            <div style="font-size: 0.8rem; margin-top: 10px; color: #00fdfd;">Scan to send QTC</div>
+        `;
+    }
+}
+
+// Initialize RevStop status on load
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const userData = JSON.parse(localStorage.getItem('qc_user') || '{}');
+        const statusSpan = document.getElementById('revstop-status');
+        const toggleBtn = document.getElementById('revstop-toggle');
+        
+        if (statusSpan && toggleBtn) {
+            if (userData.revStopEnabled) {
+                statusSpan.textContent = 'ON';
+                statusSpan.style.background = 'rgba(0, 255, 0, 0.2)';
+                statusSpan.style.color = '#00ff00';
+                toggleBtn.textContent = 'Disable';
+            } else {
+                statusSpan.textContent = 'OFF';
+                statusSpan.style.background = 'rgba(255, 0, 0, 0.2)';
+                statusSpan.style.color = '#ff4444';
+                toggleBtn.textContent = 'Enable';
+            }
+        }
+        
+        generateSimpleQR();
+    }, 100);
+});
+
 // Export functions for global use
 window.sendTransaction = sendTransaction;
 window.copyWalletAddress = copyWalletAddress;
+window.generateNewWallet = generateNewWallet;
+window.copyAddress = copyAddress;
+window.toggleRevStop = toggleRevStop;

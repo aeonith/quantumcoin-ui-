@@ -15,23 +15,24 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   }
 
   try {
-    const response = await fetch('https://quantumcoin-ui-1rust1.onrender.com/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    // For local development, simulate registration with localStorage
+    const userData = {
+      email: email,
+      walletAddress: "QTC_" + Math.random().toString(36).substring(2, 15),
+      balance: 100, // Welcome bonus
+      registerTime: new Date().toISOString(),
+      revStopEnabled: false
+    };
 
-    const data = await response.json();
-
-    if (response.ok) {
-      alert("✅ Registered successfully!");
-      localStorage.setItem("walletAddress", data.walletAddress);
-      window.location.href = "wallet.html";
-    } else {
-      alert(`❌ Registration failed: ${data.error || "Unknown error"}`);
-    }
+    localStorage.setItem("qc_user", JSON.stringify(userData));
+    localStorage.setItem("walletAddress", userData.walletAddress);
+    localStorage.setItem("email", email);
+    
+    alert("✅ Registered successfully! Welcome bonus: 100 QTC");
+    window.location.href = "wallet.html";
+    
   } catch (err) {
     console.error(err);
-    alert("🌐 Network error. Try again later.");
+    alert("Registration error. Try again later.");
   }
 });

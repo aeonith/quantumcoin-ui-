@@ -10,23 +10,22 @@ document.getElementById("login-form").addEventListener("submit", async function 
   }
 
   try {
-    const res = await fetch("https://quantumcoin-ui-1live.onrender.com/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ email, password })
-    });
+    // For local development, simulate login with localStorage
+    const userData = {
+      email: email,
+      walletAddress: "QTC_" + Math.random().toString(36).substring(2, 15),
+      balance: Math.floor(Math.random() * 1000),
+      loginTime: new Date().toISOString(),
+      revStopEnabled: false
+    };
 
-    const data = await res.json();
-
-    if (res.ok && data.token) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("email", email);
-      window.location.href = "dashboard.html"; // Redirect to wallet/dashboard
-    } else {
-      alert(data.error || "Login failed. Please try again.");
-    }
+    localStorage.setItem("qc_user", JSON.stringify(userData));
+    localStorage.setItem("walletAddress", userData.walletAddress);
+    localStorage.setItem("email", email);
+    
+    // Redirect to wallet
+    window.location.href = "wallet.html";
+    
   } catch (error) {
     console.error("Login error:", error);
     alert("An error occurred. Please try again later.");
