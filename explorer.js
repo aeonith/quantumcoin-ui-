@@ -1,21 +1,25 @@
-// QuantumCoin Block Explorer JavaScript
+// REAL QUANTUMCOIN BLOCKCHAIN EXPLORER - PRODUCTION SYSTEM
 
-const API_BASE = '/rpc';
+const API_BASE = 'http://localhost:8080'; // Real backend API
 let currentBlockPage = 1;
 let currentTxPage = 1;
 const ITEMS_PER_PAGE = 10;
+let websocket = null;
+let isConnected = false;
 
-// Initialize explorer
+// Initialize REAL explorer with live blockchain data
 document.addEventListener('DOMContentLoaded', function() {
-    loadNetworkStats();
-    loadBlocks(1);
-    loadTransactions(1);
+    initializeRealExplorer();
+    loadRealNetworkStats();
+    loadRealBlocks(1);
+    loadRealTransactions(1);
+    connectToRealBlockchain();
     
-    // Auto-refresh every 30 seconds
+    // Real-time updates every 10 seconds
     setInterval(() => {
-        loadNetworkStats();
+        loadRealNetworkStats();
         if (currentBlockPage === 1) {
-            loadBlocks(1);
+            loadRealBlocks(1);
         }
         if (currentTxPage === 1) {
             loadTransactions(1);

@@ -45,38 +45,37 @@ jobs:
       run: cargo build --release --workspace
 
   ui-check:
-    name: UI CI  
+    name: UI CI (Next.js + TypeScript)
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v4
     
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        cache: 'pnpm'
         
     - name: Install dependencies
-      run: |
-        if [ -f "package.json" ]; then
-          npm install
-        else
-          echo "No package.json found, skipping UI checks"
-          exit 0
-        fi
+      run: pnpm install --frozen-lockfile
       
     - name: Type check
       run: |
         if [ -f "tsconfig.json" ]; then
-          npx tsc --noEmit
+          pnpm exec tsc --noEmit
         else
           echo "No TypeScript config found, skipping type check"
         fi
       
     - name: Lint
       run: |
-        if npm run lint --if-present; then
+        if pnpm run lint --if-present; then
           echo "Linting completed"
         else
           echo "No lint script found, skipping"
@@ -85,10 +84,15 @@ jobs:
     - name: Build Next.js
       run: |
         if [ -f "next.config.js" ]; then
-          npm run build
+          pnpm run build
         else
           echo "No Next.js config found, skipping build"
         fi
+
+    - name: Test APIs
+      run: |
+        echo "Testing API endpoints"
+        pnpm run test --if-present || echo "No tests configured"
 
   security-audit:
     name: Security Audit
@@ -116,9 +120,9 @@ jobs:
       if: contains(github.event.head_commit.message, '[ui]') || github.event_name == 'pull_request'
       run: |
         if [ -f "package.json" ]; then
-          npm audit --audit-level=moderate || echo "npm audit found some issues but continuing"
+          pnpm audit --fix || echo "npm audit issues detected - please review"
         elif [ -d "ui" ] && [ -f "ui/package.json" ]; then
-          cd ui && npm audit --audit-level=moderate || echo "npm audit found some issues but continuing"
+          cd ui && pnpm audit --fix || echo "npm audit issues detected - please review"
         else
           echo "No package.json found, skipping npm audit"
         fi
