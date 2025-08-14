@@ -148,7 +148,7 @@ make smoke
 
 ### Mainnet (When Available)
 
-⚠️ **Mainnet is not yet live.** Follow [@QuantumCoinDev](https://twitter.com/quantumcoindev) for updates.
+⚠️ **Mainnet is not yet live.** Follow [@QuantumCoinDev](https://x.com/aeonith22?s=21) for updates.
 
 ## 📱 Wallet Integration
 
@@ -234,7 +234,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Explorer**: https://explorer.quantumcoin.network
 - **GitHub**: https://github.com/aeonith/quantumcoin-ui-
 - **Discord**: https://discord.gg/quantumcoin
-- **Twitter**: [@QuantumCoinDev](https://twitter.com/quantumcoindev)
+- **Twitter**: [@QuantumCoinDev](https://x.com/aeonith22?s=21)
 
 ---
 
