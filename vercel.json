@@ -1,9 +1,7 @@
 {
   "version": 2,
   "name": "quantumcoin-ui",
-  "buildCommand": "npm run build",
-  "outputDirectory": "out",
-  "installCommand": "npm install",
+  "framework": "nextjs",
   "builds": [
     {
       "src": "package.json",

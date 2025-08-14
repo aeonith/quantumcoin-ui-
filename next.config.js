@@ -9,13 +9,13 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Output configuration for Vercel
-  output: 'export',
+  // Vercel deployment configuration
   trailingSlash: false,
-  distDir: 'out',
   images: {
     unoptimized: true
   },
+  // Enable both static and serverless
+  target: 'serverless',
   
   // Environment variables
   env: {
