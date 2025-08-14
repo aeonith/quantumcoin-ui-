@@ -1076,7 +1076,7 @@
       }
     }
 
-    // Perfect initialization
+    // Perfect initialization with REAL system integration
     document.addEventListener('DOMContentLoaded', function() {
       // Initialize market price engine
       const priceEngine = new QuantumPriceEngine();
@@ -1084,6 +1084,9 @@
 
       // Initialize perfect navigation
       new PerfectNavigation();
+
+      // Initialize REAL system monitoring
+      initializeRealSystemMonitoring();
 
       // Add scroll effects
       const observerOptions = {
@@ -1116,6 +1119,33 @@
       console.log('✅ Enterprise-grade architecture active');
       console.log('✅ This is the most perfect cryptocurrency platform ever created');
     });
+
+    // REAL system monitoring
+    async function initializeRealSystemMonitoring() {
+      try {
+        // Check all system components
+        const healthResponse = await fetch('/api/health');
+        const health = await healthResponse.json();
+        
+        console.log('🔥 System Health Check:', health);
+        
+        // Update system status indicators
+        if (health.status === 'healthy') {
+          document.body.style.setProperty('--system-status', '#00ff88');
+          console.log('✅ ALL SYSTEMS OPERATIONAL - CRYPTO.COM READY');
+        } else {
+          document.body.style.setProperty('--system-status', '#ffaa00');
+          console.log('⚠️ Some systems degraded - checking...');
+        }
+
+        // Display system capabilities
+        const capabilities = Object.keys(health.features || {}).filter(f => health.features[f]);
+        console.log('🚀 Active Features:', capabilities);
+        
+      } catch (error) {
+        console.error('System monitoring error:', error);
+      }
+    }
 
     // Perfect performance monitoring
     if ('performance' in window) {
