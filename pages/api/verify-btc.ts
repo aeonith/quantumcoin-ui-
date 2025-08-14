@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-// Calculate QTC amount based on BTC value and QTC price
-function computeQtcAmount(btcAmount: number, btcUsdPrice: number, qtcUsdPrice?: number): number {
-  const qtcPrice = Number(process.env.QTC_USD_PRICE || qtcUsdPrice || 1.00);
+// Calculate QTC amount based on BTC value and MARKET-DRIVEN QTC price
+function computeQtcAmount(btcAmount: number, btcUsdPrice: number, qtcMarketPrice: number): number {
   const usdValue = btcAmount * btcUsdPrice;
-  return Math.max(0, Math.floor(usdValue / qtcPrice)); // Return integer QTC
+  return Math.max(0, Math.floor(usdValue / qtcMarketPrice)); // Return integer QTC based on market price
 }
 
 export default async function handler(
@@ -69,20 +68,21 @@ export default async function handler(
       });
     }
 
-    // Get current BTC price
+    // Get current market-driven prices
     const priceResponse = await fetch(`${req.headers['x-forwarded-proto'] ?? 'https'}://${req.headers.host}/api/btc-price`);
     const priceData = await priceResponse.json();
-    const btcUsdPrice = priceData.usd;
+    const btcUsdPrice = priceData.btcUsd;
+    const qtcMarketPrice = priceData.qtcUsd;
 
-    if (!btcUsdPrice) {
+    if (!btcUsdPrice || !qtcMarketPrice) {
       return res.status(200).json({ 
         ok: false, 
-        error: "Unable to fetch BTC price. Please try again later." 
+        error: "Unable to fetch market prices. Please try again later." 
       });
     }
 
-    // Calculate QTC amount
-    const estimatedQtc = computeQtcAmount(btcAmount, btcUsdPrice);
+    // Calculate QTC amount using MARKET PRICE
+    const estimatedQtc = computeQtcAmount(btcAmount, btcUsdPrice, qtcMarketPrice);
 
     return res.status(200).json({ 
       ok: true, 
@@ -90,8 +90,12 @@ export default async function handler(
       satoshis: totalSatoshis,
       confirmations,
       btcUsdPrice,
+      qtcMarketPrice,
       estimatedQtc,
       usdValue: btcAmount * btcUsdPrice,
+      scarcityLevel: priceData.scarcityLevel,
+      demandLevel: priceData.demandLevel,
+      priceSource: priceData.source,
       timestamp: new Date().toISOString()
     });
 

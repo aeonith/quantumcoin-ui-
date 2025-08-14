@@ -5,10 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && next export",
     "start": "next start",
+    "export": "next export",
     "lint": "next lint",
-    "legacy-server": "node server.js"
+    "legacy-server": "node server.js",
+    "vercel-build": "next build"
   },
   "dependencies": {
     "next": "^14.0.0",

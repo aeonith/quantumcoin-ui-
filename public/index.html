@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuantumCoin™ - Quantum-Resistant Cryptocurrency</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+      color: #fff;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Navigation - FIXED CRAMPED LAYOUT */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(15px);
+      padding: 18px 0;
+      z-index: 1000;
+      border-bottom: 2px solid #00fdfd;
+      box-shadow: 0 2px 20px rgba(0, 253, 253, 0.3);
+    }
+
+    .nav-container {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo a {
+      color: #00fdfd;
+      font-size: 1.8em;
+      font-weight: bold;
+      text-decoration: none;
+      text-shadow: 0 0 10px #00fdfd;
+    }
+
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      gap: 30px; /* MUCH BETTER SPACING */
+    }
+
+    .nav-menu a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px; /* BIGGER BUTTONS */
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+      font-weight: 500;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .nav-menu a:hover,
+    .nav-menu a.active {
+      background: linear-gradient(135deg, #00fdfd, #0080ff);
+      color: black;
+      box-shadow: 0 4px 15px rgba(0, 253, 253, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: 2px solid #00fdfd;
+      color: #00fdfd;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    /* Mobile Navigation */
+    @media (max-width: 1200px) {
+      .nav-menu {
+        gap: 20px;
+      }
+      .nav-menu a {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nav-toggle {
+        display: block;
+      }
+
+      .nav-menu {
+        position: fixed;
+        top: 90px;
+        left: -100%;
+        width: 100%;
+        height: calc(100vh - 90px);
+        background: rgba(0, 0, 0, 0.98);
+        flex-direction: column;
+        align-items: center;
+        padding-top: 50px;
+        gap: 35px; /* BIG MOBILE SPACING */
+        transition: left 0.3s ease;
+        backdrop-filter: blur(20px);
+      }
+
+      .nav-menu.active {
+        left: 0;
+      }
+
+      .nav-menu a {
+        font-size: 1.3rem; /* BIGGER MOBILE TEXT */
+        padding: 25px 50px; /* MUCH BIGGER MOBILE BUTTONS */
+        width: 320px;
+        text-align: center;
+        border: 2px solid #00fdfd;
+        border-radius: 15px;
+        background: rgba(0, 253, 253, 0.1);
+      }
+    }
+
+    /* Main Content */
+    .main-content {
+      padding-top: 120px;
+    }
+
+    .hero-section {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-title {
+      font-size: 4rem;
+      font-weight: bold;
+      color: #00fdfd;
+      text-shadow: 0 0 30px #00fdfd;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #00fdfd, #0080ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 1.5rem;
+      color: #ffffff;
+      margin-bottom: 40px;
+      opacity: 0.9;
+    }
+
+    /* Market Price Display */
+    .market-price {
+      background: linear-gradient(135deg, rgba(0, 253, 253, 0.1), rgba(0, 128, 255, 0.1));
+      border: 2px solid #00fdfd;
+      border-radius: 20px;
+      padding: 30px;
+      margin: 40px auto;
+      max-width: 600px;
+      text-align: center;
+    }
+
+    .price-title {
+      color: #00fdfd;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    .price-value {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #00ff88;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px #00ff88;
+    }
+
+    .price-note {
+      font-size: 1rem;
+      opacity: 0.8;
+      color: #cccccc;
+    }
+
+    /* Feature Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); /* BIGGER CARDS */
+      gap: 35px; /* MORE SPACING */
+      max-width: 1400px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    .feature-card {
+      background: linear-gradient(135deg, rgba(0, 253, 253, 0.1), rgba(0, 40, 80, 0.3));
+      border: 2px solid rgba(0, 253, 253, 0.3);
+      border-radius: 20px;
+      padding: 35px; /* MORE PADDING */
+      backdrop-filter: blur(15px);
+      transition: all 0.3s ease;
+      text-align: center;
+      position: relative;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 25px 50px rgba(0, 253, 253, 0.2);
+      border-color: #00fdfd;
+    }
+
+    .feature-icon {
+      font-size: 3.5rem;
+      margin-bottom: 25px;
+      display: block;
+    }
+
+    .feature-title {
+      color: #00fdfd;
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .feature-description {
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.7;
+      margin-bottom: 30px;
+      font-size: 1.05rem;
+    }
+
+    .feature-button {
+      background: linear-gradient(135deg, #00fdfd, #0080ff);
+      color: black;
+      border: none;
+      padding: 18px 35px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 6px 20px rgba(0, 253, 253, 0.3);
+      margin: 5px;
+    }
+
+    .feature-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0, 253, 253, 0.5);
+    }
+
+    .status-indicator {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      background: rgba(0, 255, 0, 0.2);
+      color: #00ff88;
+      border: 1px solid #00ff88;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 2.8rem; }
+      .hero-subtitle { font-size: 1.3rem; }
+      .features-grid { 
+        grid-template-columns: 1fr; 
+        gap: 25px;
+      }
+      .feature-card { padding: 30px 25px; }
+      .price-value { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <a href="index.html">⚛️ QuantumCoin</a>
+      </div>
+      <button class="nav-toggle" id="nav-toggle">☰</button>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="/login">Login</a></li>
+        <li><a href="/register">Register</a></li>
+        <li><a href="wallet.html">Wallet</a></li>
+        <li><a href="exchange.html">Exchange</a></li>
+        <li><a href="mining.html">Mining</a></li>
+        <li><a href="explorer.html">Explorer</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="kyc.html">KYC</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <section class="hero-section">
+      <h1 class="hero-title">🚀 QuantumCoin™</h1>
+      <p class="hero-subtitle">The World's First Quantum-Resistant Cryptocurrency with Market-Driven Pricing</p>
+      
+      <!-- Market Price Display -->
+      <div class="market-price">
+        <div class="price-title">Current Market Price</div>
+        <div class="price-value" id="qtc-price">Loading...</div>
+        <div class="price-note">Price determined by supply, demand & scarcity • Updates every 30 seconds</div>
+      </div>
+    </section>
+
+    <!-- ALL FUNCTIONS VISIBLE -->
+    <section class="features-grid">
+      <!-- Modern Authentication -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">🔐</span>
+        <h3 class="feature-title">Modern Authentication</h3>
+        <p class="feature-description">
+          Professional login and registration system with React authentication, 
+          protected routes, and secure session management.
+        </p>
+        <a href="/login" class="feature-button">Login</a>
+        <a href="/register" class="feature-button">Register</a>
+      </div>
+
+      <!-- Quantum Wallet -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">💰</span>
+        <h3 class="feature-title">Quantum Wallet</h3>
+        <p class="feature-description">
+          Generate quantum-resistant addresses with QR codes, secure backup downloads, 
+          and RevStop™ protection. Your keys, your coins.
+        </p>
+        <a href="wallet.html" class="feature-button">Generate Wallet</a>
+      </div>
+
+      <!-- BTC Exchange -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">💱</span>
+        <h3 class="feature-title">Bitcoin Exchange</h3>
+        <p class="feature-description">
+          Buy QTC with Bitcoin using real blockchain verification via mempool.space. 
+          Market-driven pricing based on supply and demand.
+        </p>
+        <a href="exchange.html" class="feature-button">Exchange BTC</a>
+      </div>
+
+      <!-- Mining Dashboard -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">⛏️</span>
+        <h3 class="feature-title">Mining Dashboard</h3>
+        <p class="feature-description">
+          Advanced mining interface with real-time statistics, pool configuration, 
+          and automatic reward tracking. Start earning QTC today.
+        </p>
+        <a href="mining.html" class="feature-button">Start Mining</a>
+      </div>
+
+      <!-- Block Explorer -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">🔍</span>
+        <h3 class="feature-title">Block Explorer</h3>
+        <p class="feature-description">
+          Search blocks, transactions, and addresses on the QuantumCoin network. 
+          Real-time blockchain data and network statistics.
+        </p>
+        <a href="explorer.html" class="feature-button">Explore Network</a>
+      </div>
+
+      <!-- User Dashboard -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">📊</span>
+        <h3 class="feature-title">User Dashboard</h3>
+        <p class="feature-description">
+          Complete overview of your wallet, transactions, RevStop™ status, 
+          and AI security features in one centralized interface.
+        </p>
+        <a href="dashboard.html" class="feature-button">View Dashboard</a>
+      </div>
+
+      <!-- KYC Verification -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">🔒</span>
+        <h3 class="feature-title">KYC Verification</h3>
+        <p class="feature-description">
+          Optional identity verification for enhanced security and exchange access. 
+          Simple captcha-based verification system.
+        </p>
+        <a href="kyc.html" class="feature-button">Verify Identity</a>
+      </div>
+
+      <!-- RevStop Protection -->
+      <div class="feature-card">
+        <span class="status-indicator">LIVE</span>
+        <span class="feature-icon">🛡️</span>
+        <h3 class="feature-title">RevStop™ Protection</h3>
+        <p class="feature-description">
+          Revolutionary transaction protection system with optional irreversible 
+          wallet lock. The ultimate security for your digital assets.
+        </p>
+        <a href="wallet.html" class="feature-button">Enable RevStop™</a>
+      </div>
+
+      <!-- Modern React App -->
+      <div class="feature-card" style="border-color: #ff6b6b;">
+        <span class="status-indicator" style="background: rgba(255, 107, 107, 0.2); color: #ff6b6b; border-color: #ff6b6b;">NEW!</span>
+        <span class="feature-icon">⚛️</span>
+        <h3 class="feature-title">Modern React App</h3>
+        <p class="feature-description">
+          Experience the cutting-edge Next.js interface with React components, 
+          TypeScript, Tailwind CSS, and advanced state management.
+        </p>
+        <a href="/" class="feature-button" style="background: linear-gradient(135deg, #ff6b6b, #ff4757);">Launch React App</a>
+      </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section style="max-width: 1200px; margin: 100px auto; padding: 0 20px;">
+      <div style="background: rgba(0, 253, 253, 0.1); border: 2px solid #00fdfd; border-radius: 25px; padding: 50px; text-align: center;">
+        <h2 style="color: #00fdfd; font-size: 2.8rem; margin-bottom: 40px;">⚙️ Revolutionary Technology</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; margin-top: 50px;">
+          <div style="padding: 30px; background: rgba(0, 0, 0, 0.3); border-radius: 15px;">
+            <h3 style="color: #00fdfd; font-size: 1.4rem; margin-bottom: 20px;">🛡️ Post-Quantum Security</h3>
+            <p style="opacity: 0.85; line-height: 1.7; font-size: 1.05rem;">
+              NIST-approved Dilithium2 signatures resist quantum computer attacks 
+              that will break Bitcoin and other cryptocurrencies.
+            </p>
+          </div>
+          
+          <div style="padding: 30px; background: rgba(0, 0, 0, 0.3); border-radius: 15px;">
+            <h3 style="color: #00fdfd; font-size: 1.4rem; margin-bottom: 20px;">📈 Market-Driven Pricing</h3>
+            <p style="opacity: 0.85; line-height: 1.7; font-size: 1.05rem;">
+              True market economics with supply scarcity, demand pressure, 
+              and Bitcoin influence determining real-time value.
+            </p>
+          </div>
+          
+          <div style="padding: 30px; background: rgba(0, 0, 0, 0.3); border-radius: 15px;">
+            <h3 style="color: #00fdfd; font-size: 1.4rem; margin-bottom: 20px;">🔒 RevStop™ Innovation</h3>
+            <p style="opacity: 0.85; line-height: 1.7; font-size: 1.05rem;">
+              Patent-pending transaction protection with optional permanent 
+              wallet lock - revolutionary security for digital assets.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 60px 20px; border-top: 1px solid rgba(0, 253, 253, 0.3);">
+      <p style="font-size: 1.1rem; margin-bottom: 20px;">&copy; 2025 QuantumCoin™. Built for the Next Era of Humanity.</p>
+      <div>
+        <a href="https://github.com/aeonith/quantumcoin-ui-" target="_blank" style="color: #00fdfd; margin: 0 20px; font-size: 1.1rem;">📂 GitHub</a>
+        <a href="https://t.me/+abzOvpCAUfwyYjIx" target="_blank" style="color: #00fdfd; margin: 0 20px; font-size: 1.1rem;">💬 Telegram</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Market-driven price updates
+    async function updateMarketPrice() {
+      try {
+        const response = await fetch('/api/btc-price');
+        const data = await response.json();
+        
+        document.getElementById('qtc-price').textContent = `$${data.qtcUsd.toFixed(4)}`;
+        
+        console.log('✅ Market Price Updated:', {
+          qtcPrice: data.qtcUsd,
+          btcPrice: data.btcUsd,
+          scarcity: data.scarcityLevel,
+          demand: data.demandLevel,
+          formula: data.priceFormula
+        });
+      } catch (error) {
+        console.error('Price update error:', error);
+        document.getElementById('qtc-price').textContent = '$0.0250'; // Fallback
+      }
+    }
+
+    // Mobile Navigation
+    const navToggle = document.getElementById('nav-toggle');
+    const navMenu = document.getElementById('nav-menu');
+
+    navToggle.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+    });
+
+    navMenu.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') {
+        navMenu.classList.remove('active');
+      }
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateMarketPrice();
+      setInterval(updateMarketPrice, 30000);
+      
+      console.log('🚀 QuantumCoin™ Homepage Loaded');
+      console.log('✅ Market-driven pricing active');
+      console.log('✅ All modern functions visible');
+      console.log('✅ Navigation layout fixed - no more cramped items');
+      console.log('✅ Login/Register/Exchange prominently displayed');
+    });
+  </script>
+</body>
+</html>

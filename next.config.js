@@ -10,8 +10,12 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   // Output configuration for Vercel
-  output: 'standalone',
+  output: 'export',
   trailingSlash: false,
+  distDir: 'out',
+  images: {
+    unoptimized: true
+  },
   
   // Environment variables
   env: {
