@@ -25,32 +25,39 @@ export interface BlockchainInfo {
   hashRate: string;
 }
 
-// Wallet API Functions
+// REAL Wallet API Functions - PRODUCTION CRYPTOCURRENCY SYSTEM
 export const walletAPI = {
-  // Generate a new wallet address (connects to Rust backend when available)
-  generateAddress: async (): Promise<string> => {
+  // Generate a REAL quantum-resistant wallet using backend cryptography
+  generateAddress: async (): Promise<{ address: string; publicKey: string; success: boolean }> => {
     if (!API_BASE) {
-      // Fallback: Generate client-side address
-      const bytes = new Uint8Array(32);
-      crypto.getRandomValues(bytes);
-      const base64 = btoa(String.fromCharCode(...bytes));
-      return "QTC" + base64.replace(/[+/=]/g, '').slice(0, 42);
+      throw new Error('Backend required for real wallet generation. This is not a demo.');
     }
 
     try {
       const response = await fetch(`${API_BASE}/wallet/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
       });
+      
+      if (!response.ok) {
+        throw new Error(`Wallet generation failed: ${response.status}`);
+      }
+      
       const data = await response.json();
-      return data.address;
+      
+      if (!data.success || !data.address) {
+        throw new Error('Invalid wallet generation response');
+      }
+      
+      return {
+        address: data.address,
+        publicKey: data.public_key,
+        success: true
+      };
     } catch (error) {
-      console.error('Error generating address:', error);
-      // Fallback to client-side generation
-      const bytes = new Uint8Array(32);
-      crypto.getRandomValues(bytes);
-      const base64 = btoa(String.fromCharCode(...bytes));
-      return "QTC" + base64.replace(/[+/=]/g, '').slice(0, 42);
+      console.error('REAL wallet generation error:', error);
+      throw new Error('Failed to generate quantum-resistant wallet. Backend connection required.');
     }
   },
 

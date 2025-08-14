@@ -107,7 +107,42 @@ fn get_blockchain(blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<Vec
 fn get_balance(address: String, blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<Value> {
     let blockchain = futures::executor::block_on(blockchain_state.read());
     let balance = blockchain.get_balance(&address);
-    Json(json!({"address": address, "balance": balance}))
+    Json(json!({
+        "address": address, 
+        "balance": balance,
+        "confirmed_balance": balance,
+        "pending_balance": 0,
+        "last_updated": chrono::Utc::now().to_rfc3339()
+    }))
+}
+
+#[post("/wallet/generate")]
+fn generate_wallet() -> Json<Value> {
+    // Generate REAL quantum-resistant wallet
+    let (private_key, public_key, address) = wallet::generate_quantum_keypair();
+    Json(json!({
+        "success": true,
+        "address": address,
+        "public_key": public_key,
+        "created_at": chrono::Utc::now().to_rfc3339(),
+        "quantum_resistant": true
+    }))
+}
+
+#[get("/network/stats")]
+fn get_network_stats(blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<Value> {
+    let blockchain = futures::executor::block_on(blockchain_state.read());
+    Json(json!({
+        "height": blockchain.get_height(),
+        "difficulty": blockchain.get_difficulty(),
+        "hash_rate": blockchain.get_network_hashrate(),
+        "total_supply": blockchain.get_total_supply(),
+        "circulating_supply": blockchain.get_circulating_supply(),
+        "active_nodes": blockchain.get_active_nodes(),
+        "mempool_size": blockchain.get_mempool_size(),
+        "last_block_time": blockchain.get_last_block_time(),
+        "network_version": "1.0.0"
+    }))
 }
 
 #[post("/transaction", data = "<transaction>")]

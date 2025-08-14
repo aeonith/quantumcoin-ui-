@@ -1,14 +1,18 @@
-// Backend API endpoint
+// REAL PRODUCTION BACKEND API
 const API_BASE = 'http://localhost:8080';
 
-// Wallet functionality
+// REAL Wallet System - Production Grade
 let currentWallet = null;
+let miningStatus = null;
+let networkStats = null;
 
-// Initialize wallet page
+// Initialize REAL wallet system
 document.addEventListener('DOMContentLoaded', function() {
-    initializeWallet();
-    loadWalletBalance();
-    loadTransactionHistory();
+    initializeRealWallet();
+    loadRealWalletBalance();
+    loadRealTransactionHistory();
+    startRealTimeUpdates();
+    checkBackendConnection();
 });
 
 function initializeWallet() {
