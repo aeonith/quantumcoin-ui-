@@ -120,45 +120,32 @@ export default async function handler(
       }
 
     } else {
-      // Development fallback: Secure local authentication
-      const users = JSON.parse(localStorage.getItem('qtc_users') || '[]');
-      const user = users.find(u => u.email === email.toLowerCase());
-      
-      if (!user) {
+      // Development fallback: Mock authentication for testing
+      if (email === "demo@quantumcoin.com" && password === "demo12345") {
+        const sessionToken = jwt.sign(
+          { userId: "demo-user", email: email },
+          process.env.JWT_SECRET || "fallback-secret",
+          { expiresIn: '24h' }
+        );
+
+        return res.status(200).json({
+          success: true,
+          user: {
+            id: "demo-user",
+            email: email,
+            createdAt: new Date().toISOString()
+          },
+          session: {
+            token: sessionToken,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          }
+        });
+      } else {
         return res.status(401).json({
           success: false,
-          error: "User not found"
+          error: "Invalid credentials. Use demo@quantumcoin.com / demo12345 for testing."
         });
       }
-
-      const passwordValid = await bcrypt.compare(password, user.password);
-      
-      if (!passwordValid) {
-        return res.status(401).json({
-          success: false,
-          error: "Invalid credentials"
-        });
-      }
-
-      // Generate session token
-      const sessionToken = jwt.sign(
-        { userId: user.id, email: user.email },
-        process.env.JWT_SECRET || "fallback-secret",
-        { expiresIn: '24h' }
-      );
-
-      return res.status(200).json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          createdAt: user.createdAt
-        },
-        session: {
-          token: sessionToken,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        }
-      });
     }
 
   } catch (error: any) {

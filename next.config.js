@@ -15,8 +15,8 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  // Enable both static and serverless
-  target: 'serverless',
+  // Modern Next.js doesn't use target
+  // target: 'serverless', // Deprecated in Next.js 12+
   
   // Environment variables
   env: {
