@@ -7,9 +7,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       <RevStopProvider>
-        <div className="min-h-screen bg-quantum-dark">
-          <Component {...pageProps} />
-        </div>
+        <Component {...pageProps} />
       </RevStopProvider>
     </AuthProvider>
   );

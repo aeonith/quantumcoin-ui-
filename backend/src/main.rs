@@ -165,6 +165,42 @@ fn mine_block(
     Json(mined_block)
 }
 
+#[derive(Deserialize)]
+struct CreditRequest {
+    address: String,
+    amount: f64,
+    reason: Option<String>,
+}
+
+#[post("/wallet/credit", data = "<credit_req>")]
+fn credit_wallet(
+    credit_req: Json<CreditRequest>,
+    blockchain_state: &State<Arc<RwLock<Blockchain>>>
+) -> Json<Value> {
+    let mut blockchain = futures::executor::block_on(blockchain_state.write());
+    
+    // Create a credit transaction (from exchange)
+    let transaction = blockchain::Transaction {
+        id: format!("exchange_{}", chrono::Utc::now().timestamp()),
+        from: "EXCHANGE".to_string(),
+        to: credit_req.address.clone(),
+        amount: credit_req.amount,
+        timestamp: chrono::Utc::now(),
+        signature: "EXCHANGE_VERIFIED".to_string(),
+    };
+    
+    blockchain.create_transaction(transaction);
+    let new_balance = blockchain.get_balance(&credit_req.address);
+    
+    Json(json!({
+        "success": true,
+        "amount": credit_req.amount,
+        "newBalance": new_balance,
+        "reason": credit_req.reason.as_ref().unwrap_or(&"CREDIT".to_string()),
+        "timestamp": chrono::Utc::now().to_rfc3339()
+    }))
+}
+
 #[launch]
 fn rocket() -> _ {
     if !Path::new("uploads").exists() {
@@ -186,7 +222,7 @@ fn rocket() -> _ {
         .manage(blockchain)
         .mount("/", routes![
             index, register, login, kyc_upload, show_keys, toggle_revstop,
-            get_blockchain, get_balance, create_transaction, mine_block
+            get_blockchain, get_balance, create_transaction, mine_block, credit_wallet
         ])
         .mount("/static", FileServer::from(relative!("static")))
         .configure(rocket::Config {
