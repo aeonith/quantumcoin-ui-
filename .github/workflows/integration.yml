@@ -1,0 +1,77 @@
+name: FULL INTEGRATION TEST - ZERO FAILURES
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  full-system-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start production stack
+        run: |
+          docker compose -f docker-compose.production.yml up -d --build
+          echo "Waiting for services to be ready..."
+
+      - name: Wait for all services
+        run: |
+          max_attempts=60
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            attempt=$((attempt + 1))
+            echo "Attempt $attempt/$max_attempts"
+            
+            if curl -f http://localhost:3000/api/health &>/dev/null; then
+              echo "✅ UI is responding"
+              if curl -f http://localhost:8081/health &>/dev/null; then
+                echo "✅ AI Load Balancer is responding"
+                echo "🎉 All services are ready!"
+                exit 0
+              else
+                echo "⏳ Waiting for AI services..."
+              fi
+            else
+              echo "⏳ Waiting for UI..."
+            fi
+            
+            sleep 5
+          done
+          
+          echo "❌ Services failed to start in time"
+          docker compose -f docker-compose.production.yml ps
+          docker compose -f docker-compose.production.yml logs
+          exit 1
+
+      - name: API Integration Test
+        run: |
+          echo "🧪 Testing API endpoints..."
+          
+          curl -f http://localhost:3000/api/health | jq .
+          curl -f -X POST http://localhost:3000/api/wallet/generate | jq .
+          curl -f http://localhost:3000/api/network/stats | jq .
+          curl -f http://localhost:3000/api/mining/status | jq .
+          
+          echo "✅ All API endpoints responding"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f docker-compose.production.yml down -v
+          docker system prune -f
