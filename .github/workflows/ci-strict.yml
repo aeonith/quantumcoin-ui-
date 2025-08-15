@@ -1,0 +1,123 @@
+name: STRICT CI - ZERO FAILURES ALLOWED
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Type check (MUST PASS)
+        run: npm run typecheck
+        
+      - name: Lint (ZERO WARNINGS)
+        run: npm run lint
+        
+      - name: Test with coverage (90%+ REQUIRED)
+        run: npm run test
+        
+      - name: Enforce coverage threshold
+        run: |
+          node -e "
+          const coverage = require('./coverage/coverage-summary.json');
+          const pct = coverage.total.lines.pct;
+          if (pct < 90) {
+            console.error(\`Coverage \${pct}% is below 90% threshold\`);
+            process.exit(1);
+          }
+          console.log(\`Coverage: \${pct}% - PASSED\`);
+          "
+          
+      - name: Build (MUST SUCCEED)
+        run: npm run build
+        
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for Rust code
+        id: rust-check
+        run: |
+          if [ -f "Cargo.toml" ] || [ -f "backend/Cargo.toml" ] || find . -name "Cargo.toml" -not -path "./target/*" | head -1; then
+            echo "has-rust=true" >> $GITHUB_OUTPUT
+          else
+            echo "has-rust=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Install Rust
+        if: steps.rust-check.outputs.has-rust == 'true'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          
+      - name: Cache Rust
+        if: steps.rust-check.outputs.has-rust == 'true'
+        uses: Swatinem/rust-cache@v2
+        
+      - name: Format check
+        if: steps.rust-check.outputs.has-rust == 'true'
+        run: |
+          if [ -f "backend/Cargo.toml" ]; then
+            cd backend && cargo fmt --all -- --check
+          else
+            cargo fmt --all -- --check
+          fi
+          
+      - name: Clippy (ZERO WARNINGS)
+        if: steps.rust-check.outputs.has-rust == 'true'
+        run: |
+          if [ -f "backend/Cargo.toml" ]; then
+            cd backend && cargo clippy --all-targets --all-features -- -D warnings
+          else
+            cargo clippy --workspace --all-targets --all-features -- -D warnings
+          fi
+          
+      - name: Test
+        if: steps.rust-check.outputs.has-rust == 'true'
+        run: |
+          if [ -f "backend/Cargo.toml" ]; then
+            cd backend && cargo test --all-features
+          else
+            cargo test --workspace --all-features
+          fi
+          
+      - name: Build
+        if: steps.rust-check.outputs.has-rust == 'true'
+        run: |
+          if [ -f "backend/Cargo.toml" ]; then
+            cd backend && cargo build --release
+          else
+            cargo build --release --workspace
+          fi
+            
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1'
+          
+      - name: CodeQL Analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript,typescript
+          
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

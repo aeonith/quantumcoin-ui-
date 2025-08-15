@@ -1,37 +1,39 @@
-# QuantumCoin Docker Configuration
-FROM rust:1.70 as builder
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Set working directory
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Copy Cargo files
-COPY Cargo.toml ./
-COPY src/ ./src/
+ENV NODE_ENV production
 
-# Build the application
-RUN cargo build --release
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Runtime stage
-FROM debian:bullseye-slim
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Copy built application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy the built application
-COPY --from=builder /app/target/release/quantumcoin-integrated /usr/local/bin/
+USER nextjs
 
-# Copy web assets
-COPY *.html /app/web/
-COPY *.js /app/web/
-COPY *.css /app/web/
+EXPOSE 3000
 
-# Set working directory
-WORKDIR /app
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
 
-# Expose ports
-EXPOSE 8332 8333
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-# Default command
-CMD ["quantumcoin-integrated", "node", "--genesis"]
+CMD ["node", "server.js"]

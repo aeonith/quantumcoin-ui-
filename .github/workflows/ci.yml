@@ -1,4 +1,4 @@
-name: QuantumCoin CI - PRODUCTION CRYPTOCURRENCY SYSTEM
+name: STRICT CI - ZERO FAILURES ALLOWED
 on:
   push:
     branches: [main, develop]

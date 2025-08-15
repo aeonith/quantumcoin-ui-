@@ -1,0 +1,78 @@
+version: "3.9"
+services:
+  ai-daemon-1:
+    build: 
+      context: .
+      dockerfile: services/ai-daemon/Dockerfile
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    environment:
+      - MODEL_PATH=/app/model.joblib
+
+  ai-daemon-2:
+    build:
+      context: .
+      dockerfile: services/ai-daemon/Dockerfile
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    environment:
+      - MODEL_PATH=/app/model.joblib
+
+  ai-lb:
+    image: nginx:1.27-alpine
+    depends_on:
+      ai-daemon-1:
+        condition: service_healthy
+      ai-daemon-2:
+        condition: service_healthy
+    ports: ["8081:8081"]
+    volumes:
+      - ./ops/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: always
+
+  blockchain-node:
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
+    ports: ["8080:8080"]
+    restart: always
+    environment:
+      - RUST_LOG=info
+      - QTC_NETWORK=mainnet
+      - QTC_CHAIN_ID=qtc-mainnet-1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_AI_URL=http://ai-lb:8081
+      - NEXT_PUBLIC_API_BASE=http://blockchain-node:8080
+      - NEXT_PUBLIC_BUILD_ID=${GITHUB_SHA:-local}
+      - QTC_NETWORK=mainnet
+      - QTC_CHAIN_ID=qtc-mainnet-1
+    ports: ["3000:3000"]
+    depends_on:
+      ai-lb:
+        condition: service_started
+      blockchain-node:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 3

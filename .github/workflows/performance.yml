@@ -1,0 +1,110 @@
+name: PERFORMANCE - ZERO TOLERANCE
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & start stack
+        run: docker compose -f docker-compose.production.yml up -d --build
+
+      - name: Wait for all services to be healthy
+        run: |
+          echo "Waiting for services to be healthy..."
+          for i in {1..120}; do
+            if docker compose -f docker-compose.production.yml ps --format json | jq -r '.[] | select(.State == "running" and (.Health == "healthy" or .Health == "")) | .Name' | wc -l | grep -q "4"; then
+              echo "All services are healthy"
+              exit 0
+            fi
+            echo "Waiting... ($i/120)"
+            sleep 5
+          done
+          echo "Services failed to become healthy in time"
+          docker compose -f docker-compose.production.yml ps
+          docker compose -f docker-compose.production.yml logs
+          exit 1
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Performance test - UI smoke (MUST PASS)
+        run: |
+          export UI_URL=http://localhost:3000
+          k6 run perf/ui-smoke.js
+          
+      - name: Performance test - AI load (MUST PASS)
+        run: |
+          export AI_URL=http://localhost:8081
+          k6 run perf/ai-load.js
+
+      - name: Collect logs on failure
+        if: failure()
+        run: |
+          echo "=== DOCKER COMPOSE STATUS ==="
+          docker compose -f docker-compose.production.yml ps
+          echo "=== SERVICE LOGS ==="
+          docker compose -f docker-compose.production.yml logs --no-color > performance-logs.txt
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-failure-logs
+          path: performance-logs.txt
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.production.yml down -v
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+        
+      - name: Start stack for E2E
+        run: docker compose -f docker-compose.production.yml up -d --build
+        
+      - name: Wait for UI to be ready
+        run: |
+          for i in {1..60}; do
+            if curl -f http://localhost:3000/api/health; then
+              echo "UI is ready"
+              break
+            fi
+            echo "Waiting for UI... ($i/60)"
+            sleep 5
+          done
+          
+      - name: Run E2E tests
+        run: npm run e2e
+        
+      - name: Upload E2E results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: test-results/
+          
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.production.yml down -v

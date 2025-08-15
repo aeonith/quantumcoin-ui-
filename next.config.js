@@ -1,13 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   experimental: {
     appDir: false, // Use pages directory
   },
   typescript: {
-    ignoreBuildErrors: true, // Allow builds even with TS errors initially
+    ignoreBuildErrors: false, // STRICT: No TS errors allowed
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // STRICT: No lint errors allowed
   },
   // Vercel deployment configuration
   trailingSlash: false,
