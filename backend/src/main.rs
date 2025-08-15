@@ -16,9 +16,11 @@ mod wallet;
 mod revstop;
 mod blockchain;
 mod rpc;
+mod ai_integration;
 
 use crate::blockchain::{Blockchain, Transaction};
 use crate::rpc::{RpcServer, RpcRequest, RpcResponse};
+use crate::ai_integration::{AIState, SentinelOutput};
 
 #[derive(FromForm, Serialize, Deserialize)]
 struct UserData {
@@ -208,6 +210,7 @@ fn rocket() -> _ {
     }
 
     let blockchain = Arc::new(RwLock::new(Blockchain::new()));
+    let ai_state = Arc::new(RwLock::new(AIState::default()));
     
     // Start RPC server in background
     let rpc_blockchain = Arc::clone(&blockchain);
@@ -218,11 +221,30 @@ fn rocket() -> _ {
         }
     });
 
+    // Start AI Sentinel in background
+    let ai_blockchain = Arc::clone(&blockchain);
+    let ai_state_clone = Arc::clone(&ai_state);
+    tokio::spawn(async move {
+        loop {
+            // AI continuously monitors and optimizes blockchain
+            tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
+            
+            let blockchain_read = ai_blockchain.read().await;
+            if let Some(latest_block) = blockchain_read.chain.last() {
+                tracing::info!("🤖 AI Sentinel analyzing block #{}", latest_block.index);
+                // In full implementation, this would trigger AI analysis
+            }
+        }
+    });
+
     rocket::build()
         .manage(blockchain)
+        .manage(ai_state)
         .mount("/", routes![
             index, register, login, kyc_upload, show_keys, toggle_revstop,
-            get_blockchain, get_balance, create_transaction, mine_block, credit_wallet
+            get_blockchain, get_balance, create_transaction, mine_block, credit_wallet,
+            ai_integration::update_ai_optimizations, ai_integration::get_ai_status,
+            ai_integration::get_network_metrics, ai_integration::get_latest_block
         ])
         .mount("/static", FileServer::from(relative!("static")))
         .configure(rocket::Config {

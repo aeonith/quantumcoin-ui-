@@ -1,7 +1,9 @@
 [workspace]
 members = [
     "crates/node",
-    "crates/wallet", 
+    "crates/wallet",
+    "crates/ai-sentinel",
+    "backend"
 ]
 resolver = "2"
 
