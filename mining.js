@@ -142,54 +142,9 @@ function updateMiningUI(isMining) {
 async function startMining() {
     await startRealMining();
 }
-    
-    const miningInterval = setInterval(async () => {
-        if (!mining) {
-            clearInterval(miningInterval);
-            return;
-        }
-        
-        // Simulate hash rate
-        hashRate = Math.floor(Math.random() * 1000) + 500;
-        document.getElementById('hashrate').textContent = hashRate + ' H/s';
-        
-        // Attempt to mine a block (random chance)
-        if (Math.random() < 0.1) {
-            try {
-                const response = await fetch(`${API_BASE}/mine/${walletAddress}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const block = await response.json();
-                    totalMined += 10; // Mining reward
-                    document.getElementById('total-mined').textContent = totalMined + ' QTC';
-                    showNotification(`Block #${block.index} mined! Reward: 10 QTC`);
-                    
-                    // Update balance display if available
-                    updateBalance();
-                }
-            } catch (error) {
-                console.error('Mining error:', error);
-                showNotification('Mining error - using simulation mode');
-                // Fallback to simulation
-                totalMined += 10;
-                document.getElementById('total-mined').textContent = totalMined + ' QTC';
-                showNotification('Block mined! Reward: 10 QTC (simulated)');
-            }
-        }
-    }, 3000); // Mine every 3 seconds for demo
-}
 
-function stopMining() {
-    mining = false;
-    document.getElementById('mining-status').textContent = 'Stopped';
-    document.getElementById('start-mining').disabled = false;
-    document.getElementById('stop-mining').disabled = true;
-    document.getElementById('hashrate').textContent = '0 H/s';
+async function stopMining() {
+    await stopRealMining();
 }
 
 async function updateBalance() {

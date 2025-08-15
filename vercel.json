@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "quantumcoin-ui",
+  "name": "quantumcoin-production",
   "framework": "nextjs",
   "builds": [
     {
@@ -11,7 +11,12 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/api/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      }
     },
     {
       "src": "/(.*\\.html)$",
@@ -32,18 +37,48 @@
   ],
   "functions": {
     "pages/api/*.ts": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
     }
   },
   "env": {
-    "NEXT_PUBLIC_BTC_ADDRESS": "@next_public_btc_address",
-    "EXCHANGE_AVAILABLE_FLOAT": "@exchange_available_float",
-    "QTC_USD_PRICE": "@qtc_usd_price",
-    "NEXT_PUBLIC_REVSTOP_DEFAULT_ON": "@next_public_revstop_default_on"
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_API_URL": "https://quantumcoin-ui.vercel.app/api",
+    "NEXT_PUBLIC_BTC_ADDRESS": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    "EXCHANGE_AVAILABLE_FLOAT": "50000",
+    "QTC_USD_PRICE": "0.45",
+    "NEXT_PUBLIC_REVSTOP_DEFAULT_ON": "true"
   },
   "build": {
     "env": {
       "NEXT_TELEMETRY_DISABLED": "1"
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options", 
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "X-QuantumCoin-Version",
+          "value": "1.0.0-production"
+        }
+      ]
+    }
+  ]
 }
