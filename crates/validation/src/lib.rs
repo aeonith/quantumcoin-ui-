@@ -18,6 +18,7 @@ pub use utxo_validator::{UtxoValidator, UtxoSet, SpendError};
 pub use signature_validator::{SignatureValidator, SignatureError};
 pub use fee_validator::{FeeValidator, FeeError, FeePolicy};
 pub use format_validator::{FormatValidator, FormatError};
+pub use transaction_validator::{TransactionValidator};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

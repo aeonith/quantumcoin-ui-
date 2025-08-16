@@ -6,16 +6,18 @@
 //! - Size, fee, and format validation from chain_spec.toml
 //! - Thread-safe concurrent validation
 
-use crate::*;
+use crate::{
+    ValidationConfig, ValidationResult, ValidationError, Transaction, UtxoSet, UtxoValidator,
+    SignatureValidator, FeeValidator, FormatValidator
+};
 use anyhow::Result;
 use pqcrypto_dilithium::dilithium2::*;
 use pqcrypto_traits::sign::{PublicKey, SecretKey, SignedMessage};
-use blake3::{Hasher, Hash};
-use std::collections::{HashMap, HashSet};
+use blake3::Hasher;
+use std::collections::HashMap;
 use std::sync::Arc;
 use parking_lot::RwLock;
 use tracing::{debug, warn, error, info};
-use chrono::{DateTime, Utc};
 
 /// Production-grade transaction validator with bulletproof validation
 pub struct TransactionValidator {

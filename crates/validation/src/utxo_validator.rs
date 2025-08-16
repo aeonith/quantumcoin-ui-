@@ -1,8 +1,9 @@
 //! UTXO validator with double-spend prevention
 
-use crate::*;
+use crate::{ValidationConfig, ValidationResult, ValidationError, Transaction, TxOutput, OutPoint, UtxoEntry};
 use anyhow::Result;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 use parking_lot::RwLock;
 
 #[derive(Debug, thiserror::Error)]

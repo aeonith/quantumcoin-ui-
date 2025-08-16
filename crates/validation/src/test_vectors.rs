@@ -2,8 +2,7 @@
 //! 
 //! Provides golden test cases including malicious/edge case transactions
 
-use crate::*;
-use chrono::{DateTime, Utc};
+use crate::{Transaction, TxInput, TxOutput, OutPoint};
 
 /// Create a valid test transaction
 pub fn create_valid_test_transaction() -> Transaction {

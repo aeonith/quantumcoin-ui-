@@ -1,6 +1,6 @@
 //! Fee validation with market-based policies
 
-use crate::*;
+use crate::{ValidationConfig, ValidationResult, ValidationError, Transaction, UtxoSet};
 use anyhow::Result;
 use tracing::{debug, warn};
 

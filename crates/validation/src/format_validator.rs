@@ -1,6 +1,6 @@
 //! Transaction format validator
 
-use crate::*;
+use crate::{ValidationConfig, ValidationResult, ValidationError, Transaction};
 use anyhow::Result;
 
 #[derive(Debug, thiserror::Error)]

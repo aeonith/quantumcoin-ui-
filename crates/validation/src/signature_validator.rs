@@ -1,9 +1,8 @@
 //! Post-quantum signature validator using Dilithium2
 
-use crate::*;
 use anyhow::Result;
 use pqcrypto_dilithium::dilithium2::*;
-use pqcrypto_traits::sign::{PublicKey, SecretKey, SignedMessage, DetachedSignature};
+use pqcrypto_traits::sign::{PublicKey, DetachedSignature};
 use blake3::Hasher;
 use std::collections::HashMap;
 use parking_lot::RwLock;
