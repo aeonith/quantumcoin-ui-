@@ -6,7 +6,8 @@ members = [
     "crates/genesis",
     "crates/validation",
     "crates/p2p",
-    "backend"
+    "backend",
+    "stress-test"
 ]
 resolver = "2"
 
