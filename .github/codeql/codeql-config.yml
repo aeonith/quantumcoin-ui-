@@ -1,0 +1,30 @@
+name: "QuantumCoin CodeQL Config"
+
+disable-default-queries: false
+
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - "target/"
+  - "node_modules/"
+  - "**/*.test.js"
+  - "**/*.test.ts"
+  - "**/*.test.rs"
+  - "**/test_*"
+  - "examples/"
+  - "docs/"
+
+paths:
+  - "src/"
+  - "crates/"
+  - "backend/"
+  - "*.js"
+  - "*.ts"
+  - "*.rs"
+
+# Reduce false positives for blockchain code
+pack-filters:
+  - exclude:
+      kind: problem
+      severity: note

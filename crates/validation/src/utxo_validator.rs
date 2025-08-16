@@ -38,6 +38,14 @@ impl UtxoSet {
     pub fn is_spent(&self, outpoint: &OutPoint) -> bool {
         self.spent_utxos.read().contains(outpoint)
     }
+
+    pub fn add_utxo(&self, outpoint: OutPoint, entry: UtxoEntry) {
+        self.utxos.write().insert(outpoint, entry);
+    }
+
+    pub fn mark_spent(&self, outpoint: &OutPoint) {
+        self.spent_utxos.write().insert(*outpoint);
+    }
 }
 
 pub struct UtxoValidator;
@@ -98,5 +106,11 @@ impl UtxoValidator {
         } else {
             Ok(ValidationResult::invalid(errors))
         }
+    }
+}
+
+impl Default for UtxoSet {
+    fn default() -> Self {
+        Self::new()
     }
 }

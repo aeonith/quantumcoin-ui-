@@ -2,60 +2,47 @@
 
 ## Supported Versions
 
-We provide security updates for the following versions:
-
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.x.x   | :white_check_mark: |
+| 2.0.x   | :white_check_mark: |
 | < 2.0   | :x:                |
 
 ## Reporting a Vulnerability
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+If you discover a security vulnerability in QuantumCoin, please follow these steps:
 
-Instead, please report security vulnerabilities to:
-- Email: security@quantumcoincrypto.com
-- Use our GPG key for encryption: [link to public key]
-
-Include the following information:
-- Description of the vulnerability
-- Steps to reproduce the issue
-- Potential impact assessment  
-- Any proof-of-concept or exploit code (if applicable)
-
-## Response Timeline
-
-- **Initial Response**: Within 24 hours of report
-- **Assessment**: Within 72 hours 
-- **Fix Development**: Based on severity (Critical: 7 days, High: 14 days, Medium: 30 days)
-- **Public Disclosure**: After fix is deployed and users have time to upgrade
+1. **Do NOT** open a public GitHub issue for security vulnerabilities
+2. Email security reports to: aeonith@quantumcoincrypto.com
+3. Include detailed information about the vulnerability
+4. Allow up to 48 hours for initial response
+5. Coordinate responsible disclosure timeline
 
 ## Security Features
 
-### Post-Quantum Cryptography
-- Uses Dilithium2 signatures for quantum resistance
-- All wallet operations use post-quantum secure primitives
+QuantumCoin implements several security measures:
 
-### RevStop Protection  
-- Per-wallet freeze capability for compromised accounts
-- Cannot affect other users' funds
-- Requires password authentication to disable
+- **Post-Quantum Cryptography**: Dilithium2 signatures for quantum resistance
+- **DoS Protection**: Rate limiting and peer scoring
+- **Input Validation**: Comprehensive transaction and block validation  
+- **Secure Transport**: TLS/Noise protocol for P2P communication
+- **Memory Safety**: Rust's memory safety guarantees
+- **Fuzzing**: Continuous security testing of parsers and validators
 
-### Supply Chain Security
-- SBOM (Software Bill of Materials) generated for all releases
-- Container images signed with cosign
-- Dependencies regularly audited with cargo-audit
+## Security Audits
 
-### Network Security
-- Rate limiting on all public endpoints
-- CORS protection for web interfaces
-- Structured logging for security monitoring
+Security audits are planned before mainnet launch. Current security measures include:
+
+- Static analysis with CodeQL
+- Dependency vulnerability scanning with cargo-audit  
+- Automated security testing in CI/CD pipeline
+- Manual code review process
 
 ## Bug Bounty Program
 
-We are considering a bug bounty program. Check this space for updates.
+A bug bounty program will be established before mainnet launch.
 
-## Additional Resources
+## Contact
 
-- [Threat Model](docs/threat-model.md)
-- [Security Runbooks](docs/runbooks/)
+For security-related questions: aeonith@quantumcoincrypto.com
+
+PGP Key: [Coming Soon]

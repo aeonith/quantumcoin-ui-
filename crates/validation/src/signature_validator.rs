@@ -89,39 +89,54 @@ impl SignatureValidator {
 
     /// Parse script signature to extract signature and public key components
     fn parse_script_sig(&self, script_sig: &[u8]) -> Result<(Vec<u8>, Vec<u8>), SignatureError> {
-        if script_sig.len() < 4 {
+        // Minimum size check: 2 bytes (sig_len) + minimum sig + 2 bytes (pubkey_len) + minimum pubkey
+        if script_sig.len() < 8 {
             return Err(SignatureError::MissingSignature);
         }
 
-        // QuantumCoin script format: [sig_len][signature][pubkey_len][public_key]
+        // QuantumCoin script format: [sig_len][signature][pubkey_len][public_key]  
         let mut offset = 0;
 
-        // Read signature length and signature
+        // Read signature length and signature - with bounds checking
         if offset + 2 > script_sig.len() {
             return Err(SignatureError::InvalidSignature);
         }
+        
         let sig_len = u16::from_le_bytes([script_sig[offset], script_sig[offset + 1]]) as usize;
         offset += 2;
+
+        // Validate signature length is reasonable (prevent memory exhaustion)
+        if sig_len == 0 || sig_len > 10000 {
+            return Err(SignatureError::InvalidSignature);
+        }
 
         if offset + sig_len > script_sig.len() {
             return Err(SignatureError::InvalidSignature);
         }
+        
         let signature = script_sig[offset..offset + sig_len].to_vec();
         offset += sig_len;
 
-        // Read public key length and public key
+        // Read public key length and public key - with bounds checking
         if offset + 2 > script_sig.len() {
             return Err(SignatureError::InvalidPublicKey);
         }
+        
         let pubkey_len = u16::from_le_bytes([script_sig[offset], script_sig[offset + 1]]) as usize;
         offset += 2;
+
+        // Validate public key length is reasonable (prevent memory exhaustion)
+        if pubkey_len == 0 || pubkey_len > 10000 {
+            return Err(SignatureError::InvalidPublicKey);
+        }
 
         if offset + pubkey_len > script_sig.len() {
             return Err(SignatureError::InvalidPublicKey);
         }
+        
         let public_key = script_sig[offset..offset + pubkey_len].to_vec();
 
-        // Validate expected sizes for Dilithium2
+        // Validate expected sizes for Dilithium2 (security requirement)
         if signature.len() != SIGNATUREBYTES {
             return Err(SignatureError::InvalidSignature);
         }
