@@ -21,6 +21,7 @@ pub use format_validator::{FormatValidator, FormatError};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Transaction input for validation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

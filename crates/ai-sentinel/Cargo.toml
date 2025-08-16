@@ -6,40 +6,33 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-# Workspace dependencies
-tokio = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-chrono = { workspace = true }
-anyhow = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
+# Core dependencies
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+anyhow = "1"
+tracing = "0.1"
 
 # HTTP client
 reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
 
 # Machine Learning
-nalgebra = { workspace = true }
-ndarray = { workspace = true }
-candle-core = { workspace = true }
-candle-nn = { workspace = true }
-candle-transformers = { workspace = true }
+nalgebra = "0.32"
+ndarray = "0.15"
+candle-core = "0.4"
+candle-nn = "0.4"
 
 # Database and caching
-sqlx = { workspace = true, features = ["postgres", "chrono", "uuid"] }
-redis = { workspace = true }
-
-# Visualization and analysis
-plotters = { workspace = true }
-statistical = { workspace = true }
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "chrono"] }
+redis = { version = "0.24", features = ["tokio-comp"] }
 
 # Concurrency
-parking_lot = { workspace = true }
-crossbeam = { workspace = true }
+parking_lot = "0.12"
 
 # Utilities
-uuid = { workspace = true }
-hex = { workspace = true }
+uuid = { version = "1", features = ["v4", "serde"] }
+hex = "0.4"
 
 [dev-dependencies]
 tempfile = "3.8"

@@ -1,4 +1,4 @@
-name: "CodeQL"
+name: "CodeQL Security Scan"
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
     branches: [main]
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Mondays at 6 AM UTC
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   analyze:
@@ -55,17 +56,46 @@ jobs:
 
     - if: matrix.build-mode == 'manual' && matrix.language == 'rust'
       name: Build Rust components
+      env:
+        RUSTFLAGS: "-A warnings -A dead_code -A unused_imports -A unused_variables"
       run: |
-        # Try to build workspace, fallback to individual crates if needed
-        cargo build --workspace --all-features || {
-          echo "Workspace build failed, trying individual crates..."
-          for crate in crates/*/; do
-            echo "Building $crate..."
-            (cd "$crate" && cargo build --all-features) || echo "Skipping $crate due to build issues"
+        echo "🔧 Building Rust components for CodeQL analysis..."
+        
+        # Set permissive build flags for CodeQL
+        export RUSTFLAGS="-A warnings -A dead_code -A unused_imports -A unused_variables -A unused_mut"
+        
+        # Try comprehensive build strategies
+        if cargo build --workspace --all-features --release; then
+          echo "✅ Workspace build successful for CodeQL"
+        else
+          echo "⚠️ Workspace build failed, using individual crate strategy..."
+          
+          # Build each crate individually with error tolerance
+          for crate_dir in crates/*/; do
+            if [ -d "$crate_dir" ]; then
+              crate_name=$(basename "$crate_dir")
+              echo "Building $crate_name for CodeQL analysis..."
+              (cd "$crate_dir" && RUSTFLAGS="$RUSTFLAGS" cargo build --all-features --release) || {
+                echo "⚠️ $crate_name build had issues, continuing..."
+              }
+            fi
           done
-          # Build main crate last
-          cargo build --all-features || echo "Main crate build completed with issues"
-        }
+          
+          # Build main crate
+          RUSTFLAGS="$RUSTFLAGS" cargo build --all-features --release || {
+            echo "⚠️ Main crate build had issues, continuing with CodeQL analysis..."
+          }
+          
+          # Build backend if exists  
+          if [ -d "backend" ]; then
+            echo "Building backend for CodeQL analysis..."
+            (cd backend && RUSTFLAGS="$RUSTFLAGS" cargo build --all-features --release) || {
+              echo "⚠️ Backend build had issues, continuing..."
+            }
+          fi
+        fi
+        
+        echo "✅ Build phase completed for CodeQL analysis"
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
