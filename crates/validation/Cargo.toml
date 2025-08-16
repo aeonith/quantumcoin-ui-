@@ -1,0 +1,50 @@
+[package]
+name = "quantumcoin-validation"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+
+# Cryptography - CANONICAL VERSIONS FROM WORKSPACE
+pqcrypto-dilithium = { workspace = true }
+pqcrypto-traits = { workspace = true }
+blake3 = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Concurrency
+parking_lot = { workspace = true }
+crossbeam = { workspace = true }
+
+# Utilities
+chrono = { workspace = true }
+hex = { workspace = true }
+
+# Testing
+proptest = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+criterion = "0.5"
+test-log = "0.2"
+
+[[bench]]
+name = "validation_bench"
+harness = false

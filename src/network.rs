@@ -1,16 +1,8 @@
-use crate::blockchain::Blockchain;
-use crate::block::Block;
-use crate::transaction::Transaction;
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::sync::{Arc, Mutex};
-use std::thread;
-use std::io::{Read, Write};
-use tokio::net::{TcpListener as TokioTcpListener, TcpStream as TokioTcpStream};
-use tokio::sync::RwLock;
-use anyhow::Result;
-use uuid::Uuid;
+// Re-export the new production-grade networking system
+pub use network_v2::*;
+
+// Legacy compatibility - gradually migrate to new system
+mod network_v2;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NetworkMessage {

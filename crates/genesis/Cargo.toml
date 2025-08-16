@@ -1,0 +1,37 @@
+[package]
+name = "quantumcoin-genesis"
+version = "2.0.0"
+edition = "2021"
+authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+license = "MIT"
+description = "Production-grade genesis block system for QuantumCoin"
+repository = "https://github.com/aeonith/quantumcoin-ui-"
+
+[dependencies]
+# Workspace dependencies
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+tracing = { workspace = true }
+hex = { workspace = true }
+
+# Cryptography - Post-quantum and traditional
+pqcrypto-dilithium = { workspace = true }
+pqcrypto-traits = { workspace = true }
+blake3 = { workspace = true }
+sha2 = { workspace = true }
+rand = { workspace = true }
+
+# Configuration
+toml = { workspace = true }
+
+# CLI
+clap = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+proptest = { workspace = true }

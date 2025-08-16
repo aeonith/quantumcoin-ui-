@@ -3,6 +3,9 @@ members = [
     "crates/node",
     "crates/wallet",
     "crates/ai-sentinel",
+    "crates/genesis",
+    "crates/validation",
+    "crates/p2p",
     "backend"
 ]
 resolver = "2"
@@ -66,3 +69,48 @@ reqwest = { version = "0.11", features = ["json"] }
 
 # Testing
 proptest = "1.4"
+tempfile = "3.8"
+
+# TOML parsing
+toml = "0.8"
+
+# Network dependencies for P2P
+rustls = "0.23"
+tokio-rustls = "0.26"
+webpki-roots = "0.26"
+hickory-resolver = "0.24"
+snow = "0.9"
+x25519-dalek = "2.0"
+futures = "0.3"
+
+# Main QuantumCoin package
+[package]
+name = "quantumcoin"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+bincode = { workspace = true }
+pqcrypto-dilithium = { workspace = true }
+pqcrypto-traits = { workspace = true }
+blake3 = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+anyhow = { workspace = true }
+toml = { workspace = true }
+rustls = { workspace = true }
+tokio-rustls = { workspace = true }
+webpki-roots = { workspace = true }
+hickory-resolver = { workspace = true }
+snow = { workspace = true }
+x25519-dalek = { workspace = true }
+futures = { workspace = true }
+tracing = { workspace = true }
+argon2 = { workspace = true }

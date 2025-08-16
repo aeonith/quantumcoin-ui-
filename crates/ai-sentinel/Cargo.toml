@@ -1,21 +1,55 @@
 [package]
 name = "quantumcoin-ai-sentinel"
-version = "1.0.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
 
 [dependencies]
-tokio = { version = "1.0", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-reqwest = { version = "0.11", features = ["json"] }
-chrono = { version = "0.4", features = ["serde"] }
-anyhow = "1.0"
-tracing = "0.1"
-tracing-subscriber = "0.3"
+# Workspace dependencies
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "rustls-tls"] }
+
+# Machine Learning
 nalgebra = "0.32"
 ndarray = "0.15"
 candle-core = "0.4"
 candle-nn = "0.4"
-sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "chrono"] }
-redis = { version = "0.24", features = ["tokio-comp"] }
+candle-transformers = "0.4"
+
+# Database and caching
+sqlx = { workspace = true, features = ["postgres", "chrono", "uuid"] }
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# Visualization and analysis
 plotters = "0.3"
+statistical = "1.0"
+
+# Concurrency
+parking_lot = { workspace = true }
+crossbeam = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+hex = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3.8"
+criterion = "0.5"
+proptest = { workspace = true }
+
+[[bin]]
+name = "ai-sentinel"
+path = "src/main.rs"
+
+[[bench]]
+name = "ml_performance"
+harness = false

@@ -9,11 +9,14 @@ mod analytics;
 mod attack_detection;
 mod network_optimizer;
 mod performance_tuner;
+mod production_models;
+mod perfect_ai_system;
 
 use analytics::*;
 use attack_detection::*;
 use network_optimizer::*;
 use performance_tuner::*;
+use perfect_ai_system::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BlockData {

@@ -11,12 +11,18 @@
 pub mod block;
 pub mod config;
 pub mod consensus;
+pub mod consensus_engine;
+pub mod chain_spec_loader;
 pub mod economics;
 pub mod mempool;
 pub mod network;
 pub mod storage;
 pub mod transaction;
 pub mod validation;
+
+// Include comprehensive tests
+#[cfg(test)]
+pub mod consensus_tests;
 
 pub use config::ChainConfig;
 pub use economics::{Economics, IssuanceSchedule};

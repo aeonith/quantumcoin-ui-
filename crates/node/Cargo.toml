@@ -38,3 +38,4 @@ database = ["sqlx"]
 [dev-dependencies]
 proptest = { workspace = true }
 tokio-test = "0.4"
+tempfile = { workspace = true }

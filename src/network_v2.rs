@@ -8,11 +8,9 @@ pub mod protocol;
 pub mod security;
 pub mod metrics;
 pub mod nat;
-pub mod gossip;
-pub mod gossip_integration;
+pub mod config;
 
 use crate::blockchain::Blockchain;
-use crate::mempool::Mempool;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -28,8 +26,6 @@ pub use protocol::*;
 pub use security::*;
 pub use metrics::*;
 pub use nat::*;
-pub use gossip::*;
-pub use gossip_integration::*;
 
 /// Production network manager for QuantumCoin
 #[derive(Clone)]
@@ -37,14 +33,12 @@ pub struct NetworkManager {
     pub node_id: String,
     pub chain_spec: Arc<ChainSpec>,
     pub blockchain: Arc<RwLock<Blockchain>>,
-    pub mempool: Arc<RwLock<Mempool>>,
     pub peer_manager: Arc<PeerManager>,
     pub discovery: Arc<DnsDiscovery>,
     pub transport: Arc<SecureTransport>,
     pub security_manager: Arc<SecurityManager>,
     pub metrics: Arc<NetworkMetrics>,
     pub nat_manager: Arc<NatManager>,
-    pub gossip_manager: Arc<GossipManager>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,7 +77,6 @@ impl NetworkManager {
     pub async fn new(
         listen_addr: SocketAddr,
         blockchain: Arc<RwLock<Blockchain>>,
-        mempool: Arc<RwLock<Mempool>>,
         chain_spec: Option<ChainSpec>,
     ) -> Result<Self> {
         let chain_spec = Arc::new(chain_spec.unwrap_or_default());
@@ -105,28 +98,16 @@ impl NetworkManager {
             metrics.clone(),
         ));
 
-        // Initialize gossip protocol
-        let gossip_manager = Arc::new(GossipManager::new(
-            node_id.clone(),
-            chain_spec.clone(),
-            metrics.clone(),
-            security_manager.clone(),
-            blockchain.clone(),
-            mempool.clone(),
-        ).await?);
-
         Ok(Self {
             node_id,
             chain_spec,
             blockchain,
-            mempool,
             peer_manager,
             discovery,
             transport,
             security_manager,
             metrics,
             nat_manager,
-            gossip_manager,
         })
     }
 
@@ -210,8 +191,6 @@ impl NetworkManager {
 
     /// Get network status
     pub async fn get_status(&self) -> NetworkStatus {
-        let gossip_stats = self.gossip_manager.get_stats().await;
-        
         NetworkStatus {
             node_id: self.node_id.clone(),
             peer_count: self.peer_manager.get_peer_count().await,
@@ -220,41 +199,13 @@ impl NetworkManager {
             network_hashrate: self.metrics.get_network_hashrate().await,
             sync_progress: self.peer_manager.get_sync_progress().await,
             uptime: self.metrics.get_uptime().await,
-            gossip_stats: Some(gossip_stats),
         }
-    }
-
-    /// Gossip a block to the network
-    pub async fn gossip_block(&self, block: crate::block::Block) -> Result<()> {
-        self.gossip_manager.gossip_block(block).await
-    }
-    
-    /// Gossip a transaction to the network
-    pub async fn gossip_transaction(&self, transaction: crate::transaction::Transaction) -> Result<()> {
-        self.gossip_manager.gossip_transaction(transaction).await
-    }
-    
-    /// Process incoming gossip from a peer
-    pub async fn process_incoming_gossip(&self, peer_id: &str, item: GossipItem) -> Result<()> {
-        self.gossip_manager.process_incoming_gossip(peer_id, item).await
-    }
-    
-    /// Handle flood attack detection
-    pub async fn handle_flood_attack(&self, peer_id: &str) -> Result<()> {
-        log::warn!("Flood attack detected from peer: {}", peer_id);
-        self.gossip_manager.handle_flood_attack(peer_id).await?;
-        
-        // Also ban at security manager level
-        self.security_manager.ban_peer(peer_id).await?;
-        
-        Ok(())
     }
 
     /// Shutdown network gracefully
     pub async fn shutdown(&self) -> Result<()> {
         log::info!("Shutting down P2P network...");
         
-        self.gossip_manager.shutdown().await?;
         self.peer_manager.shutdown().await?;
         self.transport.shutdown().await?;
         self.nat_manager.shutdown().await?;
@@ -274,5 +225,4 @@ pub struct NetworkStatus {
     pub network_hashrate: f64,
     pub sync_progress: f32,
     pub uptime: u64,
-    pub gossip_stats: Option<GossipStats>,
 }
