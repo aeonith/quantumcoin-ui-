@@ -111,6 +111,20 @@ path = "src/bin/quantumcoin-wallet.rs"
 name = "quantumcoin-explorer"
 path = "src/bin/quantumcoin-explorer.rs"
 
+[package]
+name = "quantumcoin"
+version = "2.0.0"
+edition = "2021"
+authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
+license = "MIT"
+description = "Post-quantum cryptocurrency with live mainnet"
+repository = "https://github.com/aeonith/quantumcoin-ui-"
+keywords = ["cryptocurrency", "blockchain", "post-quantum", "dilithium"]
+categories = ["cryptography", "network-programming"]
+
+[dependencies]
+# All workspace dependencies are included above
+
 # Network dependencies for P2P
 rustls = "0.23"
 tokio-rustls = "0.26"
