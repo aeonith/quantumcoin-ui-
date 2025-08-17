@@ -1,6 +1,6 @@
 // QuantumCoin Block Explorer JavaScript
 
-const API_BASE = '/rpc';
+const API_BASE = 'http://localhost:8081'; // Live QuantumCoin Explorer Backend
 let currentBlockPage = 1;
 let currentTxPage = 1;
 const ITEMS_PER_PAGE = 10;
@@ -30,20 +30,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// RPC call helper
-async function rpcCall(method, params = []) {
+// Live API call helper
+async function apiCall(endpoint) {
     try {
-        const response = await fetch(API_BASE, {
-            method: 'POST',
+        const response = await fetch(`${API_BASE}/api/${endpoint}`, {
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                method: method,
-                params: params,
-                id: Date.now()
-            })
+            }
         });
 
         const data = await response.json();

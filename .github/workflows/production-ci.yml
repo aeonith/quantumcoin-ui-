@@ -1,10 +1,8 @@
-name: Production CI - QuantumCoin
+# DISABLED - This workflow had error masking
+name: DISABLED - Production CI (Error Masking)
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always

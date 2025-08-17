@@ -1,6 +1,5 @@
 //! Peer scoring system
 
-use crate::*;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use tokio::sync::RwLock;

@@ -1,6 +1,6 @@
 //! Message propagation management
 
-use crate::*;
+use crate::GossipMessage;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;

@@ -14,14 +14,15 @@ pub mod peer_scoring;
 pub mod network_health;
 pub mod priority_queue;
 
-pub use gossip::{GossipProtocol, GossipMessage, MessageType};
+pub use gossip::{GossipProtocol};
 pub use dos_protection::{DosProtection, PeerScore, SecurityLevel};
-pub use message_propagation::{PropagationManager, MessagePriority, PropagationStats};
+pub use message_propagation::{PropagationManager, PropagationStats};
 pub use peer_scoring::{PeerScorer, ScoreReason, PeerBehavior};
 pub use network_health::{NetworkHealth, PartitionDetector, HealthMetrics};
 pub use priority_queue::{PriorityMessageQueue, MessageItem};
 
 use std::net::SocketAddr;
+use std::time::SystemTime;
 use blake3::Hasher;
 use serde::{Deserialize, Serialize};
 
@@ -77,3 +78,61 @@ pub enum P2PError {
 }
 
 pub type Result<T> = std::result::Result<T, P2PError>;
+
+/// Message priority levels
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum MessagePriority {
+    Low = 0,
+    Normal = 1,
+    High = 2,
+    Critical = 3,
+}
+
+/// Message types for the P2P network
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum MessageType {
+    Block,
+    Transaction,
+    PeerExchange,
+    HealthCheck,
+    Announcement,
+}
+
+/// Gossip message wrapper
+#[derive(Debug, Clone)]
+pub struct GossipMessage {
+    pub network_message: NetworkMessage,
+    pub first_seen: SystemTime,
+    pub propagation_count: u32,
+    pub source_peer: Option<SocketAddr>,
+}
+
+impl GossipMessage {
+    pub fn new(
+        message_type: MessageType,
+        payload: Vec<u8>,
+        sender: Option<SocketAddr>,
+        priority: MessagePriority,
+    ) -> Self {
+        let id = MessageId::new(&payload);
+        let timestamp = SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+
+        Self {
+            network_message: NetworkMessage {
+                id,
+                message_type,
+                payload,
+                timestamp,
+                sender,
+                ttl: 32,
+                priority,
+            },
+            first_seen: SystemTime::now(),
+            propagation_count: 0,
+            source_peer: sender,
+        }
+    }
+}

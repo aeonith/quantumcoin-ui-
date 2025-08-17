@@ -1,6 +1,5 @@
 //! Network health monitoring
 
-use crate::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 

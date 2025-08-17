@@ -2,7 +2,7 @@
 //! 
 //! Provides efficient, secure message propagation with DoS protection
 
-use crate::{P2PError, Result, MessageId, NetworkMessage};
+use crate::{P2PError, Result, MessageId, NetworkMessage, MessageType, MessagePriority, GossipMessage};
 use std::{
     collections::HashMap,
     net::SocketAddr,
@@ -30,52 +30,7 @@ const DEDUP_CACHE_SIZE: usize = 10000;
 /// Backpressure threshold (messages per second)
 const BACKPRESSURE_THRESHOLD: usize = 1000;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum MessageType {
-    Block,
-    Transaction,
-    PeerExchange,
-    HealthCheck,
-    Announcement,
-}
-
-#[derive(Debug, Clone)]
-pub struct GossipMessage {
-    pub network_message: NetworkMessage,
-    pub first_seen: SystemTime,
-    pub propagation_count: u32,
-    pub source_peer: Option<SocketAddr>,
-}
-
-impl GossipMessage {
-    pub fn new(
-        message_type: MessageType,
-        payload: Vec<u8>,
-        sender: Option<SocketAddr>,
-        priority: MessagePriority,
-    ) -> Self {
-        let id = MessageId::new(&payload);
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-
-        Self {
-            network_message: NetworkMessage {
-                id,
-                message_type,
-                payload,
-                timestamp,
-                sender,
-                ttl: MAX_TTL,
-                priority,
-            },
-            first_seen: SystemTime::now(),
-            propagation_count: 0,
-            source_peer: sender,
-        }
-    }
-}
+// Types are now defined in lib.rs to avoid circular dependencies
 
 /// Configuration for gossip protocol
 #[derive(Debug, Clone)]
