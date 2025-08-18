@@ -140,11 +140,11 @@ make smoke
 
 ### Testnet Quickstart
 
-1. **Get testnet coins** from the faucet (if available)
-2. **Generate wallet**: `./target/release/quantumcoin-cli address`
-3. **Send transaction**: `./target/release/quantumcoin-cli send <address> <amount>`
-4. **Mine blocks**: Use the web interface mining panel
-5. **Verify in explorer**: Check transaction status
+1. **Get testnet coins** from faucet: `curl -X POST https://faucet.testnet.quantumcoincrypto.com/request`
+2. **Generate wallet**: `./quantumcoin-node wallet generate`
+3. **Send transaction**: `./quantumcoin-node wallet send <address> <amount>`
+4. **Mine blocks**: `./quantumcoin-node mine --address <your_address>`
+5. **Verify in explorer**: https://testnet-explorer.quantumcoincrypto.com
 
 ### Mainnet
 
