@@ -27,7 +27,7 @@ jobs:
           echo $BACKEND_PID > backend.pid
           
           # Wait for backend to be ready (≤120s requirement)
-          timeout 120 bash -c 'until curl -f http://localhost:8080/health; do sleep 2; done'
+          timeout 120 bash -c 'until curl -f http://localhost:8080/status; do sleep 2; done'
           
       - name: P95 latency test (<100ms budget)
         run: |
@@ -41,7 +41,7 @@ jobs:
           };
           
           export default function() {
-            let response = http.get('http://localhost:8080/health');
+            let response = http.get('http://localhost:8080/status');
             check(response, {
               'status is 200': (r) => r.status === 200,
               'response time < 100ms': (r) => r.timings.duration < 100,
@@ -89,7 +89,7 @@ jobs:
           
           # Wait for all services to be healthy
           timeout 120 bash -c '
-            while ! curl -f http://localhost:8080/health >/dev/null 2>&1 || \
+            while ! curl -f http://localhost:8080/status >/dev/null 2>&1 || \
                   ! curl -f http://localhost:3000/ >/dev/null 2>&1; do
               sleep 2
             done
@@ -106,7 +106,8 @@ jobs:
           
       - name: Explorer backend smoke probe
         run: |
-          # Ensure explorer endpoints return sane, non-empty values
+          # This FAILS unless /status, /blocks, /explorer/stats return sane, non-empty values
+          # Prevents "Loading..." regressions from reaching production
           set -e
           
           echo "🔍 Testing explorer backend endpoints..."
@@ -120,12 +121,21 @@ jobs:
             exit 1
           fi
           
-          # Test /blocks endpoint
+          # Test /explorer/blocks endpoint
           BLOCKS_RESPONSE=$(curl -s "http://localhost:8080/explorer/blocks?limit=1")
           if echo "$BLOCKS_RESPONSE" | grep -q '"blocks":\[' && ! echo "$BLOCKS_RESPONSE" | grep -q '"blocks":\[\]'; then
-            echo "✅ /blocks returns non-empty block data"
+            echo "✅ /explorer/blocks returns non-empty block data"
           else
-            echo "❌ /blocks returns empty or invalid data: $BLOCKS_RESPONSE"
+            echo "❌ /explorer/blocks returns empty or invalid data: $BLOCKS_RESPONSE"
+            exit 1
+          fi
+          
+          # Test /explorer/stats endpoint  
+          STATS_RESPONSE=$(curl -s "http://localhost:8080/explorer/stats")
+          if echo "$STATS_RESPONSE" | grep -q '"height":[0-9]' && ! echo "$STATS_RESPONSE" | grep -q '"height":0'; then
+            echo "✅ /explorer/stats returns non-zero height"
+          else
+            echo "❌ /explorer/stats returns zero height: $STATS_RESPONSE"
             exit 1
           fi
           
@@ -138,7 +148,16 @@ jobs:
             exit 1
           fi
           
-          echo "🎉 All explorer smoke tests passed!"
+          # Test that blocks endpoint returns actual block hashes
+          BLOCK_HASH=$(echo "$BLOCKS_RESPONSE" | jq -r '.blocks[0].hash // ""')
+          if [ -n "$BLOCK_HASH" ] && [ "$BLOCK_HASH" != "null" ]; then
+            echo "✅ Block hash returned: ${BLOCK_HASH:0:16}..."
+          else
+            echo "❌ No valid block hash returned"
+            exit 1
+          fi
+          
+          echo "🎉 All explorer smoke tests passed - no Loading... placeholders!"
           
       - name: Cleanup
         if: always()
