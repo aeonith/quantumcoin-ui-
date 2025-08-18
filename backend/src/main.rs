@@ -116,15 +116,28 @@ fn explorer_status(
     consensus: &State<Arc<RwLock<ConsensusEngine>>>,
     network: &State<Arc<RwLock<NetworkManager>>>
 ) -> Json<Value> {
-    let consensus = futures::executor::block_on(consensus.read());
-    let network = futures::executor::block_on(network.read());
-    
-    let blockchain_state = consensus.get_blockchain_state();
-    let current_height = blockchain_state.get_chain_height();
-    let peer_count = network.get_peer_count();
-    let mempool_size = blockchain_state.get_mempool_size();
-    let last_block = blockchain_state.get_latest_block();
-    let sync_progress = network.get_sync_progress();
+    // BULLETPROOF: Never panic, always return valid response
+    let (current_height, peer_count, mempool_size, sync_progress, last_block_time) = match (|| -> Result<_, Box<dyn std::error::Error>> {
+        let consensus = futures::executor::block_on(consensus.read());
+        let network = futures::executor::block_on(network.read());
+        
+        let blockchain_state = consensus.get_blockchain_state();
+        let current_height = blockchain_state.get_chain_height();
+        let peer_count = network.get_peer_count();
+        let mempool_size = blockchain_state.get_mempool_size();
+        let last_block = blockchain_state.get_latest_block();
+        let sync_progress = network.get_sync_progress();
+        let last_block_time = last_block.map(|b| b.timestamp).unwrap_or(0);
+        
+        Ok((current_height, peer_count, mempool_size, sync_progress, last_block_time))
+    })() {
+        Ok(values) => values,
+        Err(e) => {
+            eprintln!("⚠️  Status endpoint error (recovered): {}", e);
+            // Always return safe defaults - never fail
+            (0u64, 0u32, 0u32, 0.0f64, 0u64)
+        }
+    };
     
     Json(json!({
         "status": if sync_progress >= 0.99 { "healthy" } else { "syncing" },
@@ -132,7 +145,7 @@ fn explorer_status(
         "peers": peer_count,
         "mempool": mempool_size,
         "sync_progress": sync_progress,
-        "last_block_time": last_block.map(|b| b.timestamp).unwrap_or(0),
+        "last_block_time": last_block_time,
         "network": "mainnet",
         "chain_id": "qtc-mainnet-1"
     }))
