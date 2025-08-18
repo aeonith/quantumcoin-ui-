@@ -1,7 +1,7 @@
 // QuantumCoin API Integration Layer
 // Handles communication between frontend and Rust backend
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://quantumcoin-mainnet-api.vercel.app';
 
 export interface WalletBalance {
   address: string;
