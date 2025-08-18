@@ -12,6 +12,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/hostedtoolcache
+          docker system prune -af
+          df -h
+          
+      - name: OS deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq gnupg
+          
       - name: Install k6
         run: |
           wget -q https://github.com/grafana/k6/releases/download/v0.47.0/k6-v0.47.0-linux-amd64.tar.gz
@@ -113,8 +125,8 @@ jobs:
           echo "🔍 Testing explorer backend endpoints..."
           
           # Test /status endpoint
-          STATUS_RESPONSE=$(curl -s http://localhost:8080/status)
-          if echo "$STATUS_RESPONSE" | grep -q '"status":"healthy"'; then
+          STATUS_RESPONSE=$(curl -s http://localhost:3001/status)
+          if echo "$STATUS_RESPONSE" | jq -e '.status == "healthy"' >/dev/null 2>&1; then
             echo "✅ /status returns healthy"
           else
             echo "❌ /status failed or unhealthy: $STATUS_RESPONSE"
@@ -131,8 +143,8 @@ jobs:
           fi
           
           # Test /explorer/stats endpoint  
-          STATS_RESPONSE=$(curl -s "http://localhost:8080/explorer/stats")
-          if echo "$STATS_RESPONSE" | grep -q '"height":[0-9]' && ! echo "$STATS_RESPONSE" | grep -q '"height":0'; then
+          STATS_RESPONSE=$(curl -s "http://localhost:3001/explorer/stats")
+          if echo "$STATS_RESPONSE" | jq -e '.height > 0' >/dev/null 2>&1; then
             echo "✅ /explorer/stats returns non-zero height"
           else
             echo "❌ /explorer/stats returns zero height: $STATS_RESPONSE"

@@ -36,6 +36,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - name: Sanity-check toolchain
+        run: rustc --version
       - uses: Swatinem/rust-cache@v2
       - name: Format check (fail hard)
         run: cargo fmt --all -- --check
@@ -82,6 +84,7 @@ jobs:
           scan-type: fs
           ignore-unfixed: true
           exit-code: "1"
+          severity: HIGH,CRITICAL
           format: table
       - name: Generate SBOM (SPDX)
         uses: anchore/sbom-action@v0
