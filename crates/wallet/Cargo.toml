@@ -1,33 +1,15 @@
 [package]
-name = "quantumcoin-wallet"
-version = "2.0.0"
+name = "qc-wallet"
+version = "0.1.0"
 edition = "2021"
-authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
-description = "QuantumCoin wallet with post-quantum cryptography"
-license = "MIT"
 
 [dependencies]
-# Workspace dependencies
-serde = { workspace = true }
-serde_json = { workspace = true }
-hex = { workspace = true }
-base64 = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-rand = { workspace = true }
-rand_core = { workspace = true }
-argon2 = { workspace = true }
-tracing = { workspace = true }
-
-# Post-quantum cryptography - CANONICAL VERSION
-pqcrypto-dilithium = { workspace = true }
-pqcrypto-traits = { workspace = true }
-
-# File permissions and security
-dirs = "5.0"
-
-[dev-dependencies]
-tempfile = "3.8"
-
-[features]
-default = []
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+rand = "0.8"
+sha2 = "0.10"
+hex = "0.4"
+bip39 = "2.0"
+pbkdf2 = "0.12"
+aes-gcm = "0.10"
+base58 = "0.2"
