@@ -1,41 +1,21 @@
 [package]
-name = "quantumcoin-node"
-version = "2.0.0"
+name = "qc-node"
+version = "0.1.0"
 edition = "2021"
-authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
-description = "QuantumCoin blockchain node implementation"
-license = "MIT"
 
 [dependencies]
-# Workspace dependencies
-tokio = { workspace = true, features = ["full"] }
-serde = { workspace = true }
-serde_json = { workspace = true }
-bincode = { workspace = true }
-sha2 = { workspace = true }
-sha3 = { workspace = true }
-blake3 = { workspace = true }
-chrono = { workspace = true }
-uuid = { workspace = true }
-hex = { workspace = true }
-anyhow = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
+anyhow = "1"
+axum = { version = "0.7", features = ["macros","json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread","macros","signal"] }
+sha2 = "0.10"
+hex = "0.4"
+thiserror = "1"
+parking_lot = "0.12"
+time = "0.3"
+rand = "0.8"
 
-# Node-specific dependencies  
-toml = "0.8"
-parking_lot = { workspace = true }
-crossbeam = { workspace = true }
-rayon = { workspace = true }
-
-# Optional database support
-sqlx = { workspace = true, optional = true }
-
-[features]
-default = ["database"]
-database = ["sqlx"]
-
-[dev-dependencies]
-proptest = { workspace = true }
-tokio-test = "0.4"
-tempfile = { workspace = true }
+[bin]
+name = "qc-node"
+path = "src/bin/qc-node.rs"
