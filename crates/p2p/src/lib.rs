@@ -88,6 +88,7 @@ pub enum MessagePriority {
     Critical = 3,
 }
 
+<<<<<<< HEAD
 /// Gossip message with metadata
 #[derive(Debug, Clone)]
 pub struct GossipMessage {
@@ -125,6 +126,8 @@ pub enum MessagePriority {
     Critical = 3,
 }
 
+=======
+>>>>>>> 71dc3fca45d5ab4634f12c6fa7eba6930f0ddc04
 /// Message types for the P2P network
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum MessageType {
