@@ -56,46 +56,9 @@ jobs:
 
     - if: matrix.build-mode == 'manual' && matrix.language == 'rust'
       name: Build Rust components
-      env:
-        RUSTFLAGS: "-A warnings -A dead_code -A unused_imports -A unused_variables"
       run: |
-        echo "🔧 Building Rust components for CodeQL analysis..."
-        
-        # Set permissive build flags for CodeQL
-        export RUSTFLAGS="-A warnings -A dead_code -A unused_imports -A unused_variables -A unused_mut"
-        
-        # Try comprehensive build strategies
-        if cargo build --workspace --all-features --release; then
-          echo "✅ Workspace build successful for CodeQL"
-        else
-          echo "⚠️ Workspace build failed, using individual crate strategy..."
-          
-          # Build each crate individually with error tolerance
-          for crate_dir in crates/*/; do
-            if [ -d "$crate_dir" ]; then
-              crate_name=$(basename "$crate_dir")
-              echo "Building $crate_name for CodeQL analysis..."
-              (cd "$crate_dir" && RUSTFLAGS="$RUSTFLAGS" cargo build --all-features --release) || {
-                echo "⚠️ $crate_name build had issues, continuing..."
-              }
-            fi
-          done
-          
-          # Build main crate
-          RUSTFLAGS="$RUSTFLAGS" cargo build --all-features --release || {
-            echo "⚠️ Main crate build had issues, continuing with CodeQL analysis..."
-          }
-          
-          # Build backend if exists  
-          if [ -d "backend" ]; then
-            echo "Building backend for CodeQL analysis..."
-            (cd backend && RUSTFLAGS="$RUSTFLAGS" cargo build --all-features --release) || {
-              echo "⚠️ Backend build had issues, continuing..."
-            }
-          fi
-        fi
-        
-        echo "✅ Build phase completed for CodeQL analysis"
+        # Build for CodeQL - fail hard if it doesn't work
+        cargo build --workspace --all-features
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

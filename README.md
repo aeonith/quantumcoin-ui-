@@ -1,6 +1,6 @@
 # QuantumCoin ⚛️
 
-[![Strict CI](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/strict-truth.yml/badge.svg)](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/strict-truth.yml)
+[![CI](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/ci.yml/badge.svg)](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/codeql.yml/badge.svg)](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 

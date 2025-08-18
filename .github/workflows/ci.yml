@@ -1,17 +1,103 @@
-# This workflow is disabled - using production-ci.yml instead
-# To re-enable, rename this file back to ci.yml
-
-name: Legacy CI (Disabled)
-
+name: ci
 on:
-  # Disabled - no triggers
-  workflow_dispatch:
+  push:
+    branches: ["**"]
+  pull_request:
 
 jobs:
-  disabled:
+  ui:
+    name: UI build + lint + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run lint -- --max-warnings=0
+      - run: npm run build
+      - run: npm test -- --ci --runInBand
+      - name: Enforce coverage >= 85%
+        run: |
+          if [ ! -f coverage/coverage-summary.json ]; then
+            echo "No coverage file found"; exit 1
+          fi
+          node -e "const c=require('./coverage/coverage-summary.json').total.lines.pct; if(c<85){console.error('Coverage',c+'% < 85%');process.exit(1)} else {console.log('Coverage OK',c+'%')}"
+
+  rust:
+    name: Rust blockchain + wallet
     runs-on: ubuntu-latest
     steps:
-    - name: Legacy workflow disabled
-      run: |
-        echo "This workflow has been replaced by production-ci.yml"
-        echo "The new workflow provides better error handling and reliability"
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Format check (fail hard)
+        run: cargo fmt --all -- --check
+      - name: Clippy (fail hard)
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Build (fail hard)
+        run: cargo build --workspace --all-features
+      - name: Test (fail hard)
+        run: cargo test --workspace --all-features
+
+  ai:
+    name: AI daemon tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ai-daemon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m venv .venv
+      - run: . .venv/bin/activate && pip install -r requirements.txt
+      - run: . .venv/bin/activate && pytest -q
+
+  security:
+    name: CodeQL + Trivy + SBOM
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: CodeQL init
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, python
+      - name: CodeQL analyze
+        uses: github/codeql-action/analyze@v3
+      - name: Trivy FS scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          output-file: sbom.spdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  no-fake-greens:
+    name: Forbid success masking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if pipelines contain bypasses
+        run: |
+          set -e
+          ! git grep -nE '\|\|\s*echo|;[ ]*true|set \+e'

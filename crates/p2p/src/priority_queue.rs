@@ -1,8 +1,7 @@
 //! Priority message queue implementation
 
-use crate::*;
+use crate::{GossipMessage, MessagePriority};
 use priority_queue::PriorityQueue;
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct MessageItem {
