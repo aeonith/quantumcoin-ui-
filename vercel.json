@@ -3,7 +3,7 @@
   "name": "quantumcoin-mainnet-explorer",
   "builds": [
     {
-      "src": "deploy_live_api.js",
+      "src": "AEONITH_GRADE_BACKEND.js",
       "use": "@vercel/node"
     },
     {
@@ -14,15 +14,15 @@
   "routes": [
     {
       "src": "/status",
-      "dest": "/deploy_live_api.js"
+      "dest": "/AEONITH_GRADE_BACKEND.js"
     },
     {
       "src": "/explorer/(.*)",
-      "dest": "/deploy_live_api.js"
+      "dest": "/AEONITH_GRADE_BACKEND.js"
     },
     {
       "src": "/health",
-      "dest": "/deploy_live_api.js"
+      "dest": "/AEONITH_GRADE_BACKEND.js"
     },
     {
       "src": "/(.*)",
@@ -35,7 +35,7 @@
     "NEXT_PUBLIC_EXPLORER_URL": "https://quantumcoin-ui.vercel.app"
   },
   "functions": {
-    "deploy_live_api.js": {
+    "AEONITH_GRADE_BACKEND.js": {
       "maxDuration": 30
     }
   }
