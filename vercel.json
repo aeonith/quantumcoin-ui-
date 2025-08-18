@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "name": "quantumcoin-mainnet-explorer",
+  "builds": [
+    {
+      "src": "deploy_live_api.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/status",
+      "dest": "/deploy_live_api.js"
+    },
+    {
+      "src": "/explorer/(.*)",
+      "dest": "/deploy_live_api.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/deploy_live_api.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "NEXT_PUBLIC_API_BASE": "https://quantumcoin-ui.vercel.app",
+    "NEXT_PUBLIC_EXPLORER_URL": "https://quantumcoin-ui.vercel.app"
+  },
+  "functions": {
+    "deploy_live_api.js": {
+      "maxDuration": 30
+    }
+  }
+}

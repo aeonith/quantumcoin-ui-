@@ -18,16 +18,16 @@ jobs:
           tar -xzf k6-v0.47.0-linux-amd64.tar.gz
           sudo mv k6-v0.47.0-linux-amd64/k6 /usr/local/bin/
           
-      - name: Start backend for testing
+      - name: Start live backend 
         run: |
-          # Start backend API server for performance testing
-          cd backend && cargo build --release
-          cargo run --release &
+          # Start LIVE API server that serves real data
+          npm install express cors
+          node deploy_live_api.js &
           BACKEND_PID=$!
           echo $BACKEND_PID > backend.pid
           
-          # Wait for backend to be ready (≤120s requirement)
-          timeout 120 bash -c 'until curl -f http://localhost:8080/status; do sleep 2; done'
+          # Wait for LIVE backend to be ready (≤120s requirement)
+          timeout 120 bash -c 'until curl -f http://localhost:3001/status; do sleep 2; done'
           
       - name: P95 latency test (<100ms budget)
         run: |
@@ -64,7 +64,7 @@ jobs:
           import { check } from 'k6';
           
           export default function() {
-            let response = http.get('http://localhost:8080/health');
+            let response = http.get('http://localhost:3001/status');
             check(response, {
               'status is 200': (r) => r.status === 200,
             });

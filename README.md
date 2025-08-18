@@ -176,11 +176,12 @@ tar -xzf quantumcoin-node-linux-x64.tar.gz
 
 ## 📱 Wallet Integration
 
-### Trust Wallet
-- Chain ID: `quantumcoin-mainnet-v2`
+### Trust Wallet  
+- Chain ID: `qtc-mainnet-1`
 - Symbol: `QTC`
 - Decimals: `8`
-- Logo: [Download Assets](listing/)
+- RPC URL: `https://rpc.quantumcoincrypto.com`
+- Explorer: `https://explorer.quantumcoincrypto.com`
 
 See [Trust Wallet Submission Checklist](TRUST_WALLET_LISTING_CHECKLIST.md) for full details.
 
