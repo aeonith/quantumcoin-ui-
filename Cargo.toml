@@ -168,6 +168,9 @@ tower-http = { workspace = true }
 sqlx = { workspace = true }
 futures = { workspace = true }
 crc32fast = "1.3"
+tempfile = { workspace = true }
+proptest = { workspace = true }
+rayon = { workspace = true }
 
 # Real QuantumCoin crate dependencies
 quantumcoin-node = { path = "crates/node" }

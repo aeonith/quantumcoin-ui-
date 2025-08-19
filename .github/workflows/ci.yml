@@ -82,16 +82,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
+      - name: Install security tools
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-deny
+          cargo install cargo-geiger
       - name: Security audit
         run: cargo audit
+      - name: Dependency check
+        run: cargo deny check
+      - name: Unsafe code detection
+        run: cargo geiger --all-targets
       - name: Check for unsafe code
         run: |
           if grep -r "unsafe " src/ crates/; then
-            echo "Unsafe code found - review required"
+            echo "❌ Unsafe code found - review required"
             exit 1
           fi
+          echo "✅ No unsafe code detected"
+      - name: Check for secrets
+        run: |
+          if grep -rE "(password|secret|key|token).*=.*['\"][^'\"]{10,}" src/ crates/ --exclude-dir=target; then
+            echo "❌ Potential secrets found in code"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets detected"
 
   performance:
     name: Performance Tests
@@ -109,6 +124,20 @@ jobs:
           timeout 60s cargo test --release --test integration_tests test_large_utxo_set_performance -- --nocapture
           echo "Running mempool performance test..."
           timeout 60s cargo test --release --test integration_tests test_mempool_high_load -- --nocapture
+      - name: Stress testing
+        run: |
+          echo "🔥 Running comprehensive stress tests..."
+          timeout 180s cargo test --release --test stress_tests extreme_stress_tests -- --nocapture
+          echo "🛡️ Running attack simulation tests..."
+          timeout 120s cargo test --release --test stress_tests attack_simulation_tests -- --nocapture
+          echo "🧪 Running property-based tests..."
+          timeout 120s cargo test --release --test stress_tests property_tests -- --nocapture
+      - name: AI and RevStop testing
+        run: |
+          echo "🧠 Testing AI learning system..."
+          cargo test --release ai_learning -- --nocapture
+          echo "🛡️ Testing RevStop system..."
+          cargo test --release revstop -- --nocapture
 
   documentation:
     name: Documentation Check
