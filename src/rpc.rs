@@ -1,638 +1,598 @@
-use crate::blockchain::Blockchain;
-use crate::block::Block;
-use crate::transaction::Transaction;
-use crate::wallet::Wallet;
-use crate::network::NetworkManager;
-use serde::{Serialize, Deserialize};
-use serde_json::{Value, json};
+use anyhow::{Result, Context};
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    response::Json,
+    routing::{get, post},
+    Router,
+};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use rocket::serde::{Serialize as RocketSerialize, Deserialize as RocketDeserialize};
-use rocket::{State, get, post, routes, launch, Build, Rocket};
-use rocket::serde::json::Json;
-use anyhow::Result;
-use std::collections::HashMap;
+use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
+use tower_http::trace::TraceLayer;
+use tracing::{info, error, debug};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RpcRequest {
-    pub jsonrpc: String,
-    pub method: String,
-    pub params: Value,
-    pub id: u64,
-}
+use crate::{
+    blockchain::Blockchain,
+    database::BlockchainDatabase,
+    mempool::Mempool,
+    p2p::{P2PNode, NetworkStats},
+    quantum_crypto::{generate_keypair, public_key_to_address},
+    transaction::SignedTransaction,
+    utxo::UTXOSet,
+};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RpcResponse {
-    pub jsonrpc: String,
-    pub result: Option<Value>,
-    pub error: Option<RpcError>,
-    pub id: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RpcError {
-    pub code: i32,
-    pub message: String,
-    pub data: Option<Value>,
-}
-
-#[derive(Clone)]
+/// RPC Server for QuantumCoin node
 pub struct RpcServer {
+    /// Server address
+    addr: SocketAddr,
+    
+    /// Blockchain state
+    blockchain: Arc<RwLock<Blockchain>>,
+    
+    /// Database
+    database: Arc<RwLock<Option<BlockchainDatabase>>>,
+    
+    /// Mempool
+    mempool: Arc<RwLock<Mempool>>,
+    
+    /// P2P node
+    p2p_node: Arc<P2PNode>,
+}
+
+/// Shared application state
+#[derive(Clone)]
+pub struct AppState {
     pub blockchain: Arc<RwLock<Blockchain>>,
-    pub network: Option<Arc<NetworkManager>>,
-    pub wallet: Arc<RwLock<Wallet>>,
+    pub database: Arc<RwLock<Option<BlockchainDatabase>>>,
+    pub mempool: Arc<RwLock<Mempool>>,
+    pub p2p_node: Arc<P2PNode>,
+}
+
+/// API Response wrapper
+#[derive(Debug, Serialize)]
+pub struct ApiResponse<T> {
+    pub success: bool,
+    pub data: Option<T>,
+    pub error: Option<String>,
+    pub timestamp: u64,
+}
+
+impl<T> ApiResponse<T> {
+    pub fn success(data: T) -> Self {
+        Self {
+            success: true,
+            data: Some(data),
+            error: None,
+            timestamp: chrono::Utc::now().timestamp() as u64,
+        }
+    }
+    
+    pub fn error(message: String) -> Self {
+        Self {
+            success: false,
+            data: None,
+            error: Some(message),
+            timestamp: chrono::Utc::now().timestamp() as u64,
+        }
+    }
+}
+
+/// Node information response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NodeInfo {
+    pub version: String,
+    pub protocol_version: u32,
+    pub chain_height: u64,
+    pub best_block_hash: String,
+    pub difficulty: u32,
+    pub network: String,
+    pub connections: usize,
+    pub mempool_size: usize,
+    pub total_supply: u64,
+}
+
+/// Block information response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BlockInfo {
+    pub height: u64,
+    pub hash: String,
+    pub previous_hash: String,
+    pub merkle_root: String,
+    pub timestamp: i64,
+    pub difficulty: u32,
+    pub nonce: u64,
+    pub transaction_count: usize,
+    pub size: usize,
+    pub transactions: Vec<String>, // Transaction IDs
+}
+
+/// Transaction information response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransactionInfo {
+    pub txid: String,
+    pub version: u32,
+    pub lock_time: u32,
+    pub inputs: Vec<TransactionInputInfo>,
+    pub outputs: Vec<TransactionOutputInfo>,
+    pub block_hash: Option<String>,
+    pub block_height: Option<u64>,
+    pub confirmations: Option<u64>,
+    pub timestamp: i64,
+    pub fee: u64,
+    pub size: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransactionInputInfo {
+    pub previous_output: String,
+    pub script_sig: String, // Hex encoded
+    pub sequence: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TransactionOutputInfo {
+    pub value: u64,
+    pub address: String,
+    pub script_pubkey: String, // Hex encoded
+}
+
+/// Address information response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddressInfo {
+    pub address: String,
+    pub balance: u64,
+    pub total_received: u64,
+    pub total_sent: u64,
+    pub transaction_count: usize,
+    pub utxo_count: usize,
+}
+
+/// Mempool information response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MempoolInfo {
+    pub size: usize,
+    pub bytes: usize,
+    pub usage: usize,
+    pub max_mempool: usize,
+    pub mempoolmin_fee: f64,
+    pub unbroadcast_count: usize,
+}
+
+/// Mining information response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MiningInfo {
+    pub blocks: u64,
+    pub current_block_size: u64,
+    pub current_block_weight: u64,
+    pub difficulty: f64,
+    pub network_hashps: u64,
+    pub pooled_tx: usize,
+    pub chain: String,
+    pub warnings: String,
+}
+
+/// Query parameters for blocks endpoint
+#[derive(Debug, Deserialize)]
+pub struct BlocksQuery {
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
+}
+
+/// Query parameters for transactions endpoint
+#[derive(Debug, Deserialize)]
+pub struct TransactionsQuery {
+    pub limit: Option<usize>,
+    pub offset: Option<usize>,
+    pub address: Option<String>,
+}
+
+/// Send transaction request
+#[derive(Debug, Deserialize)]
+pub struct SendTransactionRequest {
+    pub raw_transaction: String, // Hex encoded
 }
 
 impl RpcServer {
-    pub fn new(blockchain: Arc<RwLock<Blockchain>>, wallet: Arc<RwLock<Wallet>>) -> Self {
+    pub fn new(
+        addr: SocketAddr,
+        blockchain: Arc<RwLock<Blockchain>>,
+        database: Arc<RwLock<Option<BlockchainDatabase>>>,
+        mempool: Arc<RwLock<Mempool>>,
+        p2p_node: Arc<P2PNode>,
+    ) -> Self {
         Self {
+            addr,
             blockchain,
-            network: None,
-            wallet,
+            database,
+            mempool,
+            p2p_node,
         }
     }
-
-    pub fn with_network(mut self, network: Arc<NetworkManager>) -> Self {
-        self.network = Some(network);
-        self
-    }
-
-    pub async fn handle_request(&self, request: RpcRequest) -> RpcResponse {
-        let result = match request.method.as_str() {
-            // Blockchain info methods
-            "getblockchaininfo" => self.get_blockchain_info().await,
-            "getblockcount" => self.get_block_count().await,
-            "getbestblockhash" => self.get_best_block_hash().await,
-            "getdifficulty" => self.get_difficulty().await,
-            "gettotalsupply" => self.get_total_supply().await,
-            
-            // Block methods
-            "getblock" => self.get_block(&request.params).await,
-            "getblockheader" => self.get_block_header(&request.params).await,
-            "getblockhash" => self.get_block_hash(&request.params).await,
-            
-            // Transaction methods
-            "gettransaction" => self.get_transaction(&request.params).await,
-            "sendrawtransaction" => self.send_raw_transaction(&request.params).await,
-            "getmempool" => self.get_mempool().await,
-            "getmempoolinfo" => self.get_mempool_info().await,
-            
-            // Wallet methods
-            "getbalance" => self.get_balance(&request.params).await,
-            "getnewaddress" => self.get_new_address().await,
-            "sendtoaddress" => self.send_to_address(&request.params).await,
-            "listtransactions" => self.list_transactions(&request.params).await,
-            "getaddressinfo" => self.get_address_info(&request.params).await,
-            
-            // Mining methods
-            "getmininginfo" => self.get_mining_info().await,
-            "submitblock" => self.submit_block(&request.params).await,
-            "getblocktemplate" => self.get_block_template().await,
-            
-            // Network methods
-            "getpeerinfo" => self.get_peer_info().await,
-            "getnetworkinfo" => self.get_network_info().await,
-            "addnode" => self.add_node(&request.params).await,
-            
-            // Utility methods
-            "validateaddress" => self.validate_address(&request.params).await,
-            "estimatefee" => self.estimate_fee(&request.params).await,
-            
-            _ => Err(RpcError {
-                code: -32601,
-                message: "Method not found".to_string(),
-                data: None,
-            }),
-        };
-
-        match result {
-            Ok(result) => RpcResponse {
-                jsonrpc: "2.0".to_string(),
-                result: Some(result),
-                error: None,
-                id: request.id,
-            },
-            Err(error) => RpcResponse {
-                jsonrpc: "2.0".to_string(),
-                result: None,
-                error: Some(error),
-                id: request.id,
-            },
-        }
-    }
-
-    // Blockchain info methods
-    async fn get_blockchain_info(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!({
-            "chain": "QuantumCoin",
-            "blocks": blockchain.get_chain_height(),
-            "difficulty": blockchain.get_difficulty(),
-            "bestblockhash": blockchain.get_latest_block_hash(),
-            "totalsupply": blockchain.get_total_supply(),
-            "maxsupply": blockchain.get_max_supply(),
-            "circulationpercentage": blockchain.get_circulation_percentage(),
-            "halving_interval": blockchain.halving_interval,
-            "quantum_resistant": true
-        }))
-    }
-
-    async fn get_block_count(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!(blockchain.get_chain_height()))
-    }
-
-    async fn get_best_block_hash(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!(blockchain.get_latest_block_hash()))
-    }
-
-    async fn get_difficulty(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!(blockchain.get_difficulty()))
-    }
-
-    async fn get_total_supply(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!(blockchain.get_total_supply()))
-    }
-
-    // Block methods
-    async fn get_block(&self, params: &Value) -> Result<Value, RpcError> {
-        let hash = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Block hash required".to_string(),
-                data: None,
-            })?;
-
-        let blockchain = self.blockchain.read().await;
-        if let Some(block) = blockchain.get_block_by_hash(hash) {
-            Ok(json!({
-                "hash": block.hash,
-                "height": block.index,
-                "timestamp": block.timestamp,
-                "previous_hash": block.previous_hash,
-                "nonce": block.nonce,
-                "transactions": block.transactions,
-                "transaction_count": block.transactions.len(),
-                "size": serde_json::to_string(block).unwrap_or_default().len()
-            }))
-        } else {
-            Err(RpcError {
-                code: -5,
-                message: "Block not found".to_string(),
-                data: None,
-            })
-        }
-    }
-
-    async fn get_block_header(&self, params: &Value) -> Result<Value, RpcError> {
-        let hash = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Block hash required".to_string(),
-                data: None,
-            })?;
-
-        let blockchain = self.blockchain.read().await;
-        if let Some(block) = blockchain.get_block_by_hash(hash) {
-            Ok(json!({
-                "hash": block.hash,
-                "height": block.index,
-                "timestamp": block.timestamp,
-                "previous_hash": block.previous_hash,
-                "nonce": block.nonce,
-                "transaction_count": block.transactions.len()
-            }))
-        } else {
-            Err(RpcError {
-                code: -5,
-                message: "Block not found".to_string(),
-                data: None,
-            })
-        }
-    }
-
-    async fn get_block_hash(&self, params: &Value) -> Result<Value, RpcError> {
-        let height = params.get(0)
-            .and_then(|v| v.as_u64())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Block height required".to_string(),
-                data: None,
-            })?;
-
-        let blockchain = self.blockchain.read().await;
-        if let Some(block) = blockchain.get_block_by_index(height) {
-            Ok(json!(block.hash))
-        } else {
-            Err(RpcError {
-                code: -5,
-                message: "Block not found".to_string(),
-                data: None,
-            })
-        }
-    }
-
-    // Transaction methods
-    async fn get_transaction(&self, params: &Value) -> Result<Value, RpcError> {
-        let tx_id = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Transaction ID required".to_string(),
-                data: None,
-            })?;
-
-        let blockchain = self.blockchain.read().await;
+    
+    /// Start the RPC server
+    pub async fn start(&self) -> Result<()> {
+        info!("Starting RPC server on {}", self.addr);
         
-        // Search in all blocks for the transaction
-        for block in &blockchain.chain {
-            for tx in &block.transactions {
-                if tx.id == tx_id {
-                    return Ok(json!({
-                        "txid": tx.id,
-                        "sender": tx.sender,
-                        "recipient": tx.recipient,
-                        "amount": tx.amount,
-                        "fee": tx.fee,
-                        "timestamp": tx.timestamp,
-                        "signature": tx.signature,
-                        "confirmations": blockchain.chain.len() - block.index as usize,
-                        "blockhash": block.hash,
-                        "blockheight": block.index
-                    }));
-                }
-            }
-        }
+        let state = AppState {
+            blockchain: Arc::clone(&self.blockchain),
+            database: Arc::clone(&self.database),
+            mempool: Arc::clone(&self.mempool),
+            p2p_node: Arc::clone(&self.p2p_node),
+        };
+        
+        let app = Router::new()
+            // Node information
+            .route("/", get(get_node_info))
+            .route("/info", get(get_node_info))
+            .route("/status", get(get_node_status))
+            
+            // Blockchain endpoints
+            .route("/blocks", get(get_blocks))
+            .route("/blocks/height/:height", get(get_block_by_height))
+            .route("/blocks/hash/:hash", get(get_block_by_hash))
+            .route("/blocks/latest", get(get_latest_block))
+            
+            // Transaction endpoints
+            .route("/transactions", get(get_transactions))
+            .route("/transactions/:txid", get(get_transaction))
+            .route("/transactions/send", post(send_transaction))
+            
+            // Address endpoints
+            .route("/addresses/:address", get(get_address_info))
+            .route("/addresses/:address/balance", get(get_address_balance))
+            .route("/addresses/:address/utxos", get(get_address_utxos))
+            .route("/addresses/:address/transactions", get(get_address_transactions))
+            
+            // Mempool endpoints
+            .route("/mempool", get(get_mempool_info))
+            .route("/mempool/transactions", get(get_mempool_transactions))
+            
+            // Network endpoints
+            .route("/network", get(get_network_info))
+            .route("/peers", get(get_peers))
+            
+            // Mining endpoints
+            .route("/mining", get(get_mining_info))
+            
+            // Utility endpoints
+            .route("/utils/address/generate", post(generate_address))
+            .route("/utils/fee/estimate", get(estimate_fee))
+            
+            // Health check
+            .route("/health", get(health_check))
+            
+            .layer(
+                ServiceBuilder::new()
+                    .layer(TraceLayer::new_for_http())
+                    .layer(CorsLayer::new()
+                        .allow_origin(Any)
+                        .allow_methods(Any)
+                        .allow_headers(Any)
+                    ),
+            )
+            .with_state(state);
+        
+        let listener = tokio::net::TcpListener::bind(self.addr).await
+            .context("Failed to bind RPC server")?;
+            
+        info!("RPC server listening on {}", self.addr);
+        
+        axum::serve(listener, app)
+            .await
+            .context("RPC server error")?;
+            
+        Ok(())
+    }
+}
 
-        Err(RpcError {
-            code: -5,
-            message: "Transaction not found".to_string(),
-            data: None,
+// RPC endpoint handlers
+
+/// Get node information
+async fn get_node_info(State(state): State<AppState>) -> Json<ApiResponse<NodeInfo>> {
+    let blockchain = state.blockchain.read().await;
+    let mempool = state.mempool.read().await;
+    let network_stats = state.p2p_node.get_stats().await;
+    
+    let node_info = NodeInfo {
+        version: "2.0.0".to_string(),
+        protocol_version: crate::p2p::PROTOCOL_VERSION,
+        chain_height: blockchain.chain.len() as u64,
+        best_block_hash: blockchain.get_latest_block().hash.clone(),
+        difficulty: blockchain.difficulty,
+        network: "quantumcoin-mainnet".to_string(),
+        connections: network_stats.connected_peers,
+        mempool_size: mempool.size(),
+        total_supply: blockchain.total_supply,
+    };
+    
+    Json(ApiResponse::success(node_info))
+}
+
+/// Get node status (health check)
+async fn get_node_status(State(state): State<AppState>) -> Json<ApiResponse<HashMap<String, serde_json::Value>>> {
+    let blockchain = state.blockchain.read().await;
+    let mempool = state.mempool.read().await;
+    let network_stats = state.p2p_node.get_stats().await;
+    
+    let mut status = HashMap::new();
+    status.insert("uptime".to_string(), serde_json::json!(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs()));
+    status.insert("chain_height".to_string(), serde_json::json!(blockchain.chain.len()));
+    status.insert("mempool_size".to_string(), serde_json::json!(mempool.size()));
+    status.insert("connected_peers".to_string(), serde_json::json!(network_stats.connected_peers));
+    status.insert("is_syncing".to_string(), serde_json::json!(false)); // TODO: Implement sync status
+    
+    Json(ApiResponse::success(status))
+}
+
+/// Get blocks with pagination
+async fn get_blocks(
+    State(state): State<AppState>,
+    Query(query): Query<BlocksQuery>,
+) -> Json<ApiResponse<Vec<BlockInfo>>> {
+    let blockchain = state.blockchain.read().await;
+    let limit = query.limit.unwrap_or(10).min(100); // Max 100 blocks per request
+    let offset = query.offset.unwrap_or(0);
+    
+    let total_blocks = blockchain.chain.len();
+    let start = total_blocks.saturating_sub(offset + limit);
+    let end = total_blocks.saturating_sub(offset);
+    
+    let blocks: Vec<BlockInfo> = blockchain.chain[start..end]
+        .iter()
+        .rev() // Show newest first
+        .map(|block| BlockInfo {
+            height: block.index,
+            hash: block.hash.clone(),
+            previous_hash: block.previous_hash.clone(),
+            merkle_root: block.merkle_root.clone(),
+            timestamp: block.timestamp.timestamp(),
+            difficulty: block.difficulty,
+            nonce: block.nonce,
+            transaction_count: block.transactions.len(),
+            size: bincode::serialize(block).map(|data| data.len()).unwrap_or(0),
+            transactions: block.transactions.iter().map(|tx| tx.id.clone()).collect(),
         })
-    }
+        .collect();
+    
+    Json(ApiResponse::success(blocks))
+}
 
-    async fn send_raw_transaction(&self, params: &Value) -> Result<Value, RpcError> {
-        let tx_data = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Raw transaction data required".to_string(),
-                data: None,
-            })?;
-
-        let transaction: Transaction = serde_json::from_str(tx_data)
-            .map_err(|_| RpcError {
-                code: -22,
-                message: "Invalid transaction format".to_string(),
-                data: None,
-            })?;
-
-        let mut blockchain = self.blockchain.write().await;
-        blockchain.add_transaction(transaction.clone())
-            .map_err(|e| RpcError {
-                code: -26,
-                message: format!("Transaction rejected: {}", e),
-                data: None,
-            })?;
-
-        // Broadcast to network if available
-        if let Some(network) = &self.network {
-            network.broadcast_transaction(transaction.clone()).await;
-        }
-
-        Ok(json!(transaction.id))
-    }
-
-    async fn get_mempool(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        let transactions = blockchain.get_pending_transactions();
-        Ok(json!(transactions))
-    }
-
-    async fn get_mempool_info(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!({
-            "size": blockchain.get_pending_transaction_count(),
-            "bytes": blockchain.get_pending_transaction_count() * 500, // Rough estimate
-            "mempoolminfee": 1000
-        }))
-    }
-
-    // Wallet methods
-    async fn get_balance(&self, params: &Value) -> Result<Value, RpcError> {
-        let address = params.get(0)
-            .and_then(|v| v.as_str())
-            .unwrap_or_else(|| {
-                // Default to wallet's primary address
-                &self.wallet.blocking_read().address
-            });
-
-        let blockchain = self.blockchain.read().await;
-        let balance = blockchain.get_balance(address);
-        Ok(json!(balance))
-    }
-
-    async fn get_new_address(&self) -> Result<Value, RpcError> {
-        let wallet = self.wallet.read().await;
-        Ok(json!(wallet.address.clone()))
-    }
-
-    async fn send_to_address(&self, params: &Value) -> Result<Value, RpcError> {
-        let address = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Recipient address required".to_string(),
-                data: None,
-            })?;
-
-        let amount = params.get(1)
-            .and_then(|v| v.as_u64())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Amount required".to_string(),
-                data: None,
-            })?;
-
-        let wallet = self.wallet.read().await;
-        let transaction = wallet.create_transaction(address.to_string(), amount, 1000)
-            .map_err(|e| RpcError {
-                code: -4,
-                message: format!("Transaction creation failed: {}", e),
-                data: None,
-            })?;
-
-        let mut blockchain = self.blockchain.write().await;
-        blockchain.add_transaction(transaction.clone())
-            .map_err(|e| RpcError {
-                code: -26,
-                message: format!("Transaction rejected: {}", e),
-                data: None,
-            })?;
-
-        // Broadcast to network if available
-        drop(blockchain);
-        if let Some(network) = &self.network {
-            network.broadcast_transaction(transaction.clone()).await;
-        }
-
-        Ok(json!(transaction.id))
-    }
-
-    async fn list_transactions(&self, _params: &Value) -> Result<Value, RpcError> {
-        let wallet = self.wallet.read().await;
-        let blockchain = self.blockchain.read().await;
-        
-        let mut transactions = Vec::new();
-        
-        // Get transactions involving this wallet
-        for block in &blockchain.chain {
-            for tx in &block.transactions {
-                if tx.sender == wallet.address || tx.recipient == wallet.address {
-                    transactions.push(json!({
-                        "txid": tx.id,
-                        "sender": tx.sender,
-                        "recipient": tx.recipient,
-                        "amount": tx.amount,
-                        "fee": tx.fee,
-                        "timestamp": tx.timestamp,
-                        "confirmations": blockchain.chain.len() - block.index as usize,
-                        "category": if tx.recipient == wallet.address { "receive" } else { "send" }
-                    }));
-                }
-            }
-        }
-
-        Ok(json!(transactions))
-    }
-
-    async fn get_address_info(&self, params: &Value) -> Result<Value, RpcError> {
-        let address = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Address required".to_string(),
-                data: None,
-            })?;
-
-        let blockchain = self.blockchain.read().await;
-        let balance = blockchain.get_balance(address);
-        
-        Ok(json!({
-            "address": address,
-            "balance": balance,
-            "ismine": address == self.wallet.read().await.address,
-            "isvalid": true // Simplified validation
-        }))
-    }
-
-    // Mining methods
-    async fn get_mining_info(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        Ok(json!({
-            "blocks": blockchain.get_chain_height(),
-            "difficulty": blockchain.get_difficulty(),
-            "networkhashps": blockchain.estimate_network_hashrate(),
-            "pooledtx": blockchain.get_pending_transaction_count(),
-            "chain": "QuantumCoin",
-            "warnings": ""
-        }))
-    }
-
-    async fn submit_block(&self, params: &Value) -> Result<Value, RpcError> {
-        let block_data = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Block data required".to_string(),
-                data: None,
-            })?;
-
-        let block: Block = serde_json::from_str(block_data)
-            .map_err(|_| RpcError {
-                code: -22,
-                message: "Invalid block format".to_string(),
-                data: None,
-            })?;
-
-        let mut blockchain = self.blockchain.write().await;
-        blockchain.add_block(block.clone())
-            .map_err(|e| RpcError {
-                code: -25,
-                message: format!("Block rejected: {}", e),
-                data: None,
-            })?;
-
-        // Broadcast to network if available
-        drop(blockchain);
-        if let Some(network) = &self.network {
-            network.broadcast_block(block).await;
-        }
-
-        Ok(json!(null))
-    }
-
-    async fn get_block_template(&self) -> Result<Value, RpcError> {
-        let blockchain = self.blockchain.read().await;
-        let wallet = self.wallet.read().await;
-        
-        // Create a block template for mining
-        drop(blockchain);
-        let mut blockchain = self.blockchain.write().await;
-        let block = blockchain.create_block(&wallet.address)
-            .map_err(|e| RpcError {
-                code: -1,
-                message: format!("Failed to create block template: {}", e),
-                data: None,
-            })?;
-
-        Ok(json!({
-            "version": 1,
-            "previousblockhash": block.previous_hash,
-            "transactions": block.transactions,
-            "coinbasevalue": blockchain.get_current_mining_reward(),
-            "target": "0".repeat(blockchain.difficulty),
-            "mintime": block.timestamp,
-            "mutable": ["time", "transactions", "prevblock"],
-            "noncerange": "00000000ffffffff",
-            "sigoplimit": 20000,
-            "sizelimit": 1000000
-        }))
-    }
-
-    // Network methods
-    async fn get_peer_info(&self) -> Result<Value, RpcError> {
-        if let Some(network) = &self.network {
-            let peers = network.get_peers().await;
-            let peer_info: Vec<Value> = peers.into_iter().map(|peer| {
-                json!({
-                    "id": peer.node_id,
-                    "addr": peer.address.to_string(),
-                    "version": peer.version,
-                    "connected": peer.connected,
-                    "lastseen": peer.last_seen.elapsed().as_secs()
-                })
-            }).collect();
-            Ok(json!(peer_info))
-        } else {
-            Ok(json!([]))
-        }
-    }
-
-    async fn get_network_info(&self) -> Result<Value, RpcError> {
-        let connections = if let Some(network) = &self.network {
-            network.get_peer_count().await
-        } else {
-            0
+/// Get block by height
+async fn get_block_by_height(
+    Path(height): Path<u64>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<BlockInfo>> {
+    let blockchain = state.blockchain.read().await;
+    
+    if let Some(block) = blockchain.chain.get(height as usize) {
+        let block_info = BlockInfo {
+            height: block.index,
+            hash: block.hash.clone(),
+            previous_hash: block.previous_hash.clone(),
+            merkle_root: block.merkle_root.clone(),
+            timestamp: block.timestamp.timestamp(),
+            difficulty: block.difficulty,
+            nonce: block.nonce,
+            transaction_count: block.transactions.len(),
+            size: bincode::serialize(block).map(|data| data.len()).unwrap_or(0),
+            transactions: block.transactions.iter().map(|tx| tx.id.clone()).collect(),
         };
-
-        Ok(json!({
-            "version": 10000,
-            "subversion": "/QuantumCoin:1.0.0/",
-            "protocolversion": 1,
-            "localservices": "0000000000000001",
-            "connections": connections,
-            "networks": [{
-                "name": "ipv4",
-                "limited": false,
-                "reachable": true,
-                "proxy": "",
-                "proxy_randomize_credentials": false
-            }],
-            "relayfee": 0.00001000,
-            "incrementalfee": 0.00001000,
-            "localaddresses": [],
-            "warnings": ""
-        }))
+        Json(ApiResponse::success(block_info))
+    } else {
+        Json(ApiResponse::error("Block not found".to_string()))
     }
+}
 
-    async fn add_node(&self, params: &Value) -> Result<Value, RpcError> {
-        let node_addr = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Node address required".to_string(),
-                data: None,
-            })?;
+/// Get block by hash
+async fn get_block_by_hash(
+    Path(hash): Path<String>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<BlockInfo>> {
+    let blockchain = state.blockchain.read().await;
+    
+    if let Some(block) = blockchain.chain.iter().find(|b| b.hash == hash) {
+        let block_info = BlockInfo {
+            height: block.index,
+            hash: block.hash.clone(),
+            previous_hash: block.previous_hash.clone(),
+            merkle_root: block.merkle_root.clone(),
+            timestamp: block.timestamp.timestamp(),
+            difficulty: block.difficulty,
+            nonce: block.nonce,
+            transaction_count: block.transactions.len(),
+            size: bincode::serialize(block).map(|data| data.len()).unwrap_or(0),
+            transactions: block.transactions.iter().map(|tx| tx.id.clone()).collect(),
+        };
+        Json(ApiResponse::success(block_info))
+    } else {
+        Json(ApiResponse::error("Block not found".to_string()))
+    }
+}
 
-        if let Some(network) = &self.network {
-            let addr = node_addr.parse()
-                .map_err(|_| RpcError {
-                    code: -1,
-                    message: "Invalid address format".to_string(),
-                    data: None,
-                })?;
-            
-            network.add_bootstrap_node(addr).await;
-            Ok(json!(null))
-        } else {
-            Err(RpcError {
-                code: -1,
-                message: "Network not available".to_string(),
-                data: None,
-            })
+/// Get latest block
+async fn get_latest_block(State(state): State<AppState>) -> Json<ApiResponse<BlockInfo>> {
+    let blockchain = state.blockchain.read().await;
+    let block = blockchain.get_latest_block();
+    
+    let block_info = BlockInfo {
+        height: block.index,
+        hash: block.hash.clone(),
+        previous_hash: block.previous_hash.clone(),
+        merkle_root: block.merkle_root.clone(),
+        timestamp: block.timestamp.timestamp(),
+        difficulty: block.difficulty,
+        nonce: block.nonce,
+        transaction_count: block.transactions.len(),
+        size: bincode::serialize(block).map(|data| data.len()).unwrap_or(0),
+        transactions: block.transactions.iter().map(|tx| tx.id.clone()).collect(),
+    };
+    
+    Json(ApiResponse::success(block_info))
+}
+
+/// Get mempool information
+async fn get_mempool_info(State(state): State<AppState>) -> Json<ApiResponse<MempoolInfo>> {
+    let mempool = state.mempool.read().await;
+    let stats = mempool.get_mempool_stats();
+    
+    let mempool_info = MempoolInfo {
+        size: stats.transaction_count,
+        bytes: 0, // TODO: Calculate total bytes
+        usage: stats.transaction_count,
+        max_mempool: 10000, // TODO: Get from config
+        mempoolmin_fee: stats.min_fee_per_byte,
+        unbroadcast_count: 0, // TODO: Track unbroadcast transactions
+    };
+    
+    Json(ApiResponse::success(mempool_info))
+}
+
+/// Get address balance
+async fn get_address_balance(
+    Path(address): Path<String>,
+    State(state): State<AppState>,
+) -> Json<ApiResponse<u64>> {
+    let database = state.database.read().await;
+    
+    if let Some(db) = database.as_ref() {
+        match db.get_balance(&address).await {
+            Ok(balance) => Json(ApiResponse::success(balance)),
+            Err(e) => Json(ApiResponse::error(format!("Database error: {}", e))),
         }
+    } else {
+        Json(ApiResponse::error("Database not available".to_string()))
     }
+}
 
-    // Utility methods
-    async fn validate_address(&self, params: &Value) -> Result<Value, RpcError> {
-        let address = params.get(0)
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| RpcError {
-                code: -1,
-                message: "Address required".to_string(),
-                data: None,
-            })?;
+/// Get network information
+async fn get_network_info(State(state): State<AppState>) -> Json<ApiResponse<NetworkStats>> {
+    let stats = state.p2p_node.get_stats().await;
+    Json(ApiResponse::success(stats))
+}
 
-        // Simplified validation - in production, you'd check format, checksum, etc.
-        let is_valid = address.len() > 20 && address.chars().all(|c| c.is_alphanumeric() || c == '=');
+/// Generate new address
+async fn generate_address() -> Json<ApiResponse<HashMap<String, String>>> {
+    let (public_key, private_key) = generate_keypair();
+    let address = public_key_to_address(&public_key);
+    
+    let mut response = HashMap::new();
+    response.insert("address".to_string(), address);
+    response.insert("public_key".to_string(), public_key);
+    response.insert("private_key".to_string(), private_key);
+    
+    Json(ApiResponse::success(response))
+}
+
+/// Health check endpoint
+async fn health_check() -> Json<ApiResponse<HashMap<String, String>>> {
+    let mut health = HashMap::new();
+    health.insert("status".to_string(), "healthy".to_string());
+    health.insert("timestamp".to_string(), chrono::Utc::now().to_rfc3339());
+    
+    Json(ApiResponse::success(health))
+}
+
+// TODO: Implement remaining endpoints
+async fn get_transactions(
+    State(_state): State<AppState>,
+    Query(_query): Query<TransactionsQuery>,
+) -> Json<ApiResponse<Vec<String>>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_transaction(
+    Path(_txid): Path<String>,
+    State(_state): State<AppState>,
+) -> Json<ApiResponse<String>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn send_transaction(
+    State(_state): State<AppState>,
+    Json(_request): Json<SendTransactionRequest>,
+) -> Json<ApiResponse<String>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_address_info(
+    Path(_address): Path<String>,
+    State(_state): State<AppState>,
+) -> Json<ApiResponse<AddressInfo>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_address_utxos(
+    Path(_address): Path<String>,
+    State(_state): State<AppState>,
+) -> Json<ApiResponse<Vec<String>>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_address_transactions(
+    Path(_address): Path<String>,
+    State(_state): State<AppState>,
+) -> Json<ApiResponse<Vec<String>>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_mempool_transactions(State(_state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_peers(State(_state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn get_mining_info(State(_state): State<AppState>) -> Json<ApiResponse<MiningInfo>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+async fn estimate_fee(State(_state): State<AppState>) -> Json<ApiResponse<f64>> {
+    Json(ApiResponse::error("Not implemented yet".to_string()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum_test::TestServer;
+    
+    #[tokio::test]
+    async fn test_health_check() {
+        let app = Router::new()
+            .route("/health", get(health_check));
         
-        Ok(json!({
-            "isvalid": is_valid,
-            "address": address,
-            "ismine": address == self.wallet.read().await.address
-        }))
+        let server = TestServer::new(app).unwrap();
+        let response = server.get("/health").await;
+        
+        assert_eq!(response.status_code(), 200);
+        
+        let body: ApiResponse<HashMap<String, String>> = response.json();
+        assert!(body.success);
+        assert!(body.data.is_some());
     }
-
-    async fn estimate_fee(&self, _params: &Value) -> Result<Value, RpcError> {
-        // Simple fee estimation - 1000 satoshis
-        Ok(json!(1000))
-    }
-}
-
-// Rocket integration for HTTP RPC server
-#[post("/", data = "<request>")]
-async fn rpc_handler(
-    request: Json<RpcRequest>,
-    rpc_server: &State<Arc<RpcServer>>,
-) -> Json<RpcResponse> {
-    Json(rpc_server.handle_request(request.into_inner()).await)
-}
-
-#[get("/")]
-fn rpc_info() -> Json<Value> {
-    Json(json!({
-        "name": "QuantumCoin RPC Server",
-        "version": "1.0.0",
-        "protocol": "JSON-RPC 2.0",
-        "quantum_resistant": true
-    }))
-}
-
-pub fn build_rpc_rocket(rpc_server: Arc<RpcServer>) -> Rocket<Build> {
-    rocket::build()
-        .manage(rpc_server)
-        .mount("/rpc", routes![rpc_handler, rpc_info])
-}
-
-impl Wallet {
-    // Helper method for RPC
-    fn blocking_read(&self) -> std::sync::RwLockReadGuard<'_, Self> {
-        unimplemented!("This should be implemented with proper async handling")
+    
+    #[tokio::test]
+    async fn test_generate_address() {
+        let app = Router::new()
+            .route("/utils/address/generate", post(generate_address));
+        
+        let server = TestServer::new(app).unwrap();
+        let response = server.post("/utils/address/generate").await;
+        
+        assert_eq!(response.status_code(), 200);
+        
+        let body: ApiResponse<HashMap<String, String>> = response.json();
+        assert!(body.success);
+        assert!(body.data.is_some());
+        
+        let data = body.data.unwrap();
+        assert!(data.contains_key("address"));
+        assert!(data.contains_key("public_key"));
+        assert!(data.contains_key("private_key"));
     }
 }

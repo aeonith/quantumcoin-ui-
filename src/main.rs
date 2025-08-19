@@ -9,6 +9,10 @@ mod quantum_crypto;
 mod wallet;
 mod utxo;
 mod database;
+mod p2p;
+mod rpc;
+mod explorer;
+mod economics;
 
 use blockchain::Blockchain;
 use transaction::Transaction;
