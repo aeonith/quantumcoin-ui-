@@ -116,34 +116,6 @@ pub struct GossipMessage {
     pub source_peer: Option<SocketAddr>,
 }
 
-/// Message priority levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub enum MessagePriority {
-    Low = 0,
-    Normal = 1,
-    High = 2,
-    Critical = 3,
-}
-
-/// Message types for the P2P network
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum MessageType {
-    Block,
-    Transaction,
-    PeerExchange,
-    HealthCheck,
-    Announcement,
-}
-
-/// Gossip message wrapper
-#[derive(Debug, Clone)]
-pub struct GossipMessage {
-    pub network_message: NetworkMessage,
-    pub first_seen: SystemTime,
-    pub propagation_count: u32,
-    pub source_peer: Option<SocketAddr>,
-}
-
 impl GossipMessage {
     pub fn new(
         message_type: MessageType,

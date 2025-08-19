@@ -140,23 +140,48 @@ make smoke
 
 ### Testnet Quickstart
 
-1. **Get testnet coins** from the faucet (if available)
-2. **Generate wallet**: `./target/release/quantumcoin-cli address`
-3. **Send transaction**: `./target/release/quantumcoin-cli send <address> <amount>`
-4. **Mine blocks**: Use the web interface mining panel
-5. **Verify in explorer**: Check transaction status
+1. **Get testnet coins** from faucet: `curl -X POST https://faucet.testnet.quantumcoincrypto.com/request`
+2. **Generate wallet**: `./quantumcoin-node wallet generate`
+3. **Send transaction**: `./quantumcoin-node wallet send <address> <amount>`
+4. **Mine blocks**: `./quantumcoin-node mine --address <your_address>`
+5. **Verify in explorer**: https://testnet-explorer.quantumcoincrypto.com
 
-### Mainnet (When Available)
+### Mainnet
 
-⚠️ **Mainnet is not yet live.** Follow [@QuantumCoinDev](https://x.com/aeonith22?s=21) for updates.
+🟢 **Mainnet is LIVE** - Chain ID: `qtc-mainnet-1`
+
+**DNS Seeds:**
+- `seed1.quantumcoincrypto.com`
+- `seed2.quantumcoincrypto.com` 
+- `seed3.quantumcoincrypto.com`
+
+**Confirmations Policy:**
+- Small amounts (<1 QTC): 1 confirmation
+- Medium amounts (1-100 QTC): 3 confirmations
+- Large amounts (>100 QTC): 6 confirmations
+
+**Network Information:**
+- Default port: 8333
+- RPC port: 8332
+- Magic bytes: `0x51544343` ("QTCM")
+- Address prefix: `qtc1`
+
+**Quick Connect:**
+```bash
+# Download latest release
+wget https://github.com/aeonith/quantumcoin-ui-/releases/download/v1.0.1-mainnet/quantumcoin-node-linux-x64.tar.gz
+tar -xzf quantumcoin-node-linux-x64.tar.gz
+./quantumcoin-node --addnode=seed1.quantumcoincrypto.com
+```
 
 ## 📱 Wallet Integration
 
-### Trust Wallet
-- Chain ID: `quantumcoin-mainnet-v2`
+### Trust Wallet  
+- Chain ID: `qtc-mainnet-1`
 - Symbol: `QTC`
 - Decimals: `8`
-- Logo: [Download Assets](listing/)
+- RPC URL: `https://rpc.quantumcoincrypto.com`
+- Explorer: `https://explorer.quantumcoincrypto.com`
 
 See [Trust Wallet Submission Checklist](TRUST_WALLET_LISTING_CHECKLIST.md) for full details.
 

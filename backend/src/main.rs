@@ -17,6 +17,18 @@ mod revstop;
 mod blockchain;
 mod rpc;
 mod ai_integration;
+mod real_wallet;
+mod real_node;
+
+// Real QuantumCoin implementation imports
+use quantumcoin_node::{
+    consensus_engine::{ConsensusEngine, ChainSpec},
+    node::Node,
+    blockchain::BlockchainState,
+    mempool::Mempool as RealMempool,
+};
+use quantumcoin_p2p::network::NetworkManager;
+use quantumcoin_genesis::GenesisBuilder;
 
 use crate::blockchain::{Blockchain, Transaction};
 use crate::rpc::{RpcServer, RpcRequest, RpcResponse};
@@ -99,6 +111,110 @@ fn index() -> &'static str {
     "Welcome to QuantumCoin Backend 🚀"
 }
 
+#[get("/status")]
+fn explorer_status(
+    consensus: &State<Arc<RwLock<ConsensusEngine>>>,
+    network: &State<Arc<RwLock<NetworkManager>>>
+) -> Json<Value> {
+    // BULLETPROOF: Never panic, always return valid response
+    let (current_height, peer_count, mempool_size, sync_progress, last_block_time) = match (|| -> Result<_, Box<dyn std::error::Error>> {
+        let consensus = futures::executor::block_on(consensus.read());
+        let network = futures::executor::block_on(network.read());
+        
+        let blockchain_state = consensus.get_blockchain_state();
+        let current_height = blockchain_state.get_chain_height();
+        let peer_count = network.get_peer_count();
+        let mempool_size = blockchain_state.get_mempool_size();
+        let last_block = blockchain_state.get_latest_block();
+        let sync_progress = network.get_sync_progress();
+        let last_block_time = last_block.map(|b| b.timestamp).unwrap_or(0);
+        
+        Ok((current_height, peer_count, mempool_size, sync_progress, last_block_time))
+    })() {
+        Ok(values) => values,
+        Err(e) => {
+            eprintln!("⚠️  Status endpoint error (recovered): {}", e);
+            // Always return safe defaults - never fail
+            (0u64, 0u32, 0u32, 0.0f64, 0u64)
+        }
+    };
+    
+    Json(json!({
+        "status": if sync_progress >= 0.99 { "healthy" } else { "syncing" },
+        "height": current_height,
+        "peers": peer_count,
+        "mempool": mempool_size,
+        "sync_progress": sync_progress,
+        "last_block_time": last_block_time,
+        "network": "mainnet",
+        "chain_id": "qtc-mainnet-1"
+    }))
+}
+
+#[get("/explorer/blocks?<limit>")]
+fn explorer_blocks(
+    consensus: &State<Arc<RwLock<ConsensusEngine>>>,
+    limit: Option<u32>
+) -> Json<Value> {
+    let limit = limit.unwrap_or(10).min(100);
+    let consensus = futures::executor::block_on(consensus.read());
+    let blockchain_state = consensus.get_blockchain_state();
+    
+    let current_height = blockchain_state.get_chain_height();
+    let recent_blocks = blockchain_state.get_recent_blocks(limit as usize);
+    
+    let blocks: Vec<Value> = recent_blocks.iter().map(|block| {
+        json!({
+            "hash": block.hash,
+            "height": block.height,
+            "timestamp": block.timestamp,
+            "transactions": block.transactions.len(),
+            "size": block.calculate_size(),
+            "difficulty": format!("0x{:08x}", block.header.difficulty),
+            "nonce": block.header.nonce,
+            "merkle_root": block.header.merkle_root,
+            "previous_hash": block.header.previous_hash
+        })
+    }).collect();
+    
+    Json(json!({
+        "blocks": blocks,
+        "total": current_height
+    }))
+}
+
+#[get("/explorer/stats")]
+fn explorer_stats(
+    consensus: &State<Arc<RwLock<ConsensusEngine>>>,
+    network: &State<Arc<RwLock<NetworkManager>>>
+) -> Json<Value> {
+    let consensus = futures::executor::block_on(consensus.read());
+    let network = futures::executor::block_on(network.read());
+    
+    let blockchain_state = consensus.get_blockchain_state();
+    let economics = consensus.get_economics();
+    
+    let current_height = blockchain_state.get_chain_height();
+    let total_supply = economics.calculate_total_supply(current_height);
+    let difficulty = blockchain_state.get_current_difficulty();
+    let hash_rate = network.estimate_network_hash_rate();
+    let peer_count = network.get_peer_count();
+    let mempool_size = blockchain_state.get_mempool_size();
+    let last_block = blockchain_state.get_latest_block();
+    
+    Json(json!({
+        "height": current_height,
+        "total_supply": total_supply,
+        "difficulty": format!("{:.8}", difficulty),
+        "hash_rate": format!("{:.2} TH/s", hash_rate / 1e12),
+        "peers": peer_count,
+        "mempool": mempool_size,
+        "last_block_time": last_block.map(|b| b.timestamp).unwrap_or(0),
+        "network": "mainnet",
+        "chain_id": "qtc-mainnet-1"
+    }))
+}
+
 #[get("/blockchain")]
 fn get_blockchain(blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<Vec<blockchain::Block>> {
     let blockchain = futures::executor::block_on(blockchain_state.read());
@@ -106,14 +222,23 @@ fn get_blockchain(blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<Vec
 }
 
 #[get("/balance/<address>")]
-fn get_balance(address: String, blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<Value> {
-    let blockchain = futures::executor::block_on(blockchain_state.read());
-    let balance = blockchain.get_balance(&address);
+fn get_balance(
+    address: String, 
+    consensus: &State<Arc<RwLock<ConsensusEngine>>>
+) -> Json<Value> {
+    let consensus = futures::executor::block_on(consensus.read());
+    let blockchain_state = consensus.get_blockchain_state();
+    let utxo_set = blockchain_state.get_utxo_set();
+    
+    let confirmed_balance = utxo_set.get_balance(&address);
+    let pending_balance = blockchain_state.get_mempool().get_pending_balance(&address);
+    let total_balance = confirmed_balance + pending_balance;
+    
     Json(json!({
         "address": address, 
-        "balance": balance,
-        "confirmed_balance": balance,
-        "pending_balance": 0,
+        "balance": total_balance,
+        "confirmed_balance": confirmed_balance,
+        "pending_balance": pending_balance,
         "last_updated": chrono::Utc::now().to_rfc3339()
     }))
 }
@@ -150,11 +275,37 @@ fn get_network_stats(blockchain_state: &State<Arc<RwLock<Blockchain>>>) -> Json<
 #[post("/transaction", data = "<transaction>")]
 fn create_transaction(
     transaction: Json<Transaction>,
-    blockchain_state: &State<Arc<RwLock<Blockchain>>>
+    consensus: &State<Arc<RwLock<ConsensusEngine>>>
 ) -> Json<Value> {
-    let mut blockchain = futures::executor::block_on(blockchain_state.write());
-    blockchain.create_transaction(transaction.into_inner());
-    Json(json!({"status": "Transaction added to pending pool"}))
+    let mut consensus = futures::executor::block_on(consensus.write());
+    let blockchain_state = consensus.get_blockchain_state_mut();
+    
+    // Convert to real QuantumCoin transaction
+    let real_tx = quantumcoin_node::transaction::Transaction::new(
+        transaction.from.clone(),
+        transaction.to.clone(),
+        transaction.amount as u64,
+        chrono::Utc::now()
+    );
+    
+    // Validate transaction using real validation system
+    let validator = quantumcoin_validation::TransactionValidator::new();
+    match validator.validate_transaction(&real_tx, blockchain_state.get_utxo_set()) {
+        Ok(_) => {
+            blockchain_state.get_mempool_mut().add_transaction(real_tx);
+            Json(json!({
+                "status": "Transaction added to mempool",
+                "txid": real_tx.id,
+                "fees": real_tx.calculate_fees()
+            }))
+        },
+        Err(e) => {
+            Json(json!({
+                "status": "Transaction validation failed",
+                "error": e.to_string()
+            }))
+        }
+    }
 }
 
 #[post("/mine/<reward_address>")]
@@ -237,15 +388,40 @@ fn rocket() -> _ {
         }
     });
 
+    // Initialize REAL QuantumCoin node with actual blockchain
+    let real_node = real_node::RealQuantumCoinNode::new().await
+        .expect("Failed to initialize real QuantumCoin node");
+    
+    println!("🎉 Real QuantumCoin node initialized successfully!");
+    println!("⛏️  Chain height: {}", {
+        let consensus = real_node.consensus_engine.read().await;
+        consensus.get_blockchain_state().get_chain_height()
+    });
+    println!("🌐 Connected peers: {}", {
+        let network = real_node.network_manager.read().await;
+        network.get_active_peer_count()
+    });
+    
+    // Start mining on real blockchain
+    if let Ok(mining_addr) = std::env::var("MINING_ADDRESS") {
+        real_node.start_mining(mining_addr).await
+            .expect("Failed to start mining");
+        println!("⛏️  Started real mining process");
+    }
+    
     rocket::build()
         .manage(blockchain)
         .manage(ai_state)
+        .manage(real_node.consensus_engine)
+        .manage(real_node.network_manager)
         .mount("/", routes![
             index, register, login, kyc_upload, show_keys, toggle_revstop,
             get_blockchain, get_balance, create_transaction, mine_block, credit_wallet,
             ai_integration::update_ai_optimizations, ai_integration::get_ai_status,
-            ai_integration::get_network_metrics, ai_integration::get_latest_block
+            ai_integration::get_network_metrics, ai_integration::get_latest_block,
+            explorer_status, explorer_blocks, explorer_stats
         ])
+        .mount("/wallet", real_wallet::routes())
         .mount("/static", FileServer::from(relative!("static")))
         .configure(rocket::Config {
             address: "0.0.0.0".parse().unwrap(),

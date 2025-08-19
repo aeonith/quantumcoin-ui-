@@ -1,0 +1,144 @@
+# QuantumCoin Exchange Indexer Reference Implementation
+# This provides a complete deposit/withdrawal monitoring system
+
+version: '3.8'
+
+services:
+  quantumcoin-node:
+    image: quantumcoin/node:v1.0.0
+    container_name: qtc-node
+    ports:
+      - "8333:8333"  # P2P port
+      - "8332:8332"  # RPC port (localhost only)
+    volumes:
+      - qtc-blockchain-data:/root/.quantumcoin
+      - ./config/quantumcoin.conf:/root/.quantumcoin/quantumcoin.conf:ro
+    environment:
+      - QTC_NETWORK=mainnet
+      - QTC_RPC_USER=indexer
+      - QTC_RPC_PASSWORD_FILE=/run/secrets/rpc_password
+    secrets:
+      - rpc_password
+    command: >
+      quantumcoin-node
+      --rpcbind=0.0.0.0:8332
+      --rpcallowip=172.20.0.0/16
+      --txindex=1
+      --addressindex=1
+      --server=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8332/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    
+  indexer-db:
+    image: postgres:15-alpine
+    container_name: qtc-indexer-db
+    environment:
+      - POSTGRES_DB=quantumcoin_indexer
+      - POSTGRES_USER=indexer
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    volumes:
+      - indexer-db-data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/indexes.sql:/docker-entrypoint-initdb.d/02-indexes.sql:ro
+    secrets:
+      - postgres_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U indexer -d quantumcoin_indexer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    
+  indexer:
+    image: quantumcoin/indexer:v1.0.0
+    container_name: qtc-indexer
+    depends_on:
+      quantumcoin-node:
+        condition: service_healthy
+      indexer-db:
+        condition: service_healthy
+    environment:
+      - QTC_NODE_RPC_URL=http://qtc-node:8332
+      - QTC_NODE_RPC_USER=indexer
+      - QTC_NODE_RPC_PASSWORD_FILE=/run/secrets/rpc_password
+      - DATABASE_URL=postgresql://indexer:$(cat /run/secrets/postgres_password)@indexer-db:5432/quantumcoin_indexer
+      - INDEXER_START_HEIGHT=0
+      - INDEXER_BATCH_SIZE=100
+      - INDEXER_WORKERS=4
+    secrets:
+      - rpc_password
+      - postgres_password
+    volumes:
+      - ./config/indexer.toml:/app/config.toml:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    
+  exchange-api:
+    image: quantumcoin/exchange-api:v1.0.0
+    container_name: qtc-exchange-api
+    depends_on:
+      indexer:
+        condition: service_healthy
+    ports:
+      - "3000:3000"  # Exchange API
+    environment:
+      - DATABASE_URL=postgresql://indexer:$(cat /run/secrets/postgres_password)@indexer-db:5432/quantumcoin_indexer
+      - QTC_NODE_RPC_URL=http://qtc-node:8332
+      - QTC_NODE_RPC_USER=indexer
+      - QTC_NODE_RPC_PASSWORD_FILE=/run/secrets/rpc_password
+      - API_RATE_LIMIT=100  # requests per second
+      - MIN_CONFIRMATIONS_SMALL=1
+      - MIN_CONFIRMATIONS_MEDIUM=3
+      - MIN_CONFIRMATIONS_LARGE=6
+    secrets:
+      - rpc_password
+      - postgres_password
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: qtc-redis
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  qtc-blockchain-data:
+    driver: local
+  indexer-db-data:
+    driver: local  
+  redis-data:
+    driver: local
+
+secrets:
+  rpc_password:
+    file: ./secrets/rpc_password.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

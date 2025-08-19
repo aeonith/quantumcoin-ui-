@@ -1,0 +1,45 @@
+name: perf
+on: [push, pull_request]
+jobs:
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/hostedtoolcache
+          docker system prune -af
+          df -h
+      - name: OS deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq gnupg
+      - run: docker compose up -d --build
+      - name: Wait for UI
+        run: |
+          for i in {1..90}; do curl -sf http://localhost:3000/api/health && exit 0; sleep 2; done
+          exit 1
+      - name: UI latency budget
+        run: |
+          errs=0; ts=()
+          for i in {1..60}; do
+            out=$(curl -sw "%{time_total} %{http_code}" -o /dev/null http://localhost:3000/api/health)
+            code=${out##* }; sec=${out% *}; ms=$(awk -v s="$sec" 'BEGIN{print s*1000}')
+            [ "$code" = "200" ] || errs=$((errs+1)); ts+=("$ms"); sleep 0.5
+          done
+          p95=$(printf "%s\n" "${ts[@]}" | sort -n | awk 'BEGIN{c=0}{a[c++]=$1}END{print a[int(0.95*c)]}')
+          echo "p95=${p95}ms errs=${errs}"
+          [ $errs -eq 0 ] && [ $(printf "%.0f" "$p95") -lt 300 ] || exit 1
+      - name: Explorer status + blocks non-empty
+        run: |
+          curl -sf http://localhost:8082/status | jq -e '.height>=0' >/dev/null
+          curl -sf 'http://localhost:8082/blocks?limit=3' | jq -e 'type=="array" and length>=1' >/dev/null
+      - if: always()
+        name: Logs
+        run: docker compose logs --no-color > compose.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: compose-logs, path: compose.log }
+      - if: always()
+        run: docker compose down -v

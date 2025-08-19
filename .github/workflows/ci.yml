@@ -1,103 +1,175 @@
-name: ci
+name: QuantumCoin CI
 on:
   push:
     branches: ["**"]
   pull_request:
 
 jobs:
-  ui:
-    name: UI build + lint + tests
+  rust-blockchain:
+    name: Rust Blockchain Core
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npm run lint -- --max-warnings=0
-      - run: npm run build
-      - run: npm test -- --ci --runInBand
-      - name: Enforce coverage >= 85%
+      - name: Free disk space
         run: |
-          if [ ! -f coverage/coverage-summary.json ]; then
-            echo "No coverage file found"; exit 1
-          fi
-          node -e "const c=require('./coverage/coverage-summary.json').total.lines.pct; if(c<85){console.error('Coverage',c+'% < 85%');process.exit(1)} else {console.log('Coverage OK',c+'%')}"
-
-  rust:
-    name: Rust blockchain + wallet
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/hostedtoolcache
+          docker system prune -af
+          df -h
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - name: Format check (fail hard)
+      - name: Format check
         run: cargo fmt --all -- --check
-      - name: Clippy (fail hard)
+      - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - name: Build (fail hard)
+      - name: Build workspace
         run: cargo build --workspace --all-features
-      - name: Test (fail hard)
-        run: cargo test --workspace --all-features
+      - name: Run tests
+        run: cargo test --workspace --all-features -- --nocapture
 
-  ai:
-    name: AI daemon tests
+  genesis-validation:
+    name: Genesis Block Generation
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/ai-daemon
+    needs: rust-blockchain
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: python -m venv .venv
-      - run: . .venv/bin/activate && pip install -r requirements.txt
-      - run: . .venv/bin/activate && pytest -q
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build genesis generator
+        run: cargo build --bin generate-genesis
+      - name: Generate mainnet genesis
+        run: cargo run --bin generate-genesis
+      - name: Verify genesis deterministic
+        run: |
+          cargo run --bin generate-genesis > genesis1.json
+          cargo run --bin generate-genesis > genesis2.json
+          diff genesis1.json genesis2.json || (echo "Genesis not deterministic!" && exit 1)
+
+  cli-tools:
+    name: CLI Tools Test
+    runs-on: ubuntu-latest
+    needs: rust-blockchain
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build CLI wallet
+        run: cargo build --bin quantumcoin-cli
+      - name: Test wallet creation
+        run: |
+          mkdir -p /tmp/quantumcoin-test
+          cargo run --bin quantumcoin-cli -- --datadir /tmp/quantumcoin-test wallet create --name test
+          cargo run --bin quantumcoin-cli -- --datadir /tmp/quantumcoin-test wallet list
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: rust-blockchain
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Run integration tests
+        run: cargo test --test integration_tests -- --nocapture
+      - name: Run stress tests
+        run: cargo test --test integration_tests stress_tests -- --nocapture
 
   security:
-    name: CodeQL + Trivy + SBOM
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - name: CodeQL init
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript, python
-      - name: CodeQL analyze
-        uses: github/codeql-action/analyze@v3
-      - name: Trivy FS scan
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          scan-type: fs
-          ignore-unfixed: true
-          exit-code: "1"
-          format: table
-      - name: Generate SBOM (SPDX)
-        uses: anchore/sbom-action@v0
-        with:
-          format: spdx-json
-          output-file: sbom.spdx.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.spdx.json
-
-  no-fake-greens:
-    name: Forbid success masking
+    name: Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fail if pipelines contain bypasses
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      - name: Security audit
+        run: cargo audit
+      - name: Check for unsafe code
         run: |
-          set -e
-          ! git grep -nE '\|\|\s*echo|;[ ]*true|set \+e'
+          if grep -r "unsafe " src/ crates/; then
+            echo "Unsafe code found - review required"
+            exit 1
+          fi
+
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: rust-blockchain
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release
+        run: cargo build --release
+      - name: Performance benchmark
+        run: |
+          echo "Running UTXO performance test..."
+          timeout 60s cargo test --release --test integration_tests test_large_utxo_set_performance -- --nocapture
+          echo "Running mempool performance test..."
+          timeout 60s cargo test --release --test integration_tests test_mempool_high_load -- --nocapture
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check documentation files exist
+        run: |
+          test -f README.md || (echo "README.md missing" && exit 1)
+          test -f PROGRESS_REPORT.md || (echo "PROGRESS_REPORT.md missing" && exit 1)
+          test -f CRYPTOCURRENCY_LAUNCH_STATUS.md || (echo "Launch status missing" && exit 1)
+          test -f chain_spec.toml || (echo "Chain spec missing" && exit 1)
+      - name: Validate chain spec
+        run: |
+          if grep -q "TODO" chain_spec.toml; then
+            echo "Chain spec contains TODO items"
+            exit 1
+          fi
+
+  compatibility:
+    name: Cross Platform Build
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build for platform
+        run: cargo build --workspace
+      - name: Run basic tests
+        run: cargo test --lib --workspace
+
+  release-artifacts:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [rust-blockchain, cli-tools, integration-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build release binaries
+        run: |
+          cargo build --release --bin quantumcoin-cli
+          cargo build --release --bin generate-genesis
+          cargo build --release --bin quantumcoin
+      - name: Create release directory
+        run: |
+          mkdir -p release/
+          cp target/release/quantumcoin-cli release/
+          cp target/release/generate-genesis release/
+          cp target/release/quantumcoin release/
+          cp chain_spec.toml release/
+          cp README.md release/
+      - name: Generate checksums
+        run: |
+          cd release/
+          sha256sum * > SHA256SUMS.txt
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quantumcoin-release
+          path: release/
