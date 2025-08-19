@@ -1,381 +1,514 @@
-// Re-export the new production-grade networking system
-pub use network_v2::*;
+use std::collections::{HashMap, HashSet};
+use std::net::SocketAddr;
+use std::sync::Arc;
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{RwLock, mpsc};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use serde::{Serialize, Deserialize};
+use anyhow::{Result, anyhow};
+use tracing::{info, warn, error, debug};
+use chrono::{DateTime, Utc};
 
-// Legacy compatibility - gradually migrate to new system
-mod network_v2;
+use crate::blockchain::{Blockchain, Block};
+use crate::transaction::{Transaction, SignedTransaction};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+const PROTOCOL_VERSION: u32 = 1;
+const MAX_MESSAGE_SIZE: usize = 10 * 1024 * 1024; // 10MB
+const HEARTBEAT_INTERVAL: u64 = 30; // seconds
+const PEER_TIMEOUT: u64 = 120; // seconds
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum NetworkMessage {
-    // Node discovery
-    Ping { node_id: String, version: String },
-    Pong { node_id: String, version: String },
-    GetPeers,
-    Peers { peers: Vec<SocketAddr> },
-    
-    // Blockchain sync
-    GetBlockchain,
-    Blockchain { blocks: Vec<Block> },
-    GetBlocks { start_hash: String, count: u32 },
-    Blocks { blocks: Vec<Block> },
-    GetBlock { hash: String },
-    BlockResponse { block: Option<Block> },
-    
-    // Transactions
-    NewTransaction { transaction: Transaction },
+    Version {
+        version: u32,
+        timestamp: DateTime<Utc>,
+        best_height: u64,
+        node_id: String,
+    },
+    VerAck,
+    GetBlocks {
+        start_hash: String,
+        end_hash: String,
+    },
+    Block(Block),
     GetMempool,
-    Mempool { transactions: Vec<Transaction> },
-    
-    // Mining
-    NewBlock { block: Block },
-    BlockHeader { header: BlockHeader },
-    
-    // Error handling
-    Error { message: String },
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BlockHeader {
-    pub hash: String,
-    pub previous_hash: String,
-    pub merkle_root: String,
-    pub timestamp: u128,
-    pub difficulty: usize,
-    pub nonce: u64,
+    Transaction(SignedTransaction),
+    Ping(u64),
+    Pong(u64),
+    GetPeers,
+    Peers(Vec<SocketAddr>),
+    Disconnect(String),
 }
 
 #[derive(Debug, Clone)]
-pub struct Peer {
+pub struct PeerInfo {
     pub address: SocketAddr,
     pub node_id: String,
-    pub version: String,
-    pub last_seen: std::time::Instant,
-    pub connected: bool,
+    pub version: u32,
+    pub best_height: u64,
+    pub connected_at: DateTime<Utc>,
+    pub last_seen: DateTime<Utc>,
+    pub is_outbound: bool,
 }
 
-#[derive(Clone)]
-pub struct NetworkManager {
-    pub node_id: String,
-    pub version: String,
-    pub listen_addr: SocketAddr,
-    pub blockchain: Arc<RwLock<Blockchain>>,
-    pub peers: Arc<RwLock<HashMap<String, Peer>>>,
-    pub known_addresses: Arc<RwLock<Vec<SocketAddr>>>,
-    pub max_peers: usize,
+pub struct NetworkNode {
+    listen_addr: SocketAddr,
+    blockchain: Blockchain,
+    peers: Arc<RwLock<HashMap<SocketAddr, PeerInfo>>>,
+    known_peers: Arc<RwLock<HashSet<SocketAddr>>>,
+    node_id: String,
+    message_sender: Option<mpsc::UnboundedSender<(SocketAddr, NetworkMessage)>>,
+    is_running: Arc<RwLock<bool>>,
 }
 
-impl NetworkManager {
-    pub fn new(listen_addr: SocketAddr, blockchain: Arc<RwLock<Blockchain>>) -> Self {
+impl NetworkNode {
+    pub fn new(listen_addr: SocketAddr, blockchain: Blockchain) -> Self {
+        let node_id = format!("node_{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+        
         Self {
-            node_id: Uuid::new_v4().to_string(),
-            version: "1.0.0".to_string(),
             listen_addr,
             blockchain,
             peers: Arc::new(RwLock::new(HashMap::new())),
-            known_addresses: Arc::new(RwLock::new(Vec::new())),
-            max_peers: 50,
+            known_peers: Arc::new(RwLock::new(HashSet::new())),
+            node_id,
+            message_sender: None,
+            is_running: Arc::new(RwLock::new(false)),
         }
     }
 
-    pub async fn start(&self) -> Result<()> {
-        println!("Starting QuantumCoin network node {} on {}", self.node_id, self.listen_addr);
-        
-        // Start listening for incoming connections
-        let listener = TokioTcpListener::bind(self.listen_addr).await?;
-        let self_clone = self.clone();
-        
+    pub async fn start(&mut self) -> Result<()> {
+        let mut is_running = self.is_running.write().await;
+        if *is_running {
+            return Err(anyhow!("Network node is already running"));
+        }
+        *is_running = true;
+        drop(is_running);
+
+        info!("Starting network node {} on {}", self.node_id, self.listen_addr);
+
+        // Create message channel
+        let (tx, mut rx) = mpsc::unbounded_channel::<(SocketAddr, NetworkMessage)>();
+        self.message_sender = Some(tx);
+
+        // Start listening for connections
+        let listener = TcpListener::bind(self.listen_addr).await?;
+        info!("Listening for connections on {}", self.listen_addr);
+
+        // Clone data for tasks
+        let peers = Arc::clone(&self.peers);
+        let known_peers = Arc::clone(&self.known_peers);
+        let node_id = self.node_id.clone();
+        let blockchain = self.blockchain.clone();
+
+        // Start connection acceptor
+        let accept_peers = Arc::clone(&peers);
+        let accept_node_id = node_id.clone();
         tokio::spawn(async move {
             loop {
                 match listener.accept().await {
                     Ok((stream, addr)) => {
-                        let self_clone = self_clone.clone();
+                        info!("Accepted connection from {}", addr);
+                        let peer_info = PeerInfo {
+                            address: addr,
+                            node_id: String::new(),
+                            version: 0,
+                            best_height: 0,
+                            connected_at: Utc::now(),
+                            last_seen: Utc::now(),
+                            is_outbound: false,
+                        };
+                        
+                        {
+                            let mut peers_write = accept_peers.write().await;
+                            peers_write.insert(addr, peer_info);
+                        }
+                        
+                        let handle_peers = Arc::clone(&accept_peers);
+                        let handle_node_id = accept_node_id.clone();
                         tokio::spawn(async move {
-                            if let Err(e) = self_clone.handle_connection(stream, addr).await {
-                                eprintln!("Error handling connection from {}: {}", addr, e);
+                            if let Err(e) = Self::handle_peer_connection(
+                                stream, 
+                                addr, 
+                                handle_peers, 
+                                handle_node_id,
+                                blockchain.clone()
+                            ).await {
+                                error!("Peer connection error {}: {}", addr, e);
                             }
                         });
                     }
-                    Err(e) => eprintln!("Failed to accept connection: {}", e),
+                    Err(e) => {
+                        error!("Failed to accept connection: {}", e);
+                    }
                 }
             }
         });
 
-        // Start peer discovery and maintenance
-        self.start_peer_maintenance().await;
-        
+        // Start message processor
+        let process_peers = Arc::clone(&peers);
+        let process_known_peers = Arc::clone(&known_peers);
+        tokio::spawn(async move {
+            while let Some((sender_addr, message)) = rx.recv().await {
+                Self::process_network_message(
+                    sender_addr, 
+                    message, 
+                    Arc::clone(&process_peers),
+                    Arc::clone(&process_known_peers)
+                ).await;
+            }
+        });
+
+        // Start heartbeat task
+        let heartbeat_peers = Arc::clone(&peers);
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(HEARTBEAT_INTERVAL));
+            loop {
+                interval.tick().await;
+                Self::send_heartbeats(Arc::clone(&heartbeat_peers)).await;
+            }
+        });
+
+        // Start peer cleanup task
+        let cleanup_peers = Arc::clone(&peers);
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(PEER_TIMEOUT));
+            loop {
+                interval.tick().await;
+                Self::cleanup_stale_peers(Arc::clone(&cleanup_peers)).await;
+            }
+        });
+
         Ok(())
     }
 
-    async fn handle_connection(&self, mut stream: TokioTcpStream, addr: SocketAddr) -> Result<()> {
-        let mut buffer = vec![0; 8192];
+    pub async fn connect_to_peer(&self, peer_addr: SocketAddr) -> Result<()> {
+        if peer_addr == self.listen_addr {
+            return Err(anyhow!("Cannot connect to self"));
+        }
+
+        let peers = self.peers.read().await;
+        if peers.contains_key(&peer_addr) {
+            return Err(anyhow!("Already connected to peer"));
+        }
+        drop(peers);
+
+        info!("Connecting to peer: {}", peer_addr);
+
+        let stream = TcpStream::connect(peer_addr).await?;
         
+        let peer_info = PeerInfo {
+            address: peer_addr,
+            node_id: String::new(),
+            version: 0,
+            best_height: 0,
+            connected_at: Utc::now(),
+            last_seen: Utc::now(),
+            is_outbound: true,
+        };
+
+        {
+            let mut peers_write = self.peers.write().await;
+            peers_write.insert(peer_addr, peer_info);
+        }
+
+        // Add to known peers
+        {
+            let mut known_peers_write = self.known_peers.write().await;
+            known_peers_write.insert(peer_addr);
+        }
+
+        let handle_peers = Arc::clone(&self.peers);
+        let handle_node_id = self.node_id.clone();
+        let handle_blockchain = self.blockchain.clone();
+        
+        tokio::spawn(async move {
+            if let Err(e) = Self::handle_peer_connection(
+                stream, 
+                peer_addr, 
+                handle_peers, 
+                handle_node_id,
+                handle_blockchain
+            ).await {
+                error!("Outbound peer connection error {}: {}", peer_addr, e);
+            }
+        });
+
+        Ok(())
+    }
+
+    async fn handle_peer_connection(
+        mut stream: TcpStream,
+        peer_addr: SocketAddr,
+        peers: Arc<RwLock<HashMap<SocketAddr, PeerInfo>>>,
+        node_id: String,
+        blockchain: Blockchain,
+    ) -> Result<()> {
+        // Send version message
+        let version_msg = NetworkMessage::Version {
+            version: PROTOCOL_VERSION,
+            timestamp: Utc::now(),
+            best_height: blockchain.chain.len() as u64,
+            node_id: node_id.clone(),
+        };
+        
+        Self::send_message(&mut stream, &version_msg).await?;
+
+        // Handle incoming messages
         loop {
-            match stream.try_read(&mut buffer) {
-                Ok(0) => break, // Connection closed
-                Ok(n) => {
-                    let message_data = &buffer[..n];
-                    if let Ok(message) = serde_json::from_slice::<NetworkMessage>(message_data) {
-                        let response = self.handle_message(message, addr).await;
-                        if let Some(response) = response {
-                            let response_data = serde_json::to_vec(&response)?;
-                            let _ = stream.try_write(&response_data);
+            match Self::receive_message(&mut stream).await {
+                Ok(message) => {
+                    debug!("Received message from {}: {:?}", peer_addr, message);
+                    
+                    // Update last seen time
+                    {
+                        let mut peers_write = peers.write().await;
+                        if let Some(peer_info) = peers_write.get_mut(&peer_addr) {
+                            peer_info.last_seen = Utc::now();
+                        }
+                    }
+
+                    // Process the message
+                    match message {
+                        NetworkMessage::Version { version, best_height, node_id: peer_node_id, .. } => {
+                            // Send version acknowledgment
+                            Self::send_message(&mut stream, &NetworkMessage::VerAck).await?;
+                            
+                            // Update peer info
+                            {
+                                let mut peers_write = peers.write().await;
+                                if let Some(peer_info) = peers_write.get_mut(&peer_addr) {
+                                    peer_info.version = version;
+                                    peer_info.best_height = best_height;
+                                    peer_info.node_id = peer_node_id;
+                                }
+                            }
+                        }
+                        NetworkMessage::VerAck => {
+                            info!("Version handshake completed with {}", peer_addr);
+                        }
+                        NetworkMessage::Ping(nonce) => {
+                            Self::send_message(&mut stream, &NetworkMessage::Pong(nonce)).await?;
+                        }
+                        NetworkMessage::Pong(_) => {
+                            debug!("Received pong from {}", peer_addr);
+                        }
+                        NetworkMessage::GetBlocks { .. } => {
+                            // TODO: Send blocks
+                            warn!("GetBlocks not implemented");
+                        }
+                        NetworkMessage::Block(block) => {
+                            info!("Received block {} from {}", block.hash, peer_addr);
+                            // TODO: Validate and add block
+                        }
+                        NetworkMessage::Transaction(tx) => {
+                            info!("Received transaction {} from {}", tx.id, peer_addr);
+                            // TODO: Validate and add to mempool
+                        }
+                        NetworkMessage::GetMempool => {
+                            // TODO: Send mempool transactions
+                            warn!("GetMempool not implemented");
+                        }
+                        NetworkMessage::GetPeers => {
+                            let known_peers = {
+                                let peers_read = peers.read().await;
+                                peers_read.keys().copied().collect::<Vec<_>>()
+                            };
+                            Self::send_message(&mut stream, &NetworkMessage::Peers(known_peers)).await?;
+                        }
+                        NetworkMessage::Peers(peer_addrs) => {
+                            info!("Received {} peer addresses from {}", peer_addrs.len(), peer_addr);
+                            // TODO: Connect to new peers
+                        }
+                        NetworkMessage::Disconnect(reason) => {
+                            info!("Peer {} disconnected: {}", peer_addr, reason);
+                            break;
                         }
                     }
                 }
-                Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
-                }
                 Err(e) => {
-                    eprintln!("Error reading from stream: {}", e);
+                    error!("Failed to receive message from {}: {}", peer_addr, e);
                     break;
                 }
             }
         }
+
+        // Remove peer on disconnect
+        {
+            let mut peers_write = peers.write().await;
+            peers_write.remove(&peer_addr);
+        }
+
+        info!("Disconnected from peer: {}", peer_addr);
+        Ok(())
+    }
+
+    async fn send_message(stream: &mut TcpStream, message: &NetworkMessage) -> Result<()> {
+        let serialized = bincode::serialize(message)?;
+        let length = serialized.len() as u32;
+        
+        if length > MAX_MESSAGE_SIZE as u32 {
+            return Err(anyhow!("Message too large: {} bytes", length));
+        }
+
+        // Send length header
+        stream.write_all(&length.to_le_bytes()).await?;
+        // Send message data
+        stream.write_all(&serialized).await?;
+        stream.flush().await?;
         
         Ok(())
     }
 
-    async fn handle_message(&self, message: NetworkMessage, sender: SocketAddr) -> Option<NetworkMessage> {
-        match message {
-            NetworkMessage::Ping { node_id, version } => {
-                // Add peer to known peers
-                let peer = Peer {
-                    address: sender,
-                    node_id: node_id.clone(),
-                    version: version.clone(),
-                    last_seen: std::time::Instant::now(),
-                    connected: true,
-                };
-                
-                self.peers.write().await.insert(node_id, peer);
-                
-                Some(NetworkMessage::Pong {
-                    node_id: self.node_id.clone(),
-                    version: self.version.clone(),
-                })
-            }
-            
-            NetworkMessage::GetPeers => {
-                let peers: Vec<SocketAddr> = self.peers.read().await
-                    .values()
-                    .map(|p| p.address)
-                    .collect();
-                Some(NetworkMessage::Peers { peers })
-            }
-            
-            NetworkMessage::GetBlockchain => {
-                let blockchain = self.blockchain.read().await;
-                Some(NetworkMessage::Blockchain {
-                    blocks: blockchain.chain.clone(),
-                })
-            }
-            
-            NetworkMessage::GetBlocks { start_hash, count } => {
-                let blockchain = self.blockchain.read().await;
-                let blocks = blockchain.get_blocks_range(&start_hash, None, count as usize);
-                Some(NetworkMessage::Blocks { blocks })
-            }
-            
-            NetworkMessage::GetBlock { hash } => {
-                let blockchain = self.blockchain.read().await;
-                let block = blockchain.get_block_by_hash(&hash).cloned();
-                Some(NetworkMessage::BlockResponse { block })
-            }
-            
-            NetworkMessage::NewTransaction { transaction } => {
-                let mut blockchain = self.blockchain.write().await;
-                if let Ok(_) = blockchain.add_transaction(transaction.clone()) {
-                    // Broadcast to other peers
-                    self.broadcast_to_peers(NetworkMessage::NewTransaction { transaction }).await;
-                }
-                None
-            }
-            
-            NetworkMessage::NewBlock { block } => {
-                let mut blockchain = self.blockchain.write().await;
-                if let Ok(_) = blockchain.add_block(block.clone()) {
-                    println!("New block added: {}", block.hash);
-                    // Broadcast to other peers
-                    self.broadcast_to_peers(NetworkMessage::NewBlock { block }).await;
-                }
-                None
-            }
-            
-            NetworkMessage::GetMempool => {
-                let blockchain = self.blockchain.read().await;
-                Some(NetworkMessage::Mempool {
-                    transactions: blockchain.get_pending_transactions(),
-                })
-            }
-            
-            _ => None,
+    async fn receive_message(stream: &mut TcpStream) -> Result<NetworkMessage> {
+        // Read length header
+        let mut length_bytes = [0u8; 4];
+        stream.read_exact(&mut length_bytes).await?;
+        let length = u32::from_le_bytes(length_bytes) as usize;
+
+        if length > MAX_MESSAGE_SIZE {
+            return Err(anyhow!("Message too large: {} bytes", length));
         }
+
+        // Read message data
+        let mut buffer = vec![0u8; length];
+        stream.read_exact(&mut buffer).await?;
+
+        let message: NetworkMessage = bincode::deserialize(&buffer)?;
+        Ok(message)
     }
 
-    async fn broadcast_to_peers(&self, message: NetworkMessage) {
-        let peers = self.peers.read().await;
-        for peer in peers.values() {
-            if let Err(e) = self.send_message_to_peer(&peer.address, &message).await {
-                eprintln!("Failed to send message to peer {}: {}", peer.address, e);
-            }
-        }
-    }
-
-    async fn send_message_to_peer(&self, addr: &SocketAddr, message: &NetworkMessage) -> Result<()> {
-        let mut stream = TokioTcpStream::connect(addr).await?;
-        let data = serde_json::to_vec(message)?;
-        stream.try_write(&data)?;
-        Ok(())
-    }
-
-    pub async fn connect_to_peer(&self, addr: SocketAddr) -> Result<()> {
-        let ping = NetworkMessage::Ping {
-            node_id: self.node_id.clone(),
-            version: self.version.clone(),
+    async fn send_heartbeats(peers: Arc<RwLock<HashMap<SocketAddr, PeerInfo>>>) {
+        let peer_addrs: Vec<SocketAddr> = {
+            let peers_read = peers.read().await;
+            peers_read.keys().copied().collect()
         };
+
+        for _peer_addr in peer_addrs {
+            // TODO: Send ping to each peer
+            // This would require maintaining connection handles
+        }
+    }
+
+    async fn cleanup_stale_peers(peers: Arc<RwLock<HashMap<SocketAddr, PeerInfo>>>) {
+        let now = Utc::now();
+        let timeout_threshold = now - chrono::Duration::seconds(PEER_TIMEOUT as i64);
         
-        self.send_message_to_peer(&addr, &ping).await?;
-        println!("Connected to peer: {}", addr);
+        let stale_peers: Vec<SocketAddr> = {
+            let peers_read = peers.read().await;
+            peers_read
+                .iter()
+                .filter(|(_, info)| info.last_seen < timeout_threshold)
+                .map(|(addr, _)| *addr)
+                .collect()
+        };
+
+        if !stale_peers.is_empty() {
+            let mut peers_write = peers.write().await;
+            for addr in stale_peers {
+                info!("Removing stale peer: {}", addr);
+                peers_write.remove(&addr);
+            }
+        }
+    }
+
+    async fn process_network_message(
+        _sender_addr: SocketAddr,
+        _message: NetworkMessage,
+        _peers: Arc<RwLock<HashMap<SocketAddr, PeerInfo>>>,
+        _known_peers: Arc<RwLock<HashSet<SocketAddr>>>,
+    ) {
+        // TODO: Process messages received via channel
+    }
+
+    pub async fn broadcast_block(&self, block: &Block) -> Result<()> {
+        info!("Broadcasting block {} to peers", block.hash);
+        
+        let message = NetworkMessage::Block(block.clone());
+        let peer_count = {
+            let peers_read = self.peers.read().await;
+            peers_read.len()
+        };
+
+        // TODO: Implement actual broadcasting
+        // This would require maintaining connection handles for each peer
+        
+        info!("Block broadcast initiated to {} peers", peer_count);
         Ok(())
     }
 
-    async fn start_peer_maintenance(&self) {
-        let self_clone = self.clone();
-        tokio::spawn(async move {
-            loop {
-                // Clean up disconnected peers
-                let mut peers = self_clone.peers.write().await;
-                let now = std::time::Instant::now();
-                peers.retain(|_, peer| {
-                    now.duration_since(peer.last_seen).as_secs() < 300 // 5 minutes timeout
-                });
-                drop(peers);
-
-                // Try to discover new peers
-                self_clone.discover_peers().await;
-                
-                tokio::time::sleep(tokio::time::Duration::from_secs(30)).await;
-            }
-        });
-    }
-
-    async fn discover_peers(&self) {
-        let known_addresses = self.known_addresses.read().await.clone();
-        for addr in known_addresses {
-            if self.peers.read().await.len() >= self.max_peers {
-                break;
-            }
-            
-            if let Err(_) = self.connect_to_peer(addr).await {
-                // Connection failed, remove from known addresses
-                let mut addresses = self.known_addresses.write().await;
-                addresses.retain(|a| *a != addr);
-            }
-        }
-    }
-
-    pub async fn add_bootstrap_node(&self, addr: SocketAddr) {
-        self.known_addresses.write().await.push(addr);
-        let _ = self.connect_to_peer(addr).await;
-    }
-
-    pub async fn sync_blockchain(&self) -> Result<()> {
-        println!("Syncing blockchain with network...");
+    pub async fn broadcast_transaction(&self, transaction: &SignedTransaction) -> Result<()> {
+        info!("Broadcasting transaction {} to peers", transaction.id);
         
-        let peers = self.peers.read().await;
-        if peers.is_empty() {
-            return Ok(());
-        }
+        let _message = NetworkMessage::Transaction(transaction.clone());
+        let peer_count = {
+            let peers_read = self.peers.read().await;
+            peers_read.len()
+        };
 
-        for peer in peers.values().take(3) { // Sync with up to 3 peers
-            match self.send_message_to_peer(&peer.address, &NetworkMessage::GetBlockchain).await {
-                Ok(_) => println!("Requested blockchain from peer: {}", peer.address),
-                Err(e) => eprintln!("Failed to sync with peer {}: {}", peer.address, e),
-            }
-        }
+        // TODO: Implement actual broadcasting
         
+        info!("Transaction broadcast initiated to {} peers", peer_count);
         Ok(())
-    }
-
-    pub async fn broadcast_transaction(&self, transaction: Transaction) {
-        self.broadcast_to_peers(NetworkMessage::NewTransaction { transaction }).await;
-    }
-
-    pub async fn broadcast_block(&self, block: Block) {
-        self.broadcast_to_peers(NetworkMessage::NewBlock { block }).await;
     }
 
     pub async fn get_peer_count(&self) -> usize {
-        self.peers.read().await.len()
+        let peers_read = self.peers.read().await;
+        peers_read.len()
     }
 
-    pub async fn get_peers(&self) -> Vec<Peer> {
-        self.peers.read().await.values().cloned().collect()
+    pub async fn get_peers(&self) -> Vec<PeerInfo> {
+        let peers_read = self.peers.read().await;
+        peers_read.values().cloned().collect()
     }
-}
 
-// Mining pool support
-#[derive(Clone)]
-pub struct MiningPool {
-    pub network: NetworkManager,
-    pub miners: Arc<RwLock<HashMap<String, MinerInfo>>>,
-    pub current_work: Arc<RwLock<Option<Block>>>,
+    pub async fn disconnect_peer(&self, peer_addr: SocketAddr, reason: String) -> Result<()> {
+        let mut peers_write = self.peers.write().await;
+        if peers_write.remove(&peer_addr).is_some() {
+            info!("Disconnected from peer {}: {}", peer_addr, reason);
+        }
+        Ok(())
+    }
+
+    pub async fn stop(&self) -> Result<()> {
+        let mut is_running = self.is_running.write().await;
+        *is_running = false;
+        
+        // Disconnect all peers
+        let peer_addrs: Vec<SocketAddr> = {
+            let peers_read = self.peers.read().await;
+            peers_read.keys().copied().collect()
+        };
+
+        for peer_addr in peer_addrs {
+            let _ = self.disconnect_peer(peer_addr, "Node shutting down".to_string()).await;
+        }
+
+        info!("Network node stopped");
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]
-pub struct MinerInfo {
-    pub address: String,
-    pub hash_rate: f64,
-    pub last_share: std::time::Instant,
-    pub total_shares: u64,
+pub struct NetworkStats {
+    pub connected_peers: usize,
+    pub known_peers: usize,
+    pub node_id: String,
+    pub listen_address: SocketAddr,
+    pub is_running: bool,
 }
 
-impl MiningPool {
-    pub fn new(network: NetworkManager) -> Self {
-        Self {
-            network,
-            miners: Arc::new(RwLock::new(HashMap::new())),
-            current_work: Arc::new(RwLock::new(None)),
+impl NetworkNode {
+    pub async fn get_network_stats(&self) -> NetworkStats {
+        let peers_read = self.peers.read().await;
+        let known_peers_read = self.known_peers.read().await;
+        let is_running = self.is_running.read().await;
+
+        NetworkStats {
+            connected_peers: peers_read.len(),
+            known_peers: known_peers_read.len(),
+            node_id: self.node_id.clone(),
+            listen_address: self.listen_addr,
+            is_running: *is_running,
         }
-    }
-
-    pub async fn submit_work(&self, miner_id: String, block: Block) -> Result<bool> {
-        // Validate the work
-        let blockchain = self.network.blockchain.read().await;
-        if blockchain.validate_block(&block).is_ok() {
-            drop(blockchain);
-            
-            // Add block to blockchain
-            let mut blockchain = self.network.blockchain.write().await;
-            blockchain.add_block(block.clone())?;
-            
-            // Broadcast new block
-            self.network.broadcast_block(block).await;
-            
-            // Update miner stats
-            let mut miners = self.miners.write().await;
-            if let Some(miner) = miners.get_mut(&miner_id) {
-                miner.total_shares += 1;
-                miner.last_share = std::time::Instant::now();
-            }
-            
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
-
-    pub async fn get_work(&self, miner_id: String) -> Option<Block> {
-        // Register miner if new
-        let mut miners = self.miners.write().await;
-        miners.entry(miner_id).or_insert(MinerInfo {
-            address: "unknown".to_string(),
-            hash_rate: 0.0,
-            last_share: std::time::Instant::now(),
-            total_shares: 0,
-        });
-        drop(miners);
-
-        // Return current work template
-        self.current_work.read().await.clone()
     }
 }

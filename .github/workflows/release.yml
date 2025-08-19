@@ -1,168 +1,192 @@
-name: Release
-
+name: release
 on:
   push:
     tags:
-      - 'v*.*.*'
-
-env:
-  CARGO_TERM_COLOR: always
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+      - "v*.*.*"
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-        body: |
-          ## Changes
-          
-          See [CHANGELOG.md](CHANGELOG.md) for details.
-          
-          ## Security
-          
-          - SBOM: Download quantumcoin-${{ github.ref_name }}.sbom.json
-          - Container signatures: Signed with cosign keyless
-          - All binaries built reproducibly in GitHub Actions
-
-  build-rust:
-    needs: create-release
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: rustfmt, clippy
-        
-    - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
-      
-    - name: Build release binaries
-      run: |
-        cargo build --release --workspace
-        
-    - name: Install SBOM generator
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-        
-    - name: Generate SBOM
-      run: |
-        syft packages . --output spdx-json > quantumcoin-${{ github.ref_name }}.sbom.json
-        
-    - name: Upload SBOM
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./quantumcoin-${{ github.ref_name }}.sbom.json
-        asset_name: quantumcoin-${{ github.ref_name }}.sbom.json
-        asset_content_type: application/json
-        
-    - name: Create binary archive
-      run: |
-        mkdir -p artifacts
-        cp target/release/quantumcoin artifacts/ 2>/dev/null || echo "quantumcoin binary not found"
-        # Copy other binaries that exist
-        find target/release -maxdepth 1 -type f -executable -not -name ".*" -exec cp {} artifacts/ \; 2>/dev/null || true
-        tar czf quantumcoin-${{ github.ref_name }}-linux-x86_64.tar.gz -C artifacts .
-        
-    - name: Upload binary archive
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./quantumcoin-${{ github.ref_name }}-linux-x86_64.tar.gz  
-        asset_name: quantumcoin-${{ github.ref_name }}-linux-x86_64.tar.gz
-        asset_content_type: application/gzip
-
-  build-docker:
-    needs: create-release
+  build-and-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
-      id-token: write
-      
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install cosign
-      uses: sigstore/cosign-installer@v3
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=tag
-          type=raw,value=latest
-          
-    - name: Build and push Docker image
-      id: build-and-push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: services/explorer/Dockerfile
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        platforms: linux/amd64,linux/arm64
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        
-    - name: Sign container image
-      run: |
-        echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign --yes {}@${{ steps.build-and-push.outputs.digest }}
-        
-    - name: Generate SBOM for container
-      run: |
-        docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} --format "{{ json .Manifest }}" > manifest.json
-        echo "Container SBOM and attestation generation completed"
+      - uses: actions/checkout@v4
 
-  vulnerability-scan:
-    needs: build-docker
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Install Grype
-      run: |
-        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-        
-    - name: Scan container image
-      run: |
-        grype ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }} --output sarif > grype-results.sarif
-        
-    - name: Upload Grype results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: grype-results.sarif
+      # Rust blockchain components
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      
+      - name: Build QuantumCoin Node
+        run: |
+          cargo build --release --bin quantumcoin-node
+          mkdir -p dist/node
+          cp target/release/quantumcoin-node dist/node/
+          tar -czf dist/quantumcoin-node-${{ github.ref_name }}-linux-x64.tar.gz -C dist/node .
+
+      - name: Build QuantumCoin Wallet
+        run: |
+          cargo build --release --bin quantumcoin-wallet
+          mkdir -p dist/wallet
+          cp target/release/quantumcoin-wallet dist/wallet/
+          tar -czf dist/quantumcoin-wallet-${{ github.ref_name }}-linux-x64.tar.gz -C dist/wallet .
+
+      - name: Build QuantumCoin CLI
+        run: |
+          cargo build --release --bin quantumcoin-cli
+          mkdir -p dist/cli
+          cp target/release/quantumcoin-cli dist/cli/
+          tar -czf dist/quantumcoin-cli-${{ github.ref_name }}-linux-x64.tar.gz -C dist/cli .
+
+      # UI build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build UI
+        run: |
+          npm ci
+          npm run build
+          mkdir -p dist/ui
+          tar -czf dist/quantumcoin-ui-${{ github.ref_name }}.tar.gz .next package.json next.config.js
+
+      # AI daemon container
+      - name: Build AI daemon image
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/ai-daemon:${{ github.ref_name }} services/ai-daemon
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/${{ github.repository }}/ai-daemon:${{ github.ref_name }}
+
+      # Explorer API
+      - name: Build Explorer API
+        run: |
+          cargo build --release --bin quantumcoin-explorer
+          mkdir -p dist/explorer
+          cp target/release/quantumcoin-explorer dist/explorer/
+          tar -czf dist/quantumcoin-explorer-${{ github.ref_name }}-linux-x64.tar.gz -C dist/explorer .
+
+      # Generate checksums
+      - name: Generate checksums
+        run: |
+          cd dist
+          shasum -a 256 *.tar.gz > SHA256SUMS.txt
+          shasum -a 512 *.tar.gz > SHA512SUMS.txt
+
+      # Sign with cosign
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.5.0
+      - name: Sign releases (keyless OIDC)
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: |
+          cosign sign-blob --yes dist/SHA256SUMS.txt --output-signature dist/SHA256SUMS.txt.sig
+          cosign sign ghcr.io/${{ github.repository }}/ai-daemon:${{ github.ref_name }} --yes
+
+      # Create mainnet configuration
+      - name: Generate mainnet config
+        run: |
+          mkdir -p dist/mainnet
+          cp chain_spec.toml dist/mainnet/
+          echo "# QuantumCoin Mainnet Configuration
+          
+          ## Quick Start
+          1. Download and extract: quantumcoin-node-${{ github.ref_name }}-linux-x64.tar.gz
+          2. Run: ./quantumcoin-node --config mainnet/chain_spec.toml
+          3. Wait for sync: curl http://localhost:8080/status
+          
+          ## Network Info
+          - Magic Bytes: 0x51544344 (QTCM)
+          - Default Port: 8333
+          - RPC Port: 8080
+          - Genesis Hash: [Generated on first run]
+          
+          ## Seed Nodes
+          - seed1.quantumcoincrypto.com:8333
+          - seed2.quantumcoincrypto.com:8333
+          - seed3.quantumcoincrypto.com:8333
+          " > dist/mainnet/README.md
+
+      # GitHub Release
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: QuantumCoin ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          body: |
+            # QuantumCoin ${{ github.ref_name }}
+            
+            ## 🚀 Ready-to-Run Binaries
+            
+            **Download, extract, and run immediately:**
+            
+            ### Node (Required)
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/quantumcoin-node-${{ github.ref_name }}-linux-x64.tar.gz
+            tar -xzf quantumcoin-node-${{ github.ref_name }}-linux-x64.tar.gz
+            ./quantumcoin-node
+            ```
+            
+            ### Wallet
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/quantumcoin-wallet-${{ github.ref_name }}-linux-x64.tar.gz
+            tar -xzf quantumcoin-wallet-${{ github.ref_name }}-linux-x64.tar.gz
+            ./quantumcoin-wallet --help
+            ```
+            
+            ### CLI Tools
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/quantumcoin-cli-${{ github.ref_name }}-linux-x64.tar.gz
+            tar -xzf quantumcoin-cli-${{ github.ref_name }}-linux-x64.tar.gz
+            ./quantumcoin-cli --help
+            ```
+            
+            ## 🌐 Live Network
+            
+            **Connect to mainnet immediately:**
+            ```bash
+            ./quantumcoin-node --network mainnet
+            ```
+            
+            **Check network status:**
+            ```bash
+            curl http://localhost:8080/status
+            ```
+            
+            ## 🔒 Verification
+            
+            **Verify checksums:**
+            ```bash
+            wget https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SHA256SUMS.txt
+            shasum -c SHA256SUMS.txt
+            ```
+            
+            **Verify signatures:**
+            ```bash
+            cosign verify-blob --signature SHA256SUMS.txt.sig SHA256SUMS.txt
+            ```
+            
+            ## ⚛️ Post-Quantum Security
+            - Dilithium2 signatures (NIST Level 2)
+            - Quantum-resistant cryptography
+            - Enterprise-grade security
+            
+            ## 📊 Network Stats
+            - Block time: 10 minutes
+            - Max supply: 22M QTC
+            - Consensus: Proof of Work (BLAKE3)
+            - Current difficulty: [Live from network]
+            
+          files: |
+            dist/quantumcoin-node-${{ github.ref_name }}-linux-x64.tar.gz
+            dist/quantumcoin-wallet-${{ github.ref_name }}-linux-x64.tar.gz
+            dist/quantumcoin-cli-${{ github.ref_name }}-linux-x64.tar.gz
+            dist/quantumcoin-explorer-${{ github.ref_name }}-linux-x64.tar.gz
+            dist/quantumcoin-ui-${{ github.ref_name }}.tar.gz
+            dist/SHA256SUMS.txt
+            dist/SHA512SUMS.txt
+            dist/SHA256SUMS.txt.sig
+            dist/mainnet/chain_spec.toml
+            dist/mainnet/README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

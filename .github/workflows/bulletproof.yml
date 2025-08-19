@@ -1,10 +1,10 @@
-name: BULLETPROOF CI - ZERO FAILURES GUARANTEED
+# DISABLED - This workflow masked real failures
+# Using truthful ci.yml instead
+
+name: DISABLED - Bulletproof CI (Error Masking)
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always

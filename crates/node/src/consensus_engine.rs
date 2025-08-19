@@ -531,16 +531,26 @@ impl ConsensusEngine {
     
     /// Validate all transactions in block
     fn validate_block_transactions(&self, block: &Block) -> Result<(), ConsensusError> {
+        if block.transactions.is_empty() {
+            return Err(ConsensusError::InvalidTransaction { 
+                reason: "Block must contain at least one transaction (coinbase)".to_string() 
+            });
+        }
+
         // First transaction must be coinbase
         if let Some(first_tx_hash) = block.transactions.first() {
-            // In a real implementation, look up the transaction and verify it's a coinbase
-            // For now, assume valid
+            // Validate coinbase transaction structure
+            self.validate_coinbase_transaction(first_tx_hash, block.header.height)?;
         }
         
         // Validate each transaction
-        for tx_hash in &block.transactions {
-            // In a real implementation, look up each transaction and validate
-            // This includes signature verification, UTXO checks, etc.
+        for (index, tx_hash) in block.transactions.iter().enumerate() {
+            if index == 0 {
+                continue; // Skip coinbase, already validated
+            }
+            
+            // Validate non-coinbase transaction
+            self.validate_regular_transaction(tx_hash)?;
         }
         
         // Check for duplicate transactions
@@ -553,6 +563,54 @@ impl ConsensusEngine {
             }
         }
         
+        // Validate total transaction fees and block reward
+        self.validate_transaction_fees(block)?;
+        
+        Ok(())
+    }
+
+    /// Validate coinbase transaction
+    fn validate_coinbase_transaction(&self, tx_hash: &[u8; 32], block_height: u64) -> Result<(), ConsensusError> {
+        // In a real implementation, this would:
+        // 1. Verify transaction has no inputs (or single empty input)
+        // 2. Verify output amount matches block reward + fees
+        // 3. Verify coinbase data format
+        
+        let expected_reward = self.calculate_block_reward(block_height);
+        
+        // For now, assume coinbase is structurally valid
+        // TODO: Implement full coinbase validation when transaction indexer is ready
+        
+        Ok(())
+    }
+
+    /// Validate regular (non-coinbase) transaction
+    fn validate_regular_transaction(&self, tx_hash: &[u8; 32]) -> Result<(), ConsensusError> {
+        // In a real implementation, this would:
+        // 1. Look up transaction from mempool or transaction index
+        // 2. Verify all input UTXOs exist and are unspent
+        // 3. Verify signatures for all inputs
+        // 4. Check input amounts >= output amounts + fees
+        // 5. Verify transaction structure and limits
+        
+        // For now, assume transaction is valid if it's in the block
+        // TODO: Implement full transaction validation when UTXO set is available
+        
+        Ok(())
+    }
+
+    /// Validate transaction fees in block
+    fn validate_transaction_fees(&self, block: &Block) -> Result<(), ConsensusError> {
+        // Calculate total fees from all transactions in block
+        let mut total_fees = 0u64;
+        
+        // In a real implementation:
+        // 1. Sum fees from all transactions
+        // 2. Verify coinbase output = block reward + total fees
+        
+        // For now, assume fees are correct
+        // TODO: Implement fee validation when transaction amounts are indexed
+        
         Ok(())
     }
     
@@ -560,11 +618,36 @@ impl ConsensusEngine {
     fn validate_block_reward(&self, block: &Block) -> Result<(), ConsensusError> {
         let expected_reward = self.calculate_block_reward(block.header.height);
         
-        // In a real implementation, extract the coinbase transaction amount
-        // and compare with expected_reward
-        // For now, assume valid
-        
-        Ok(())
+        // Get the coinbase transaction hash (first transaction)
+        if let Some(coinbase_hash) = block.transactions.first() {
+            // In a real implementation:
+            // 1. Look up the coinbase transaction
+            // 2. Extract the output amount
+            // 3. Subtract total transaction fees to get base reward
+            // 4. Compare with expected_reward
+            
+            // For now, log the expected reward for validation
+            tracing::debug!(
+                "Block {} expects reward: {} satoshis (height: {})",
+                hex::encode(&block.header.hash),
+                expected_reward,
+                block.header.height
+            );
+            
+            // Validate reward doesn't exceed maximum
+            if expected_reward > self.calculate_block_reward(0) {
+                return Err(ConsensusError::InvalidTransaction {
+                    reason: format!("Block reward {} exceeds maximum", expected_reward)
+                });
+            }
+            
+            // TODO: Implement full reward validation when transaction indexer is ready
+            Ok(())
+        } else {
+            Err(ConsensusError::InvalidTransaction {
+                reason: "Block missing coinbase transaction".to_string()
+            })
+        }
     }
     
     /// Validate block size constraints

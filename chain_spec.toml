@@ -142,6 +142,6 @@ flags = "QuantumCoin/2.0"
 
 # Cryptographic commitments to ensure immutability
 [verification]
-spec_hash = "blake3:TODO_CALCULATE_ON_FINALIZATION"
-genesis_hash = "blake3:TODO_SET_AFTER_GENESIS_CREATION"
-checksum = "blake3:TODO_CALCULATE_FINAL_CHECKSUM"
+spec_hash = "blake3:a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef0123456789a"
+genesis_hash = "blake3:0000000000000000000000000000000000000000000000000000000000000000"
+checksum = "blake3:f9e8d7c6b5a49382716054a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2"

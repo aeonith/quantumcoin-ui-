@@ -7,6 +7,8 @@ mod network;
 mod revstop;
 mod quantum_crypto;
 mod wallet;
+mod utxo;
+mod database;
 
 use blockchain::Blockchain;
 use transaction::Transaction;

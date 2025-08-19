@@ -1,6 +1,6 @@
 //! DoS protection implementation
 
-use crate::*;
+use crate::{P2PError, Result, GossipMessage};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use tokio::sync::RwLock;
