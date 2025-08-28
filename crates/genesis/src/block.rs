@@ -316,9 +316,9 @@ mod tests {
     #[test]
     fn test_genesis_transaction_creation() {
         let coinbase = GenesisTransaction::new_coinbase(
-            "qtc1qgenesis000000000000000000000000000000".to_string(),
-            5000000000,
-            "Genesis coinbase".to_string(),
+            "0000000000000000000000000000000000000000".to_string(),
+            0, // NO PREMINE - empty genesis coinbase
+            "Genesis coinbase - fair launch".to_string(),
             0,
             Utc::now(),
             &[0, 1, 2, 3],
@@ -342,9 +342,9 @@ mod tests {
         };
         
         let coinbase = GenesisTransaction::new_coinbase(
-            "qtc1qgenesis000000000000000000000000000000".to_string(),
-            5000000000,
-            "Genesis coinbase".to_string(),
+            "0000000000000000000000000000000000000000".to_string(),
+            0, // NO PREMINE - empty genesis coinbase
+            "Genesis coinbase - fair launch".to_string(),
             0,
             Utc::now(),
             &[0, 1, 2, 3],

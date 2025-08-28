@@ -18,12 +18,12 @@ pub struct GenesisConfig {
 impl Default for GenesisConfig {
     fn default() -> Self {
         Self {
-            total_supply: 21_000_000_000_000_000, // 21 million QTC with 8 decimal places
+            total_supply: 22_000_000_000_000_000, // 22 million QTC max supply (NOT premined)
             initial_difficulty: 1000000,
             block_reward: 5_000_000_000, // 50 QTC initial reward
-            halving_interval: 210_000,    // Halving every 210k blocks like Bitcoin
+            halving_interval: 105_120,    // Halving every ~2 years (105,120 blocks)
             target_block_time: 600,      // 10 minutes like Bitcoin
-            genesis_message: "QuantumCoin Genesis - Quantum-Safe Future of Money".to_string(),
+            genesis_message: "QuantumCoin Genesis - Fair Launch, No Premine".to_string(),
             genesis_timestamp: Utc::now(),
         }
     }
@@ -64,11 +64,12 @@ impl GenesisBuilder {
     }
 
     fn create_genesis_transaction(&self) -> Transaction {
-        // Create coinbase transaction for genesis block
+        // Create empty coinbase transaction for genesis block
+        // NO PREMINE - all coins must be mined through Proof-of-Work
         let mut genesis_tx = Transaction::new(
             "0000000000000000000000000000000000000000".to_string(), // Coinbase address
-            "qtc1qgenesis000000000000000000000000000000000".to_string(), // Genesis address
-            self.config.total_supply,
+            "0000000000000000000000000000000000000000".to_string(), // No recipient - fair launch
+            0, // NO PREMINE - zero coins allocated
             0, // No fee for genesis
             0, // Nonce 0
         );

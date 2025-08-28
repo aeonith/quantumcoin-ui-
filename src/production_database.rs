@@ -267,33 +267,8 @@ impl ProductionDatabase {
     }
 
     async fn create_demo_data(&self) -> Result<(), DatabaseError> {
-        // Insert demo addresses with balances
-        sqlx::query(r#"
-            INSERT OR IGNORE INTO address_balances 
-            (address, confirmed_balance, total_received, tx_count)
-            VALUES 
-            ('QTC1qy8x9s8v7d2k3l4m5n6p7q8r9s0t1u2v3w4x5y6z', 100000000, 100000000, 5),
-            ('QTC1qz9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g', 50000000, 75000000, 8),
-            ('QTC1qa1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t', 25000000, 30000000, 3),
-            ('QTC1miner_address_example_wallet_quantum_safe', 1000000000, 1000000000, 100)
-        "#)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| DatabaseError::QueryFailed(e.to_string()))?;
-
-        // Create corresponding UTXOs
-        sqlx::query(r#"
-            INSERT OR IGNORE INTO utxos 
-            (tx_id, output_index, address, amount, block_height, is_spent)
-            VALUES 
-            ('genesis_tx_1', 0, 'QTC1qy8x9s8v7d2k3l4m5n6p7q8r9s0t1u2v3w4x5y6z', 100000000, 1, 0),
-            ('genesis_tx_2', 0, 'QTC1qz9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g', 50000000, 1, 0),
-            ('genesis_tx_3', 0, 'QTC1qa1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t', 25000000, 1, 0),
-            ('miner_reward_1', 0, 'QTC1miner_address_example_wallet_quantum_safe', 1000000000, 2, 0)
-        "#)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| DatabaseError::QueryFailed(e.to_string()))?;
+        // NO PREMINE - All balances start at zero and must be earned through mining
+        // Database initialization complete - clean slate for fair launch
 
         Ok(())
     }
