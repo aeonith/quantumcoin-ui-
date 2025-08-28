@@ -1,147 +1,27 @@
-# QuantumCoin Chain Specification v2.0
-# IMMUTABLE PARAMETERS - DO NOT MODIFY AFTER MAINNET LAUNCH
-
 [network]
-name = "quantumcoin"
-symbol = "QTC" 
+name = "QuantumCoin"
+symbol = "QC"
 decimals = 8
-version = "2.0.0"
+version = "1.0.0"
 
 [consensus]
-algorithm = "proof_of_work"
-hash_function = "blake3"
-target_block_time = 600  # 10 minutes in seconds
-difficulty_adjustment_period = 2016  # blocks
-max_difficulty_change = 4.0  # maximum 4x difficulty change per adjustment
-genesis_difficulty = 0x1d00ffff
+hash_function = "sha256d"
+target_block_time_secs = 600
+difficulty_adjustment = "ASERT"
+asert_half_life_secs = 2592000   # 30 days
 
 [supply]
-max_supply = 22000000000000000  # 22M QTC with 8 decimals (22,000,000.00000000)
-initial_reward = 5000000000  # 50 QTC with 8 decimals
-halving_interval = 210000  # blocks (~4 years at 10min blocks)
-premine = 0  # No premine
+max_supply_sats = 22000000_00000000   # 22,000,000 * 10^8
+halving_interval_blocks = 105120      # ~2 years @ 10 min
+premine_sats = 0
 
-[transaction]
-max_tx_size = 100000  # 100KB max transaction size
-min_tx_fee = 1000  # 0.00001000 QTC minimum fee
-dust_threshold = 546  # 0.00000546 QTC dust threshold
-max_inputs_per_tx = 1000
-max_outputs_per_tx = 1000
-signature_hash_type = "dilithium2"
+[txpolicy]
+max_tx_size = 100000
+min_fee_per_kb_sats = 1000
+dust_threshold_sats = 546
+max_inputs = 32
+max_outputs = 32
+coinbase_maturity = 100
 
-[block]
-max_block_size = 4000000  # 4MB max block size
-max_block_weight = 4000000  # 4MW max block weight
-coinbase_maturity = 100  # blocks before coinbase can be spent
-max_reorg_depth = 6  # maximum reorg depth for finality
-
-[cryptography]
-address_version = 0x51  # Address version byte for mainnet
-private_key_version = 0x80  # Private key WIF version
-checksum_algorithm = "blake3"
-signature_scheme = "dilithium2"
-hash_algorithm = "blake3_256"
-
-[network_protocol]
-magic_bytes = [0x51, 0x54, 0x43, 0x4D]  # "QTCM" for QuantumCoin Mainnet
-protocol_version = 70015
-services = 1  # NODE_NETWORK
-default_port = 8333
-max_connections = 125
-connection_timeout = 5  # seconds
-
-[fees]
-min_relay_fee = 1000  # satoshis per KB
-increment_fee = 1000  # minimum fee increment for RBF
-dust_relay_fee = 3000  # minimum fee to relay dust transactions
-max_fee_rate = 10000000  # maximum fee rate (100 QTC/KB)
-
-[mempool]
-max_size = 300000000  # 300MB mempool limit
-max_tx_count = 100000  # maximum transactions in mempool
-expiry_time = 86400  # 24 hours in seconds
-replacement_enabled = true  # enable replace-by-fee
-
-[mining]
-coinbase_flags = "QuantumCoin/2.0"
-extra_nonce_placeholder = 8  # bytes reserved for extra nonce
-witness_commitment_pos = 0  # position of witness commitment in coinbase
-
-[governance]
-bip9_activation_threshold = 1916  # 95% of 2016 blocks
-bip9_min_activation_height = 0
-lock_in_period = 2016  # blocks
-timeout_period = 10080  # blocks (~10 weeks)
-
-[checkpoints]
-# Critical block hashes for fast sync validation
-genesis = "0000000000000000000000000000000000000000000000000000000000000000"
-# Additional checkpoints will be added after mainnet deployment
-
-[testnet]
-enabled = false  # This spec is for mainnet
-testnet_magic_bytes = [0x51, 0x54, 0x43, 0x54]  # "QTCT" for testnet
-testnet_port = 18333
-testnet_difficulty = 0x207fffff  # Lower difficulty for testnet
-
-[economic_model]
-# Block reward schedule (auto-calculated from halving_interval and initial_reward)
-# Block 0-209999: 50 QTC
-# Block 210000-419999: 25 QTC  
-# Block 420000-629999: 12.5 QTC
-# Block 630000-839999: 6.25 QTC
-# And so on...
-
-inflation_schedule = [
-    { height = 0, reward = 5000000000 },
-    { height = 210000, reward = 2500000000 },
-    { height = 420000, reward = 1250000000 },
-    { height = 630000, reward = 625000000 },
-    { height = 840000, reward = 312500000 },
-    { height = 1050000, reward = 156250000 },
-    { height = 1260000, reward = 78125000 },
-    { height = 1470000, reward = 39062500 },
-    { height = 1680000, reward = 19531250 },
-    { height = 1890000, reward = 9765625 },
-]
-
-[post_quantum]
-signature_algorithm = "dilithium2"
-public_key_size = 1312  # bytes
-private_key_size = 2528  # bytes
-signature_size = 2420  # bytes
-security_level = 2  # NIST security level
-
-[ai_integration]
-enabled = true
-telemetry_endpoint = "https://ai.quantumcoincrypto.com/telemetry"
-anomaly_detection = true
-fee_prediction = true
-network_analysis = true
-
-[metadata]
-specification_version = "2.0.0"
-created_at = "2025-01-15T00:00:00Z"
-authors = ["Aeonith <aeonith@quantumcoincrypto.com>"]
-license = "MIT"
-repository = "https://github.com/aeonith/quantumcoin-ui-"
-documentation = "https://docs.quantumcoincrypto.com"
-
-# Genesis block configuration
-[genesis]
-timestamp = "2025-01-15T00:00:00Z"
-message = "QuantumCoin Mainnet Genesis - Post-Quantum Cryptographic Future"
-
-# No premine - fair launch with mining only
-# genesis.allocations = [] # Empty array - no premine allocations
-
-[genesis.coinbase]
-message = "The Times 15/Jan/2025 Chancellor on brink of post-quantum cryptography era"
-extra_nonce_size = 8
-flags = "QuantumCoin/2.0"
-
-# Cryptographic commitments to ensure immutability
-[verification]
-spec_hash = "blake3:a1b2c3d4e5f6789abcdef0123456789abcdef0123456789abcdef0123456789a"
-genesis_hash = "blake3:0000000000000000000000000000000000000000000000000000000000000000"
-checksum = "blake3:f9e8d7c6b5a49382716054a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2"
+[revstop]
+window_blocks = 30

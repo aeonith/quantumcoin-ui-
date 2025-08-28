@@ -1,5 +1,5 @@
 [package]
-name = "qc-validation"
+name = "qc-types"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,10 +7,10 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-qc-types = { path = "../types" }
-qc-crypto = { path = "../crypto" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 bincode = { workspace = true }
-thiserror = { workspace = true }
-toml = "0.8"
+hex = { workspace = true }
+bech32 = "0.9"
 sha2 = { workspace = true }
+thiserror = { workspace = true }

@@ -14,6 +14,7 @@ mod rpc;
 mod explorer;
 mod economics;
 mod ai_learning;
+mod block_monitor;
 
 use blockchain::Blockchain;
 use transaction::Transaction;
