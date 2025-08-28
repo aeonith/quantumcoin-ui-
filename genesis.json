@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "timestamp": "2025-01-15T00:00:00Z",
+  "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "difficulty": "1d00ffff",
+  "nonce": 0,
+  "transactions": [
+    {
+      "type": "coinbase",
+      "id": "genesis_coinbase_tx",
+      "inputs": [],
+      "outputs": [],
+      "amount": 0,
+      "fee": 0,
+      "timestamp": "2025-01-15T00:00:00Z",
+      "message": "QuantumCoin Genesis - Fair Launch, 22M Cap, Zero Premine",
+      "signature": ""
+    }
+  ],
+  "supply": {
+    "max_supply_sats": 2200000000000000,
+    "premine_sats": 0,
+    "halving_interval_blocks": 105120
+  }
+}
