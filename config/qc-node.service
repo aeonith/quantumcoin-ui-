@@ -1,0 +1,43 @@
+# QuantumCoin Node - Linux systemd service
+# Copy to: /etc/systemd/system/qc-node.service
+
+[Unit]
+Description=QuantumCoin Node - Post-Quantum Cryptocurrency
+Documentation=https://github.com/aeonith/quantumcoin-ui-
+After=network-online.target
+Wants=network-online.target
+StartLimitInterval=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=qtc
+Group=qtc
+ExecStart=/opt/qtc/qc-node --config /opt/qtc/config/node.toml
+ExecReload=/bin/kill -HUP $MAINPID
+WorkingDirectory=/opt/qtc
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/qtc /opt/qtc/logs
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+DynamicUser=false
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Environment
+Environment=RUST_LOG=info
+Environment=RUST_BACKTRACE=1
+
+[Install]
+WantedBy=multi-user.target

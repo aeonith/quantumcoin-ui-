@@ -1,0 +1,65 @@
+# QuantumCoin Node Configuration
+# Production-ready configuration for 24/7 operation
+
+[data]
+# Data directory for blockchain storage
+# Linux/Server: "/var/lib/qtc"
+# Windows: "C:\\qtc\\data" or "%APPDATA%\\.qtc"
+# macOS: "~/.qtc"
+path = "~/.qtc"
+
+[chain]
+# Chain specification and genesis files
+spec = "./chain_spec.toml"
+genesis = "./genesis.json"
+
+[p2p]
+# P2P networking configuration
+listen_addr = "0.0.0.0:30333"    # Listen on all interfaces, port 30333
+max_peers = 50                   # Maximum number of connected peers
+discovery_enabled = true         # Enable peer discovery
+
+# Seed nodes for initial peer discovery
+# Add your seed nodes here once deployed
+peers = [
+    # "seed1.quantumcoincrypto.com:30333",
+    # "seed2.quantumcoincrypto.com:30333",
+    # "192.168.1.100:30333"
+]
+
+[rpc]
+# RPC server configuration  
+listen_addr = "127.0.0.1:8545"   # Bind to localhost only for security
+enabled = true                   # Enable RPC server
+cors_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+# Enabled RPC methods (exchange-compatible)
+enabled_methods = [
+    "getblockchain",
+    "getbalance", 
+    "sendtransaction",
+    "mineblock",
+    "qc_blockNumber",
+    "qc_getBalance",
+    "qc_getBlockByNumber", 
+    "qc_sendTransaction"
+]
+
+[mining]
+# Mining configuration
+enabled = false                  # Disable by default, enable for mining nodes
+reward_address = ""              # Set your mining address if enabled
+max_block_size = 100000         # Maximum block size in bytes
+
+[logging]
+# Logging configuration
+level = "info"                  # Logging level: error, warn, info, debug, trace
+file = "logs/qtc-node.log"      # Log file path (relative to data directory)
+max_file_size = "100MB"         # Maximum log file size before rotation
+max_files = 5                   # Maximum number of rotated log files
+
+[security]
+# Security settings
+revstop_enabled = true          # Enable RevStop protection
+max_connections_per_ip = 10     # Rate limiting
+ban_duration_seconds = 3600     # IP ban duration for misbehaving peers
