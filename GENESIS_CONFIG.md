@@ -11,7 +11,7 @@ symbol = "QC"
 decimals = 8
 
 [supply]
-max_supply_sats = 22000000_00000000   # 22M QTC
+max_supply_sats = 2200000000000000  # 22,000,000 × 100,000,000
 halving_interval_blocks = 105120      # ~2 years
 premine_sats = 0                      # FAIR LAUNCH
 
