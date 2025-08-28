@@ -141,6 +141,89 @@ impl RpcServer {
                     }
                 }
             }
+            // Exchange-compatible qc_* aliases
+            "qc_blockNumber" => {
+                let blockchain = blockchain.read().await;
+                let height = if blockchain.chain.is_empty() { 0 } else { blockchain.chain.len() - 1 };
+                RpcResponse {
+                    result: Some(serde_json::json!({ "blockNumber": height })),
+                    error: None,
+                    id: request.id,
+                }
+            }
+            "qc_getBalance" => {
+                if let Some(address) = request.params.get("address").and_then(|v| v.as_str()) {
+                    let blockchain = blockchain.read().await;
+                    let balance = blockchain.get_balance(address);
+                    RpcResponse {
+                        result: Some(serde_json::json!({ "balance": balance })),
+                        error: None,
+                        id: request.id,
+                    }
+                } else {
+                    RpcResponse {
+                        result: None,
+                        error: Some("Missing address".to_string()),
+                        id: request.id,
+                    }
+                }
+            }
+            "qc_getBlockByNumber" => {
+                if let Some(num) = request.params.get("number").and_then(|v| v.as_u64()) {
+                    let blockchain = blockchain.read().await;
+                    if let Some(block) = blockchain.chain.get(num as usize) {
+                        RpcResponse {
+                            result: Some(serde_json::to_value(block).unwrap()),
+                            error: None,
+                            id: request.id,
+                        }
+                    } else {
+                        RpcResponse {
+                            result: None,
+                            error: Some("Block not found".to_string()),
+                            id: request.id,
+                        }
+                    }
+                } else {
+                    RpcResponse {
+                        result: None,
+                        error: Some("Missing number".to_string()),
+                        id: request.id,
+                    }
+                }
+            }
+            "qc_sendTransaction" => {
+                let params = &request.params;
+                if let (Some(from), Some(to), Some(amount)) = (
+                    params.get("from").and_then(|v| v.as_str()),
+                    params.get("to").and_then(|v| v.as_str()),
+                    params.get("amount").and_then(|v| v.as_f64()),
+                ) {
+                    let transaction = Transaction {
+                        id: format!("tx_{}", Utc::now().timestamp()),
+                        from: from.to_string(),
+                        to: to.to_string(),
+                        amount,
+                        timestamp: Utc::now(),
+                        signature: "".to_string(),
+                    };
+
+                    let mut blockchain = blockchain.write().await;
+                    blockchain.create_transaction(transaction.clone());
+
+                    RpcResponse {
+                        result: Some(serde_json::json!({"transactionHash": transaction.id})),
+                        error: None,
+                        id: request.id,
+                    }
+                } else {
+                    RpcResponse {
+                        result: None,
+                        error: Some("from, to, and amount parameters required".to_string()),
+                        id: request.id,
+                    }
+                }
+            }
             _ => RpcResponse {
                 result: None,
                 error: Some(format!("Unknown method: {}", request.method)),
