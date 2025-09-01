@@ -1,7 +1,5 @@
 # QuantumCoin Blockchain ⚛️
 
-[![CI](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/ci.yml/badge.svg)](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/codeql.yml/badge.svg)](https://github.com/aeonith/quantumcoin-ui-/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A quantum-resistant cryptocurrency blockchain implementation built with post-quantum cryptography and Rust. This repository contains the **core blockchain protocol only** - website and frontend components are maintained in a separate repository.
