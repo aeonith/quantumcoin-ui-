@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 qc-types = { path = "../types" }
-pqcrypto-dilithium = "0.7"
+pqcrypto-dilithium = "0.5"
 sha2 = { workspace = true }
 ripemd = "0.1"
 bech32 = "0.9"

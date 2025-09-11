@@ -35,7 +35,7 @@ pub enum TransactionType {
     SelfTransfer,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum TransactionStatus {
     Pending,
     Confirmed,
