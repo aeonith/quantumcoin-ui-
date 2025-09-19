@@ -43,6 +43,7 @@ proptest = { workspace = true }
 name = "ai-sentinel"
 path = "src/main.rs"
 
-[[bench]]
-name = "ml_performance"
-harness = false
+# Benchmarks disabled for now
+# [[bench]]
+# name = "ml_performance"
+# harness = false

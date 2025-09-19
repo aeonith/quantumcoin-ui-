@@ -1,214 +1,296 @@
 # Security Policy
 
+## Overview
+
+QuantumCoin takes security seriously. This document outlines our security practices, vulnerability reporting process, and supported versions for security updates.
+
 ## Supported Versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.0.x   | :white_check_mark: |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| Version | Supported          | End of Support |
+| ------- | ------------------ | -------------- |
+| 1.0.x   | ✅ Active support  | TBD            |
+| < 1.0   | ❌ No support      | 2025-01-01     |
 
-## Reporting a Vulnerability
+## Security Features
 
-We take security seriously. If you discover a security vulnerability in QuantumCoin, please report it responsibly.
+### Post-Quantum Cryptography
+- **Signature Algorithm**: Dilithium2 (NIST PQC finalist)
+- **Hash Function**: SHA256d (Bitcoin-compatible)
+- **Address Format**: Bech32 with quantum-resistant public keys
+- **Key Generation**: Cryptographically secure random number generation
 
-### How to Report
+### Network Security
+- **P2P Encryption**: TLS 1.3 for all peer communications
+- **DDoS Protection**: Built-in rate limiting and peer management
+- **Eclipse Attack Mitigation**: Multiple seed nodes and peer diversity
+- **Sybil Attack Protection**: Proof-of-work consensus with difficulty adjustment
 
-**Email:** security@quantumcoincrypto.com
+### Node Security
+- **Privilege Separation**: Node runs as non-root user
+- **Memory Safety**: Written in Rust (memory-safe language)
+- **Input Validation**: Comprehensive validation of all external inputs
+- **Resource Limits**: Built-in limits to prevent resource exhaustion
 
-**PGP Key:**
-```
------BEGIN PGP PUBLIC KEY BLOCK-----
+### Wallet Security
+- **Cold Storage**: Air-gapped wallet support for offline signing
+- **Hardware Wallets**: Integration with hardware security modules
+- **Multi-signature**: M-of-N multisig wallet support
+- **Encryption**: AES-256-GCM for wallet file encryption
+- **Seed Phrases**: BIP-39 compatible mnemonic seeds (adapted for Dilithium)
 
-mQINBGWH2wsBEADO2Q+XYZ123...
-[Full PGP key will be included in actual releases]
-...
-=ABCD
------END PGP PUBLIC KEY BLOCK-----
-```
+## Vulnerability Reporting
 
-**Key Fingerprint:** `1234 5678 9ABC DEF0 1234 5678 9ABC DEF0 1234 5678`
+### Reporting Process
 
-### What to Include
+**Please DO NOT report security vulnerabilities through public GitHub issues.**
 
-Please include as much detail as possible:
+Instead, report security vulnerabilities to: **security@quantumcoincrypto.com**
 
-- **Vulnerability type** (e.g., consensus bug, cryptographic issue, network attack)
-- **Affected components** (node, wallet, RPC, P2P protocol)
-- **Steps to reproduce** with example code or commands
-- **Potential impact** (fund theft, network disruption, privacy leak)
-- **Suggested fix** if you have one
-- **Your contact information** for follow-up questions
+### Information to Include
 
-### Scope
+Please include as much of the following information as possible:
 
-#### In Scope
-- **Consensus layer**: Block validation, transaction verification, fork choice
-- **Cryptography**: Post-quantum signatures, key generation, address derivation  
-- **P2P protocol**: Network messaging, peer discovery, sync mechanisms
-- **RPC interface**: Authentication, input validation, data exposure
-- **Wallet functionality**: Key storage, transaction creation, backup/restore
-- **Economic attacks**: Fee manipulation, mining attacks, inflation bugs
+1. **Description**: Clear description of the vulnerability
+2. **Impact**: Potential impact and severity assessment
+3. **Reproduction**: Detailed steps to reproduce the issue
+4. **Environment**: Version numbers, operating system, configuration
+5. **Attack Vectors**: How the vulnerability could be exploited
+6. **Suggested Fix**: If you have ideas for remediation
 
-#### Out of Scope
-- **UI/UX issues** that don't affect security
-- **Performance issues** without security implications
-- **Third-party services** (explorers, exchanges, wallets not developed by us)
-- **Social engineering** attacks against users
-- **Physical attacks** on user devices
-- **Theoretical attacks** without practical exploitation
+### Response Timeline
 
-### Response Process
+| Timeframe | Action |
+|-----------|--------|
+| 24 hours | Acknowledgment of report |
+| 72 hours | Initial assessment and severity classification |
+| 7 days | Detailed analysis and response plan |
+| 30 days | Fix development and testing (for non-critical issues) |
+| 24 hours | Emergency fix (for critical vulnerabilities) |
 
-1. **Acknowledgment** within 24 hours
-2. **Initial assessment** within 72 hours  
-3. **Regular updates** every 7 days during investigation
-4. **Resolution timeline** provided after assessment
-5. **Public disclosure** 90 days after fix deployment (or by mutual agreement)
-
-### Severity Levels
+### Severity Classification
 
 #### Critical (CVSS 9.0-10.0)
-- **Consensus failure** leading to chain split
-- **Cryptographic break** compromising signatures
-- **Remote code execution** on nodes
-- **Private key exposure** in normal operation
-
-**Response:** Immediate fix within 24-48 hours, emergency release
+- Remote code execution
+- Private key extraction
+- Consensus mechanism bypass
+- Supply inflation vulnerabilities
 
 #### High (CVSS 7.0-8.9)  
-- **Fund theft** through transaction manipulation
-- **Network-wide DoS** attacks
-- **Privacy breaches** exposing user data
-- **Mining centralization** attacks
-
-**Response:** Fix within 1-2 weeks, coordinated release
+- Denial of service attacks
+- Network partitioning
+- Transaction malleability
+- Significant fund loss scenarios
 
 #### Medium (CVSS 4.0-6.9)
-- **Local DoS** on individual nodes
-- **Information disclosure** of non-sensitive data
-- **Fee manipulation** attacks
-- **Mempool spam** attacks
-
-**Response:** Fix in next regular release (4-8 weeks)
+- Information disclosure
+- Authentication bypass
+- Local privilege escalation
+- Non-critical logic errors
 
 #### Low (CVSS 0.1-3.9)
-- **Minor information leaks**
-- **Aesthetic security issues**
-- **Rate limiting bypasses**
+- Minor information leaks
+- Documentation issues
+- Configuration problems
+- Performance degradation
 
-**Response:** Fix when convenient, document workarounds
+## Security Audits
 
-## Responsible Disclosure Guidelines
+### Completed Audits
+- [ ] **External Security Audit** (Pending - Q1 2025)
+  - Auditor: TBD
+  - Focus: Core cryptography, consensus, and network security
+  - Status: Planning phase
 
-### For Researchers
-
-- **Give us time** to fix vulnerabilities before public disclosure
-- **Don't exploit** vulnerabilities on mainnet or cause harm to users
-- **Test on testnet** when possible for proof-of-concept
-- **Coordinate disclosure** timing with our security team
-- **Consider user safety** in your research and disclosure
-
-### For the Community
-
-- **Report** security issues through proper channels (not GitHub issues)
-- **Don't share** exploit details publicly until fixes are deployed
-- **Update** your nodes promptly when security releases are available
-- **Follow** @QuantumCoinSec on Twitter for security announcements
+### Planned Audits
+- [ ] **Post-Quantum Cryptography Review** (Q2 2025)
+- [ ] **Economic Security Analysis** (Q2 2025)
+- [ ] **Exchange Integration Security** (Q3 2025)
 
 ## Bug Bounty Program
 
-### Rewards
+### Coming Soon
+We are preparing a comprehensive bug bounty program with the following scope:
 
-| Severity | Mainnet Reward | Testnet Reward |
-|----------|----------------|----------------|
-| Critical | $10,000-25,000 | $1,000-2,500   |
-| High     | $5,000-10,000  | $500-1,000     |
-| Medium   | $1,000-5,000   | $100-500       |
-| Low      | $100-1,000     | $50-100        |
+#### In Scope
+- Core QuantumCoin node implementation
+- Wallet software and key management
+- P2P network protocols
+- Cryptographic implementations
+- Mining and consensus logic
+- RPC and API endpoints
 
-### Payment Methods
-- **QuantumCoin (QTC)** - preferred
-- **Bitcoin (BTC)** - accepted
-- **USD equivalent** via bank transfer
+#### Out of Scope
+- Third-party websites and services
+- Social engineering attacks
+- Physical attacks
+- Attacks requiring privileged access
+- DDoS attacks
 
-### Eligibility
-- **First reporter** of a vulnerability gets the reward
-- **No previous public disclosure** of the issue
-- **Follows responsible disclosure** guidelines
-- **Provides sufficient detail** for reproduction
+#### Reward Structure (Planned)
+- **Critical**: $10,000 - $50,000
+- **High**: $5,000 - $10,000
+- **Medium**: $1,000 - $5,000
+- **Low**: $500 - $1,000
 
-## Security Announcements
+## Security Best Practices
 
-### Channels
-- **Security mailing list**: security-announce@quantumcoincrypto.com
-- **Twitter**: @QuantumCoinSec
-- **GitHub**: Security advisories on main repository
-- **Website**: https://quantumcoincrypto.com/security
+### For Node Operators
 
-### Release Security Notes
-All releases include security impact assessment:
-- **Security release**: Contains fixes for disclosed vulnerabilities
-- **Regular release**: May contain proactive security improvements
-- **Emergency release**: Critical security fixes requiring immediate upgrade
+#### System Security
+```bash
+# Run as non-root user
+sudo useradd -r -s /bin/false quantumcoin
+sudo -u quantumcoin quantumcoin-node
 
-## Cryptographic Assumptions
+# Enable firewall
+ufw allow 8546/tcp  # P2P port
+ufw allow 8545/tcp from 127.0.0.1  # RPC (local only)
+ufw enable
 
-### Post-Quantum Security
-QuantumCoin uses **Dilithium2** from the NIST Post-Quantum Cryptography standardization:
-- **Security level**: NIST Level 2 (equivalent to AES-128)
-- **Quantum resistance**: Secure against known quantum algorithms
-- **Classical security**: Based on lattice problems (LWE/SIS)
+# Keep system updated
+apt update && apt upgrade
+```
 
-### Hash Functions
-- **Block hashing**: BLAKE3 (cryptographically secure, fast)
-- **Merkle trees**: BLAKE3 with domain separation
-- **Address checksums**: BLAKE3 with version bytes
+#### Network Security
+```bash
+# Use TLS for RPC connections
+quantumcoin-node --rpc-tls-cert /path/to/cert.pem \
+                 --rpc-tls-key /path/to/key.pem
 
-### Randomness Sources
-- **Key generation**: OS cryptographic RNG (`/dev/urandom`, Windows CryptoAPI)
-- **Nonce generation**: ChaCha20 DRBG with regular reseeding
-- **Mining**: Hardware entropy where available
+# Bind RPC to localhost only (for security)
+quantumcoin-node --rpc-bind 127.0.0.1:8545
+```
 
-## Known Limitations
+#### Monitoring
+```bash
+# Monitor logs for suspicious activity
+tail -f ~/.quantumcoin/node.log | grep -E "(error|warning|attack)"
 
-### Performance Trade-offs
-- **Signature size**: Dilithium2 signatures are ~2.4KB (vs ~70 bytes for ECDSA)
-- **Key size**: Public keys are ~1.3KB (vs ~33 bytes for ECDSA)  
-- **Verification time**: ~10x slower than ECDSA (still <1ms per signature)
+# Set up alerts for unusual behavior
+curl -X POST http://localhost:8545 \
+  -d '{"method":"getnetworkinfo"}' | \
+  jq '.result.connections' | \
+  awk '$1 < 3 { system("alert-low-peers.sh") }'
+```
 
-### Quantum Transition Risks
-- **Algorithm updates**: May require hard fork if NIST parameters change
-- **Backward compatibility**: Old signatures will remain valid
-- **Migration path**: Planned for potential algorithm upgrades
+### For Exchange Operators
 
-## Audit History
+#### Cold Storage
+```bash
+# Generate cold wallet on air-gapped machine
+qtc-wallet new --name exchange-cold --type cold --hsm
 
-### External Audits
-- **Pending**: Comprehensive security audit scheduled for Q2 2025
-- **Scope**: Consensus engine, cryptography, P2P protocol, wallet security
-- **Auditor**: TBD (RFP process underway)
+# Create unsigned transaction (online)
+qtc-wallet send --wallet exchange-cold --offline \
+  --to qtc1abc... --amount 1000.0
 
-### Internal Reviews
-- **Code review**: All commits require security-focused review
-- **Fuzzing**: Continuous fuzzing of parsers and validators
-- **Static analysis**: CodeQL, Clippy, and custom security lints
+# Sign transaction (offline)
+qtc-wallet sign --wallet exchange-cold \
+  --transaction unsigned_tx.json
 
-## Compliance
+# Broadcast signed transaction (online)
+qtc-wallet broadcast --file signed_tx.json
+```
 
-### Regulatory Considerations
-- **KYC/AML**: Not implemented at protocol level (exchange responsibility)
-- **Privacy**: Transaction privacy similar to Bitcoin (pseudonymous)
-- **Auditability**: Full transaction history permanently recorded
-- **Sanctions**: No protocol-level sanctions enforcement
+#### Hot Wallet Security
+```bash
+# Enable multi-signature for hot wallets
+qtc-wallet new --name exchange-hot --type multisig \
+  --threshold 3 --participants 5
 
-### Standards Compliance
-- **NIST**: Post-quantum cryptography follows NIST standards
-- **RFC**: Network protocols follow relevant internet standards
-- **ISO 27001**: Security practices align with international standards
+# Use hardware security modules
+qtc-wallet new --name exchange-hot --hsm
+
+# Regular security audits
+qtc-wallet audit --wallet exchange-hot
+```
+
+#### Monitoring & Alerts
+```bash
+# Monitor for large withdrawals
+qtc-wallet history --wallet exchange-hot \
+  --format json | \
+  jq '.[] | select(.amount > 10000000000)' # > 100 QTC
+
+# Verify supply integrity
+supply-audit --verify --output daily-audit.json
+
+# Alert on consensus issues
+qtc-node status | grep -q "synchronized: true" || \
+  alert-consensus-issue.sh
+```
+
+### For Developers
+
+#### Secure Development
+- **Code Review**: All code must be reviewed by at least 2 developers
+- **Static Analysis**: Run `cargo clippy` and `cargo audit` on all code
+- **Testing**: Maintain >90% test coverage for security-critical code
+- **Fuzzing**: Use `cargo fuzz` for input validation testing
+
+#### Dependencies
+- **Minimal Dependencies**: Only include necessary dependencies
+- **Audit Dependencies**: Regular `cargo audit` checks
+- **Pin Versions**: Use exact versions in production builds
+- **Update Regularly**: Keep dependencies updated for security patches
+
+#### Cryptography
+- **Use Standard Libraries**: Never implement custom cryptography
+- **Constant-Time Operations**: Use constant-time algorithms for sensitive operations
+- **Secure Random**: Use cryptographically secure random number generators
+- **Key Management**: Follow best practices for key generation and storage
+
+## Incident Response
+
+### Response Team
+- **Security Lead**: security-lead@quantumcoincrypto.com
+- **Development Lead**: dev-lead@quantumcoincrypto.com  
+- **Operations Lead**: ops@quantumcoincrypto.com
+- **Communications**: communications@quantumcoincrypto.com
+
+### Response Procedures
+
+#### Critical Vulnerabilities
+1. **Immediate Actions** (0-1 hours)
+   - Confirm and validate the vulnerability
+   - Assess impact and affected systems
+   - Implement temporary mitigations if possible
+   - Notify the response team
+
+2. **Short-term Actions** (1-24 hours)
+   - Develop and test a fix
+   - Prepare security advisory
+   - Coordinate with major exchanges and node operators
+   - Prepare emergency release
+
+3. **Long-term Actions** (1-7 days)
+   - Release patched version
+   - Monitor network upgrade
+   - Publish post-incident analysis
+   - Update security procedures
+
+#### Communication
+- **Internal**: Slack #security-incidents channel
+- **External**: Twitter @QuantumCoinDev, website security notices
+- **Exchanges**: Direct notification via secure channels
+- **Community**: Discord announcements, GitHub security advisories
+
+## Contact Information
+
+### Security Team
+- **Primary**: security@quantumcoincrypto.com
+- **PGP Key**: [View on website](https://quantumcoincrypto.com/pgp)
+- **Emergency**: security-emergency@quantumcoincrypto.com
+
+### Response Times
+- **Critical Issues**: 1-4 hours
+- **High Issues**: 1-2 business days  
+- **Medium Issues**: 3-5 business days
+- **Low Issues**: 1-2 weeks
 
 ---
 
-**Last Updated:** January 15, 2025  
-**Next Review:** April 15, 2025  
-**Version:** 1.0
+**Last Updated**: January 19, 2025  
+**Next Review**: April 19, 2025
+
+For the latest version of this security policy, visit: https://quantumcoincrypto.com/security

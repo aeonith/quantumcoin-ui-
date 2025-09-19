@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "QuantumCoin",
+    "slug": "quantum-coin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0F17"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "scheme": "quantumcoin",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aeonith.quantumcoin",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scan QR codes to send/receive QuantumCoin",
+        "NSFaceIDUsageDescription": "Use Face ID to unlock your wallet"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B0F17"
+      },
+      "package": "com.aeonith.quantumcoin"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
+  }
+}

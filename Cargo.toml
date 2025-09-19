@@ -1,37 +1,103 @@
 [workspace]
-members = ["crates/types", "crates/crypto", "crates/validation", "crates/node"]
+members = [
+    "crates/types", 
+    "crates/crypto", 
+    "crates/validation", 
+    "crates/node",
+    "crates/genesis",
+    "crates/p2p",
+    "crates/wallet"
+]
 resolver = "2"
 
 [workspace.package]
 edition = "2021"
 license = "MIT"
 authors = ["QuantumCoin contributors"]
-repository = "https://github.com/aeonith/quantumcoin-ui-"
+repository = "https://github.com/quantumcoin-crypto/quantumcoin-core"
 version = "1.0.0"
+description = "QuantumCoin: Post-quantum cryptocurrency with Bitcoin-like economics"
+keywords = ["cryptocurrency", "blockchain", "post-quantum", "bitcoin"]
+categories = ["cryptography", "network-programming"]
+documentation = "https://docs.rs/quantumcoin"
+homepage = "https://quantumcoincrypto.com"
 
 [workspace.dependencies]
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 bincode = "1.3"
+
+# Cryptography (stable versions only)
 hex = "0.4"
 sha2 = "0.10"
+blake3 = "1.5"
+rand = "0.8"
+argon2 = "0.5"
+pqcrypto-dilithium = { version = "0.5", features = ["std"] }
+pqcrypto-traits = "0.3"
+
+# Error handling
 thiserror = "1.0"
 anyhow = "1.0"
-tokio = { version = "1.39", features = ["full"] }
+
+# Async runtime (stable version)
+tokio = { version = "1.35", features = ["full"] }
+futures = "0.3"
+
+# Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 
+# Network & Web
+axum = "0.7"
+reqwest = { version = "0.11", features = ["json"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+
+# Database
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio-rustls"] }
+
+# Utilities
+uuid = { version = "1.0", features = ["v4"] }
+clap = { version = "4.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+crc32fast = "1.4"
+bech32 = "0.9"
+toml = "0.8"
+
+# Development dependencies  
+tempfile = "3.0"
+proptest = "1.0"
+
 [package]
-name = "quantumcoin"
+name = "quantumcoin-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
 repository.workspace = true
+description.workspace = true
+keywords.workspace = true
+categories.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+
+[[bin]]
+name = "quantumcoin-node"
+path = "src/bin/quantumcoin-node.rs"
 
 [[bin]]
 name = "qtc-address"
 path = "src/bin/qtc-address.rs"
+
+[[bin]]
+name = "qtc-wallet"
+path = "src/bin/qtc-wallet.rs"
+
+[[bin]]
+name = "supply-audit"
+path = "src/bin/supply-audit.rs"
 
 [dependencies]
 hex.workspace = true

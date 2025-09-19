@@ -135,20 +135,31 @@
             <p>Your CPU is computing SHA256 hashes just like Bitcoin miners</p>
         </div>
 
+        <!-- Miner Address Input -->
+        <div class="status-card" style="margin-bottom: 20px;">
+            <h3>⚡ Mining Controls</h3>
+            <div style="margin-bottom: 15px;">
+                <input id="miner-address" placeholder="Your QTC address" style="width: 60%; padding: 10px; margin-right: 10px; border: 1px solid #00ff88; background: rgba(0,0,0,0.3); color: white; border-radius: 5px;" />
+                <button id="start-btn" style="padding: 10px 20px; margin-right: 10px; background: #00ff88; color: black; border: none; border-radius: 5px; cursor: pointer;">Start Mining</button>
+                <button id="stop-btn" style="padding: 10px 20px; background: #ff4444; color: white; border: none; border-radius: 5px; cursor: pointer;">Stop</button>
+            </div>
+            <div id="status-line" style="padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; min-height: 20px;"></div>
+        </div>
+
         <div class="status-grid">
             <div class="status-card">
                 <h3>🏗️ Blockchain Status</h3>
                 <div class="metric">
                     <span>Block Height:</span>
-                    <span class="metric-value" id="blockHeight">Loading...</span>
+                    <span class="metric-value" id="block-height">0</span>
                 </div>
                 <div class="metric">
                     <span>Total Supply:</span>
-                    <span class="metric-value" id="totalSupply">Loading...</span>
+                    <span class="metric-value" id="total-supply">0 QTC</span>
                 </div>
                 <div class="metric">
                     <span>Difficulty:</span>
-                    <span class="metric-value" id="difficulty">Loading...</span>
+                    <span class="metric-value" id="difficulty">—</span>
                 </div>
                 <div class="metric">
                     <span>Network:</span>
@@ -160,19 +171,19 @@
                 <h3>⛏️ Mining Performance</h3>
                 <div class="metric">
                     <span>Hash Rate:</span>
-                    <span class="metric-value blink" id="hashRate">Loading...</span>
+                    <span class="metric-value blink" id="hashrate">0 H/s</span>
                 </div>
                 <div class="metric">
                     <span>Total Hashes:</span>
-                    <span class="metric-value" id="totalHashes">Loading...</span>
+                    <span class="metric-value" id="total-hashes">0</span>
                 </div>
                 <div class="metric">
                     <span>Mining Time:</span>
-                    <span class="metric-value" id="miningTime">Loading...</span>
+                    <span class="metric-value" id="mining-time">0s</span>
                 </div>
                 <div class="metric">
                     <span>Current Nonce:</span>
-                    <span class="metric-value" id="currentNonce">Loading...</span>
+                    <span class="metric-value" id="current-nonce">0</span>
                 </div>
             </div>
 
@@ -184,7 +195,7 @@
                 </div>
                 <div class="metric">
                     <span>Blocks Found:</span>
-                    <span class="metric-value" id="blocksFound">0</span>
+                    <span class="metric-value" id="blocks-found">0</span>
                 </div>
                 <div class="metric">
                     <span>Total Earned:</span>
@@ -230,163 +241,175 @@
     </div>
 
     <script>
-        let hashCount = 0;
-        let startTime = Date.now();
-        let blocksFound = 0;
+const EXPLORER_API = "http://localhost:8080";  // your explorer API status/supply
+const POOL_API     = "http://localhost:3333";  // the pool we just ran
 
-        // Generate CPU bars
-        function initializeCPUBars() {
-            const container = document.getElementById('cpuBars');
-            for (let i = 0; i < 8; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'cpu-bar';
-                bar.style.height = '20px';
-                container.appendChild(bar);
-            }
+const $ = (id)=>document.getElementById(id);
+const nf=(n)=>new Intl.NumberFormat().format(n);
+
+// ---- live stats (optional, if explorer API is running) ----
+async function refreshNetwork(){
+  try{
+    const s=await fetch(`${EXPLORER_API}/status`).then(r=>r.json()).catch(()=>({tip_height:0}));
+    const sup=await fetch(`${EXPLORER_API}/supply`).then(r=>r.json()).catch(()=>({circulating:"0"}));
+    let bits="—";
+    try{
+      const j=await fetch(`${POOL_API}/mining/getwork?address=dummy`).then(r=>r.json());
+      if(!j.error && j.bits) bits=j.bits;
+    }catch{}
+    $('block-height').textContent = nf(s.tip_height ?? 0);
+    $('total-supply').textContent = nf(Number(sup.circulating||0)) + " QTC";
+    $('difficulty').textContent   = bits;
+  }catch(e){}
+}
+setInterval(refreshNetwork,3000); refreshNetwork();
+
+// ---- browser miner (demo) ----
+let mining=false, hashes=0, startedAt=0, job=null, nonce=0, loopHandle=null, updater=null;
+
+const hexToBytes = (hex)=>{ hex=(hex||"").replace(/^0x/,''); if(hex.length%2) hex='0'+hex;
+  const arr=new Uint8Array(hex.length/2); for(let i=0;i<arr.length;i++) arr[i]=parseInt(hex.substr(i*2,2),16); return arr; };
+async function sha256(b){ return await crypto.subtle.digest('SHA-256', b); }
+async function sha256d(b){ return await sha256(await sha256(b)); }
+function bitsToTargetBE(bits){ const e=(bits>>>24)&0xff, m=bits&0x007fffff;
+  const out=new Uint8Array(32), m3=new Uint8Array([(m>>>16)&0xff,(m>>>8)&0xff,m&0xff]);
+  const pos=32-(3+(e-3)); if(pos>=0&&pos<=29) out.set(m3,pos); return out; }
+function leq256(a,b){ for(let i=0;i<32;i++){ if(a[i]<b[i])return true; if(a[i]>b[i])return false; } return true; }
+function headerBytes(j, ts, n){
+  const prev=hexToBytes(j.prev_hash), mer=hexToBytes(j.merkle_root);
+  const buf=new ArrayBuffer(4+32+32+4+4+4), dv=new DataView(buf); let off=0;
+  dv.setUint32(off, j.version>>>0, false); off+=4;
+  new Uint8Array(buf,off,32).set(prev); off+=32;
+  new Uint8Array(buf,off,32).set(mer);  off+=32;
+  dv.setUint32(off, ts>>>0, false);     off+=4;
+  dv.setUint32(off, j.bits>>>0, false); off+=4;
+  dv.setUint32(off, n>>>0, false);      off+=4;
+  return buf;
+}
+
+async function getWork(addr){
+  const j=await fetch(`${POOL_API}/mining/getwork?address=${encodeURIComponent(addr)}`).then(r=>r.json());
+  if(j && !j.error){ job=j; nonce=0; return true; }
+  $('status-line').textContent = `❌ ${j.error||'getwork_failed'}`; return false;
+}
+
+async function mineLoop(addr){
+  if(!mining) return;
+  if(!job){ if(!(await getWork(addr))) return; }
+  const shareTarget = bitsToTargetBE((job.share_bits ?? job.bits) >>> 0);
+  const ts = Math.floor(Date.now()/1000);
+
+  for(let i=0;i<2000;i++){
+    const buf=headerBytes(job, ts, nonce);
+    const h=new Uint8Array(await sha256d(buf));
+    hashes++; if(hashes%1000===0) $('total-hashes').textContent=nf(hashes);
+    $('current-nonce').textContent=nf(nonce);
+
+    if (leq256(h, shareTarget)){
+      const resp=await fetch(`${POOL_API}/mining/submit`,{
+        method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({ job_id: job.job_id, nonce, timestamp: ts })
+      }).then(r=>r.json()).catch(()=>({status:"rejected",reason:"submit_failed"}));
+
+      if(resp.status==="accepted"){
+        $('blocks-found').textContent=(Number($('blocks-found').textContent||0)+1).toString();
+        $('status-line').textContent=`✅ BLOCK accepted ${resp.hash}`;
+      } else if (resp.status==="share"){
+        $('status-line').textContent=`🟢 share accepted`;
+      } else {
+        $('status-line').textContent=`❌ ${resp.reason||'rejected'}`;
+      }
+      job=null; // refresh job after any result
+      break;
+    }
+    nonce=(nonce+1)>>>0;
+  }
+  loopHandle=requestAnimationFrame(()=>mineLoop(addr));
+}
+
+function startMining(){
+  const addr=($('miner-address')?.value||"").trim();
+  if(!addr){ $('status-line').textContent="Enter your QTC address first"; return; }
+  if(mining) return;
+  mining=true; hashes=0; startedAt=Date.now();
+  updater=setInterval(()=>{
+    const secs=((Date.now()-startedAt)/1000)|0;
+    $('mining-time').textContent=`${secs}s`;
+    const hr=hashes/Math.max(1,secs||1);
+    $('hashrate').textContent = nf(hr.toFixed(0)) + " H/s";
+  },1000);
+  mineLoop(addr);
+}
+function stopMining(){ mining=false; if(loopHandle) cancelAnimationFrame(loopHandle); if(updater) clearInterval(updater); }
+
+$('start-btn')?.addEventListener('click',startMining);
+$('stop-btn')?.addEventListener('click',stopMining);
+
+// ---- legacy dashboard features ----
+let blocksFound = 0;
+
+// Generate CPU bars
+function initializeCPUBars() {
+    const container = document.getElementById('cpuBars');
+    if(container) {
+        for (let i = 0; i < 8; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'cpu-bar';
+            bar.style.height = '20px';
+            container.appendChild(bar);
         }
+    }
+}
 
-        // Simulate CPU usage animation
-        function updateCPUBars() {
-            const bars = document.querySelectorAll('.cpu-bar');
-            bars.forEach(bar => {
-                const usage = 60 + Math.random() * 35; // 60-95% usage
-                bar.style.height = usage + '%';
-            });
+// Simulate CPU usage animation
+function updateCPUBars() {
+    const bars = document.querySelectorAll('.cpu-bar');
+    bars.forEach(bar => {
+        const usage = mining ? (60 + Math.random() * 35) : (10 + Math.random() * 20); // 60-95% when mining, 10-30% when idle
+        bar.style.height = usage + '%';
+    });
+}
+
+// Add log entry
+function addLogEntry(message) {
+    const logContainer = document.getElementById('miningLog');
+    if(logContainer) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+
+        // Keep only last 50 entries
+        const entries = logContainer.querySelectorAll('.log-entry');
+        if (entries.length > 50) {
+            entries[0].remove();
         }
+    }
+}
 
-        // Add log entry
-        function addLogEntry(message) {
-            const logContainer = document.getElementById('miningLog');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logContainer.appendChild(entry);
-            logContainer.scrollTop = logContainer.scrollHeight;
-
-            // Keep only last 50 entries
-            const entries = logContainer.querySelectorAll('.log-entry');
-            if (entries.length > 50) {
-                entries[0].remove();
-            }
+// Initialize dashboard
+function initialize() {
+    initializeCPUBars();
+    addLogEntry('🚀 QuantumCoin Mining Dashboard initialized');
+    addLogEntry('⚛️ Ready to connect to mining pool');
+    addLogEntry('💡 Enter your QTC address and click Start Mining');
+    
+    // Start updates
+    setInterval(updateCPUBars, 2000); // Every 2 seconds
+    
+    // Update CPU usage display
+    setInterval(()=>{
+        const cpuUsageEl = $('cpuUsage');
+        if(cpuUsageEl) {
+            const usage = mining ? (60 + Math.random() * 35) : (5 + Math.random() * 15);
+            cpuUsageEl.textContent = usage.toFixed(1) + '%';
         }
+    }, 1000);
+}
 
-        // Fetch blockchain info
-        async function fetchBlockchainInfo() {
-            try {
-                const response = await fetch('http://localhost:8545', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsonrpc: "2.0",
-                        method: "getblockchaininfo",
-                        params: {},
-                        id: 1
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.result) {
-                    document.getElementById('blockHeight').textContent = data.result.height;
-                    document.getElementById('totalSupply').textContent = 
-                        (data.result.supply.current / 100000000).toFixed(2) + ' QTC';
-                    document.getElementById('difficulty').textContent = 
-                        '0x' + data.result.difficulty.toString(16);
-                }
-            } catch (error) {
-                console.error('Error fetching blockchain info:', error);
-            }
-        }
-
-        // Fetch mining info
-        async function fetchMiningInfo() {
-            try {
-                const response = await fetch('http://localhost:8545', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        jsonrpc: "2.0",
-                        method: "getmininginfo",
-                        params: {},
-                        id: 2
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.result) {
-                    // Update display
-                }
-            } catch (error) {
-                console.error('Error fetching mining info:', error);
-            }
-        }
-
-        // Simulate real mining progress
-        function simulateMiningProgress() {
-            hashCount += Math.floor(Math.random() * 100000) + 50000; // Random hash increment
-            const timeElapsed = (Date.now() - startTime) / 1000;
-            const hashRate = Math.floor(hashCount / timeElapsed);
-            
-            // Update display
-            document.getElementById('hashRate').textContent = hashRate.toLocaleString() + ' H/s';
-            document.getElementById('totalHashes').textContent = hashCount.toLocaleString();
-            document.getElementById('miningTime').textContent = Math.floor(timeElapsed) + 's';
-            document.getElementById('currentNonce').textContent = Math.floor(hashCount / 8).toLocaleString();
-            
-            // Update CPU usage
-            document.getElementById('cpuUsage').textContent = (60 + Math.random() * 35).toFixed(1) + '%';
-            
-            // Simulate progress (this is just visual, real mining depends on actual hash finding)
-            const progress = Math.min((hashCount / 1000000) % 100, 95);
-            document.getElementById('progressFill').style.width = progress + '%';
-            
-            // Random log entries
-            if (Math.random() < 0.1) {
-                const messages = [
-                    `🔍 Checking nonce ${Math.floor(hashCount/8).toLocaleString()}...`,
-                    `⚡ Hash rate: ${hashRate.toLocaleString()} H/s`,
-                    `🎯 ${hashCount.toLocaleString()} hashes computed`,
-                    `💻 All 8 CPU cores mining at full capacity`,
-                    `🔢 Double SHA256 computation in progress...`
-                ];
-                addLogEntry(messages[Math.floor(Math.random() * messages.length)]);
-            }
-            
-            // Check if a block might be found (very rare)
-            if (Math.random() < 0.0001 && hashCount > 1000000) {
-                blocksFound++;
-                document.getElementById('blocksFound').textContent = blocksFound;
-                document.getElementById('totalEarned').textContent = (blocksFound * 50) + ' QTC';
-                addLogEntry(`🎉 BLOCK FOUND! Block #${blocksFound} mined successfully!`);
-                addLogEntry(`💰 Earned 50 QTC! Total: ${blocksFound * 50} QTC`);
-                
-                // Reset for next block
-                hashCount = 0;
-                startTime = Date.now();
-                document.getElementById('progressText').textContent = `Mining Block #${blocksFound + 1}...`;
-            }
-        }
-
-        // Initialize dashboard
-        function initialize() {
-            initializeCPUBars();
-            addLogEntry('🚀 QuantumCoin Mining Dashboard initialized');
-            addLogEntry('⚛️ Connected to local QuantumCoin node');
-            addLogEntry('⛏️ Starting real Bitcoin-like mining...');
-            addLogEntry('🔥 Using 8 CPU threads for maximum hash rate');
-            
-            // Start updates
-            setInterval(fetchBlockchainInfo, 10000); // Every 10 seconds
-            setInterval(fetchMiningInfo, 5000); // Every 5 seconds
-            setInterval(simulateMiningProgress, 1000); // Every second
-            setInterval(updateCPUBars, 2000); // Every 2 seconds
-            
-            // Initial fetch
-            fetchBlockchainInfo();
-            fetchMiningInfo();
-        }
-
-        // Start when page loads
-        window.onload = initialize;
+// Start when page loads
+window.onload = initialize;
     </script>
 </body>
 </html>

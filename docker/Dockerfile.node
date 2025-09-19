@@ -1,0 +1,102 @@
+# QuantumCoin Node - Production Docker Image
+# Multi-stage build for security and minimal attack surface
+
+# Stage 1: Build environment
+FROM rust:1.75-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    musl-dev \
+    pkgconfig \
+    openssl-dev \
+    sqlite-dev \
+    git
+
+# Create non-root build user
+RUN adduser -D -s /bin/sh build
+
+# Set up workspace
+WORKDIR /build
+COPY . .
+
+# Build optimized release binaries
+RUN cargo build --release --locked \
+    && strip target/release/quantumcoin-node \
+    && strip target/release/qtc-wallet \
+    && strip target/release/qtc-address
+
+# Verify binaries work
+RUN ./target/release/quantumcoin-node --version
+RUN ./target/release/qtc-wallet --help
+RUN ./target/release/qtc-address --help
+
+# Stage 2: Runtime environment
+FROM alpine:3.19
+
+# Install runtime dependencies only
+RUN apk add --no-cache \
+    ca-certificates \
+    sqlite \
+    tini \
+    && update-ca-certificates
+
+# Create quantumcoin user and group
+RUN addgroup -S quantumcoin \
+    && adduser -S quantumcoin -G quantumcoin -h /home/quantumcoin
+
+# Create data directories
+RUN mkdir -p /data/quantumcoin \
+    && mkdir -p /etc/quantumcoin \
+    && chown -R quantumcoin:quantumcoin /data/quantumcoin \
+    && chmod 700 /data/quantumcoin
+
+# Copy binaries from builder
+COPY --from=builder /build/target/release/quantumcoin-node /usr/local/bin/
+COPY --from=builder /build/target/release/qtc-wallet /usr/local/bin/
+COPY --from=builder /build/target/release/qtc-address /usr/local/bin/
+
+# Copy configuration
+COPY docker/quantumcoin.conf /etc/quantumcoin/
+COPY LICENSE README.md /usr/share/doc/quantumcoin/
+
+# Set ownership and permissions
+RUN chown root:root /usr/local/bin/quantumcoin-* \
+    && chmod 755 /usr/local/bin/quantumcoin-* \
+    && chown -R quantumcoin:quantumcoin /etc/quantumcoin
+
+# Switch to non-root user
+USER quantumcoin
+
+# Set up runtime environment
+ENV PATH="/usr/local/bin:$PATH"
+ENV QTC_DATA_DIR="/data/quantumcoin"
+ENV QTC_CONFIG_FILE="/etc/quantumcoin/quantumcoin.conf"
+
+# Expose ports
+EXPOSE 8545/tcp  # RPC (mainnet)
+EXPOSE 8546/tcp  # P2P (mainnet)
+EXPOSE 18545/tcp # RPC (testnet)
+EXPOSE 18546/tcp # P2P (testnet)
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD quantumcoin-node status || exit 1
+
+# Use tini as init system for proper signal handling
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Default command
+CMD ["quantumcoin-node", "--data-dir", "/data/quantumcoin"]
+
+# Labels for metadata
+LABEL org.opencontainers.image.title="QuantumCoin Node"
+LABEL org.opencontainers.image.description="Post-quantum cryptocurrency node with Bitcoin-like economics"
+LABEL org.opencontainers.image.vendor="QuantumCoin Contributors"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.source="https://github.com/quantumcoin-crypto/quantumcoin-core"
+LABEL org.opencontainers.image.documentation="https://docs.quantumcoincrypto.com"
+
+# Security labels
+LABEL security.non-root="true"
+LABEL security.tini="true"
+LABEL security.stripped-binaries="true"
